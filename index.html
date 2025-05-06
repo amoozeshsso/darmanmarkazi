@@ -1,48 +1,98 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <title>Supabase Test</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ورود آزمون</title>
   <style>
+    /* پس‌زمینه گرادیانت */
     body {
-      font-family: sans-serif;
-      padding: 20px;
-      background: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      font-family: Tahoma, sans-serif;
+      background: linear-gradient(135deg, #6C63FF, #3D84A8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-    h1 {
-      color: #2c3e50;
+    /* کارت فرم */
+    .login-card {
+      background: #fff;
+      border-radius: 8px; /* حاشیه‌گرد */
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* سایه ملایم */
+      width: 90%;
+      max-width: 400px;
+      padding: 30px;
+      text-align: center;
     }
-    pre {
-      background: white;
+    .login-card h1 {
+      margin-bottom: 20px;
+      font-size: 24px;
+      color: #333;
+    }
+    .login-card label {
+      display: block;
+      text-align: right;
+      margin-top: 15px;
+      font-size: 14px;
+      color: #555;
+    }
+    .login-card input {
+      width: 100%;
       padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 0 5px #ccc;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    .login-card button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 4px;
+      background-color: #6C63FF;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .login-card button:hover {
+      background-color: #5a52d4;
+    }
+    .login-card a {
+      display: block;
+      margin-top: 15px;
+      font-size: 14px;
+      color: #999;
+      text-decoration: none;
+    }
+    .login-card a:hover {
+      color: #666;
     }
   </style>
 </head>
 <body>
-  <h1>📡 اتصال به Supabase</h1>
-  <p>داده‌های جدول <code>users</code> در پایین نمایش داده می‌شود:</p>
-  <pre id="output">در حال بارگذاری...</pre>
+  <div class="login-card">
+    <h1>آزمون درمان مرکزی</h1>
+    <label for="username">نام کاربری</label>
+    <input type="text" id="username" placeholder="نام کاربری خود را وارد کنید">
+    <label for="password">رمز عبور</label>
+    <input type="password" id="password" placeholder="رمز عبورتان را وارد کنید">
+    <button onclick="login()">ورود</button>
+    <a href="#">فراموشی رمز عبور؟</a>
+  </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-
-    const supabaseUrl = 'https://qdccjbakfuywvdqfcoyg.supabase.co'
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU'
-
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
-    try {
-      const { data, error } = await supabase.from('users').select('*')
-      const output = document.getElementById('output')
-      if (error) {
-        output.textContent = '❌ خطا: ' + error.message
+  <script>
+    function login() {
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+      // اینجا می‌توانید منطق احراز هویت را اضافه کنید
+      if(user === 'admin' && pass === '123') {
+        window.location.href = 'admin.html';
       } else {
-        output.textContent = JSON.stringify(data, null, 2)
+        alert('نام کاربری یا رمز عبور اشتباه است');
       }
-    } catch (e) {
-      document.getElementById('output').textContent = '❌ خطای غیرمنتظره: ' + e.message
     }
   </script>
 </body>
