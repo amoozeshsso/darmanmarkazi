@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>آزمون آنلاین</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Tahoma;
+      background-color: #f8f9fa;
+      text-align: center;
+      padding: 50px;
+    }
+    .quiz-box {
+      background: white;
+      padding: 30px;
+      width: 500px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    .question { margin: 20px 0; font-size: 18px; }
+    .option { margin: 10px 0; text-align: right; }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .result { margin-top: 20px; font-weight: bold; color: #2c3e50; }
+  </style>
+</head>
+<body>
+
+  <div class="quiz-box">
+    <h2>آزمون شما</h2>
+
+    <div class="question" id="questionText">1. پایتخت ایران کدام است؟</div>
+    <div class="option"><input type="radio" name="answer" value="1"> تبریز</div>
+    <div class="option"><input type="radio" name="answer" value="2"> اصفهان</div>
+    <div class="option"><input type="radio" name="answer" value="3"> شیراز</div>
+    <div class="option"><input type="radio" name="answer" value="4"> تهران</div>
+
+    <button onclick="submitAnswer()">ثبت پاسخ</button>
+    <div class="result" id="resultBox"></div>
+  </div>
+
+  <script>
+    const supabase = supabase.createClient(
+      'https://qdccjbakfuywvdqfcoyg.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU'
+    );
+
+    async function submitAnswer() {
+      const answer = document.querySelector('input[name="answer"]:checked');
+      if (!answer) {
+        document.getElementById('resultBox').innerText = "لطفاً یک گزینه انتخاب کنید.";
+        return;
+      }
+
+      const { data: user } = await supabase.auth.getUser();
+      const userId = user?.user?.id;
+
+      const { error } = await supabase
+        .from('answers')
+        .insert([
+          { user_id: userId, question_id: 1, answer: parseInt(answer.value) }
+        ]);
+
+      if (!error) {
+        document.getElementById('resultBox').innerText = "پاسخ با موفقیت ذخیره شد ✅";
+      } else {
+        document.getElementById('resultBox').innerText = "خطا در ذخیره‌سازی ❌";
+      }
+    }
+  </script>
+
+</body>
+</html>
