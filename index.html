@@ -2,125 +2,74 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ورود آزمون‌ساز</title>
+  <title>ورود به آزمون</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
-      margin: 0; padding: 0;
-      font-family: Tahoma, sans-serif;
-      background: linear-gradient(135deg, #f0f4ff, #dfe9ff);
-      display: flex; align-items: center; justify-content: center;
-      height: 100vh;
-    }
-    .login-card {
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 30px;
-      max-width: 360px;
-      width: 90%;
+      font-family: Tahoma;
+      background-color: #f4f4f4;
       text-align: center;
+      padding-top: 100px;
     }
-    .login-card h1 {
-      margin-bottom: 24px;
-      font-size: 24px;
-      color: #333;
+    .login-box {
+      background: white;
+      padding: 30px;
+      width: 300px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px gray;
     }
-    .login-card label {
-      display: block;
-      text-align: right;
-      margin-top: 16px;
-      font-size: 14px;
-      color: #555;
-    }
-    .login-card input {
-      width: 100%;
+    input, button {
+      width: 90%;
       padding: 10px;
-      margin-top: 6px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 16px;
-      box-sizing: border-box;
+      margin: 10px 0;
+      border-radius: 5px;
     }
-    .login-card button.primary {
-      width: 100%;
-      padding: 12px;
-      margin-top: 24px;
-      border: none;
-      border-radius: 4px;
-      background-color: #6C63FF;
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-    }
-    .login-card button.primary:hover {
-      background-color: #5a52d4;
-    }
-    .login-card .social-btns {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 16px;
-    }
-    .login-card .social-btns button {
-      flex: 1;
-      margin: 0 4px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background: #f5f5f5;
-      cursor: pointer;
-    }
-    .login-card .social-btns button:first-child {
-      background: #4285F4; color: #fff; border: none;
-    }
-    .login-card .social-btns button:last-child {
-      background: #2F2F2F; color: #fff; border: none;
-    }
-    .login-card a {
-      display: block;
-      margin-top: 16px;
-      font-size: 13px;
-      color: #777;
-      text-decoration: none;
-    }
-    .login-card a:hover {
-      color: #555;
-    }
+    .error { color: red; }
   </style>
 </head>
 <body>
-  <div class="login-card">
-    <h1>آزمون درمان مرکزی</h1>
-
-    <label for="user">نام کاربری</label>
-    <input type="text" id="user" placeholder="نام کاربری">
-
-    <label for="pass">رمز عبور</label>
-    <input type="password" id="pass" placeholder="رمز عبور">
-
-    <button class="primary" onclick="login()">ورود</button>
-
-    <div class="social-btns">
-      <button onclick="socialLogin('google')">Google</button>
-      <button onclick="socialLogin('microsoft')">Microsoft</button>
-    </div>
-
-    <a href="#">فراموشی رمز عبور؟</a>
+  <div class="login-box">
+    <h2>ورود به سیستم</h2>
+    <input type="email" id="email" placeholder="ایمیل">
+    <input type="password" id="password" placeholder="رمز عبور">
+    <button onclick="login()">ورود</button>
+    <p class="error" id="error"></p>
   </div>
 
   <script>
-    function login() {
-      const u = document.getElementById('user').value;
-      const p = document.getElementById('pass').value;
-      if(u==='admin' && p==='123') {
+    const supabase = supabase.createClient(
+      'https://qdccjbakfuywvdqfcoyg.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU'
+    );
+
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        document.getElementById('error').innerText = "ایمیل یا رمز اشتباه است";
+        return;
+      }
+
+      // نقش را از جدول user_roles می‌خوانیم
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('email', email)
+        .single();
+
+      if (!roles) {
+        document.getElementById('error').innerText = "نقش کاربر مشخص نیست";
+        return;
+      }
+
+      if (roles.role === 'admin') {
         window.location.href = 'admin.html';
       } else {
-        alert('نام کاربری یا رمز اشتباه است');
+        window.location.href = 'quiz.html';
       }
-    }
-    function socialLogin(provider) {
-      // TODO: پیاده‌سازی SSO
-      alert(provider + ' login not implemented');
     }
   </script>
 </body>
