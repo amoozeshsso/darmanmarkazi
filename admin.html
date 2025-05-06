@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>پنل مدیریت</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Tahoma;
+      background-color: #eef2f7;
+      text-align: center;
+      padding-top: 80px;
+    }
+    .panel {
+      background: white;
+      padding: 30px;
+      width: 400px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px gray;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      border: none;
+      background-color: #c0392b;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    h2 { color: #2c3e50; }
+  </style>
+</head>
+<body>
+
+  <div class="panel">
+    <h2>به پنل مدیریت خوش آمدید</h2>
+    <p>در اینجا می‌توانید آزمون‌ها، کاربران و پاسخ‌ها را مدیریت کنید.</p>
+
+    <button onclick="logout()">خروج از حساب</button>
+  </div>
+
+  <script>
+    const supabase = supabase.createClient(
+      'https://qdccjbakfuywvdqfcoyg.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU'
+    );
+
+    async function logout() {
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+    }
+  </script>
+
+</body>
+</html>
