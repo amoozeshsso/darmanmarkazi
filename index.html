@@ -3,10 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <title>Supabase Test</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    pre {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px #ccc;
+    }
+  </style>
 </head>
 <body>
-  <h1>Supabase Connection Test</h1>
-  <pre id="output">Loading...</pre>
+  <h1>📡 اتصال به Supabase</h1>
+  <p>داده‌های جدول <code>users</code> در پایین نمایش داده می‌شود:</p>
+  <pre id="output">در حال بارگذاری...</pre>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
@@ -16,14 +33,16 @@
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // فرض کنیم جدولت اسمش "users" هست
-    const { data, error } = await supabase.from('users').select('*')
-
-    const output = document.getElementById('output')
-    if (error) {
-      output.textContent = 'Error: ' + error.message
-    } else {
-      output.textContent = JSON.stringify(data, null, 2)
+    try {
+      const { data, error } = await supabase.from('users').select('*')
+      const output = document.getElementById('output')
+      if (error) {
+        output.textContent = '❌ خطا: ' + error.message
+      } else {
+        output.textContent = JSON.stringify(data, null, 2)
+      }
+    } catch (e) {
+      document.getElementById('output').textContent = '❌ خطای غیرمنتظره: ' + e.message
     }
   </script>
 </body>
