@@ -16,41 +16,99 @@
     body {
       font-family: Tahoma, sans-serif;
       background: #f3f3f3;
-      display: flex; justify-content: center; align-items: center;
-      height: 100vh; margin: 0; direction: rtl;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      direction: rtl;
     }
     .box {
       background: white;
       padding: 30px;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      width: 90%; max-width: 360px; text-align: center;
+      width: 90%;
+      max-width: 360px;
+      text-align: center;
     }
-    h2 { margin-bottom: 20px; color: #333; }
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
     input, button {
-      width: 100%; padding: 12px; margin: 10px 0;
-      border: 1px solid #ccc; border-radius: 5px;
-      font-size: 16px; box-sizing: border-box;
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      box-sizing: border-box;
     }
     button {
-      background: #4e54c8; color: white; border: none;
+      background: #4e54c8;
+      color: white;
+      border: none;
       cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover:not(:disabled) {
+      background: #3a3f9d;
     }
     button:disabled {
-      opacity: 0.6; cursor: not-allowed;
+      opacity: 0.6;
+      cursor: not-allowed;
     }
     #error {
-      color: #e74c3c; min-height: 1.2em; margin-top: 10px;
+      color: #e74c3c;
+      min-height: 1.2em;
+      margin-top: 10px;
+    }
+    .loading {
+      position: relative;
+    }
+    .loading:after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      top: 50%;
+      left: 10px;
+      margin-top: -10px;
+      border: 3px solid #ffffff;
+      border-top: 3px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
-
   <div class="box">
     <h2>ورود به سامانه</h2>
     <form id="loginForm" autocomplete="off">
-      <input type="text" id="username" name="username" placeholder="نام کاربری" required />
-      <input type="password" id="password" name="password" placeholder="رمز عبور" required />
+      <input 
+        type="text" 
+        id="username" 
+        name="username" 
+        placeholder="نام کاربری" 
+        required 
+        minlength="3"
+        maxlength="50"
+        pattern="[A-Za-z0-9_]+"
+      />
+      <input 
+        type="password" 
+        id="password" 
+        name="password" 
+        placeholder="رمز عبور" 
+        required 
+        minlength="6"
+        maxlength="100"
+      />
       <button type="submit" id="loginBtn">ورود</button>
       <p id="error"></p>
     </form>
@@ -58,72 +116,112 @@
 
   <script>
     (async () => {
-      // URL و KEY مستقیم
       const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
 
-      // ایجاد کلاینت با window.Supabase
+      // ایجاد کلاینت Supabase
       const supabase = window.Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const form = document.getElementById('loginForm');
       const btn = document.getElementById('loginBtn');
       const err = document.getElementById('error');
 
+      // تابع نمایش خطا
+      const showError = (message) => {
+        err.textContent = message;
+        btn.disabled = false;
+        btn.classList.remove('loading');
+      };
+
+      // تابع اعتبارسنجی ورودی
+      const validateInput = (username, password) => {
+        if (!username || !password) {
+          throw new Error('لطفاً همهٔ فیلدها را پر کنید.');
+        }
+        if (!/^[A-Za-z0-9_]+$/.test(username)) {
+          throw new Error('نام کاربری فقط می‌تواند شامل حروف انگلیسی، اعداد و _ باشد.');
+        }
+        if (username.length < 3) {
+          throw new Error('نام کاربری باید حداقل ۳ کاراکتر باشد.');
+        }
+        if (password.length < 6) {
+          throw new Error('رمز عبور باید حداقل ۶ کاراکتر باشد.');
+        }
+      };
+
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         err.textContent = '';
         btn.disabled = true;
+        btn.classList.add('loading');
 
         const username = form.username.value.trim();
         const password = form.password.value.trim();
 
-        if (!username || !password) {
-          err.textContent = 'لطفاً همهٔ فیلدها را پر کنید.';
-          btn.disabled = false;
-          return;
-        }
-
         try {
-          // لاگین بر اساس جدول users
+          // اعتبارسنجی ورودی
+          validateInput(username, password);
+
+          // بررسی کاربر در جدول users با استفاده از RPC
           const { data, error } = await supabase
-            .from('users')
-            .select('role')
-            .eq('username', username)
-            .eq('password', password)
-            .in('role', ['admin', 'user']);
+            .rpc('check_user_credentials', {
+              p_username: username,
+              p_password: password
+            });
 
           if (error) throw error;
-          if (!data.length) {
-            err.textContent = 'نام کاربری یا رمز اشتباه است.';
-            btn.disabled = false;
-            return;
+
+          if (!data || !data.length) {
+            throw new Error('نام کاربری یا رمز عبور اشتباه است.');
           }
 
-          const role = data[0].role;
-          console.log('🔑 Login role:', role);
-          window.location.href = role === 'admin' ? 'admin.html' : 'quiz.html';
+          const userInfo = data[0];
+          
+          // ذخیره اطلاعات نشست
+          sessionStorage.setItem('userRole', userInfo.role);
+          sessionStorage.setItem('loginTime', new Date().toISOString());
+
+          // هدایت به صفحه مناسب
+          window.location.href = userInfo.role === 'admin' ? 'admin.html' : 'quiz.html';
 
         } catch (error) {
-          console.error('Supabase Error:', error);
-          err.textContent = 'خطا در ارتباط با پایگاه داده.';
-          btn.disabled = false;
+          console.error('Login Error:', error);
+          showError(error.message || 'خطا در ورود به سیستم.');
         }
       });
 
-      // جلوگیری از راست کلیک و کلیدهای Ctrl+U/S
+      // جلوگیری از راست کلیک
       document.addEventListener('contextmenu', e => e.preventDefault());
+
+      // جلوگیری از کلیدهای میانبر
       document.addEventListener('keydown', e => {
-        if (e.ctrlKey && (e.key === 'u' || e.key === 's')) e.preventDefault();
+        if ((e.ctrlKey || e.metaKey) && ['u', 's', 'i'].includes(e.key.toLowerCase())) {
+          e.preventDefault();
+        }
       });
 
-      // ریست فرم در بارگذاری و قبل از خروج
-      window.addEventListener('load', () => form.reset());
+      // پاک کردن فرم در بارگذاری و خروج
+      window.addEventListener('load', () => {
+        form.reset();
+        sessionStorage.clear();
+      });
+
       window.addEventListener('beforeunload', () => {
         form.reset();
         sessionStorage.clear();
       });
+
+      // غیرفعال کردن DevTools
+      setInterval(() => {
+        const devtools = /./;
+        devtools.toString = function() {
+          form.reset();
+          sessionStorage.clear();
+        }
+        console.log('%c', devtools);
+      }, 1000);
+
     })();
   </script>
-
 </body>
 </html>
