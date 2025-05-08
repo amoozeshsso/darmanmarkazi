@@ -2,130 +2,53 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>ورود به سامانه آزمون</title>
+  <title>تست اتصال Supabase</title>
   <style>
-    body {
-      font-family: Tahoma;
-      background: #F3F3F3;
-      padding-top: 80px;
-      text-align: center;
+    body { 
+      font-family: Tahoma; 
+      background: #f9f9f9; 
+      text-align: center; 
+      padding-top: 50px; 
       direction: rtl;
     }
-    .box {
-      background: white;
+    pre {
+      background: #fff;
+      border: 1px solid #ccc;
       display: inline-block;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    input, button {
-      display: block;
-      width: 250px;
-      margin: 10px auto;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #CCC;
-      font-size: 16px;
-    }
-    #error {
-      color: red;
-      min-height: 1.2em;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: #45a049;
+      text-align: left;
+      padding: 20px;
+      max-width: 90%;
+      white-space: pre-wrap;
+      word-break: break-all;
     }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h2>ورود به سامانه</h2>
-    <input type="text" id="username" placeholder="نام کاربری">
-    <input type="password" id="password" placeholder="رمز عبور">
-    <button id="loginbtn">ورود</button>
-    <p id="error"></p>
-  </div>
+  <h2>DEBUG: جدول users</h2>
+  <pre id="output">در حال بارگذاری...</pre>
 
-  <!-- بارگذاری کتابخانه Supabase -->
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-  <script>
-    // اطمینان از بارگذاری کامل صفحه
-    document.addEventListener('DOMContentLoaded', function() {
-      // پیکربندی Supabase
-      const SUPABASE_URL = "https://qdccjbakfuywvdqfcoyg.supabase.co";
-      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU";
-      
-      // ایجاد کلاینت Supabase
-      const supabase = supabaseClient.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = createClient(
+      'https://qdccjbakfuywvdqfcoyg.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU'
+    );
 
-      // تابع اصلی لاگین
-      async function handleLogin() {
-        const errorEl = document.getElementById("error");
-        const username = document.getElementById("username").value.trim();
-        const password = document.getElementById("password").value.trim();
-        
-        try {
-          // بررسی ورودی‌های خالی
-          if (!username || !password) {
-            errorEl.textContent = "لطفاً نام کاربری و رمز عبور را وارد کنید.";
-            return;
-          }
+    (async () => {
+      const { data, error } = await supabase
+        .from('users')     // نام جدول lowercase
+        .select('*');      // همه ستون‌ها
 
-          // جستجو در جدول users
-          const { data, error } = await supabase
-            .from('users')
-            .select('role')
-            .eq('username', username)
-            .eq('password', password)
-            .single();
+      console.log('DEBUG users data:', data, 'error:', error);
 
-          if (error) {
-            console.error('خطای پایگاه داده:', error.message);
-            errorEl.textContent = "خطا در برقراری ارتباط با پایگاه داده.";
-            return;
-          }
-
-          if (!data) {
-            errorEl.textContent = "نام کاربری یا رمز عبور اشتباه است.";
-            return;
-          }
-
-          // هدایت کاربر بر اساس نقش
-          if (data.role === 'admin') {
-            window.location.href = 'admin.html';
-          } else {
-            window.location.href = 'quiz.html';
-          }
-
-        } catch (err) {
-          console.error('خطای غیرمنتظره:', err);
-          errorEl.textContent = "خطای غیرمنتظره رخ داده است.";
-        }
+      const output = document.getElementById('output');
+      if (error) {
+        output.textContent = `❌ خطا: ${error.message}`;
+      } else {
+        output.textContent = JSON.stringify(data, null, 2);
       }
-
-      // افزودن رویداد کلیک به دکمه
-      document.getElementById("loginbtn").addEventListener("click", handleLogin);
-
-      // افزودن رویداد فشردن Enter در فیلدها
-      document.getElementById("username").addEventListener("keypress", function(e) {
-        if (e.key === "Enter") {
-          document.getElementById("password").focus();
-        }
-      });
-
-      document.getElementById("password").addEventListener("keypress", function(e) {
-        if (e.key === "Enter") {
-          handleLogin();
-        }
-      });
-    });
+    })();
   </script>
 </body>
 </html>
