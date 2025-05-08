@@ -27,42 +27,22 @@
       font-size: 24px;
       color: #4e54c8;
     }
-    .card .input-group {
-      margin-bottom: 16px;
-      text-align: left;
+    .input-group { margin-bottom: 16px; text-align: left; }
+    .input-group label { display: block; margin-bottom: 6px; font-size: 14px; }
+    .input-group input {
+      width: 100%; padding: 10px 12px; border: 1px solid #ccc;
+      border-radius: 6px; font-size: 16px;
     }
-    .card .input-group label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 14px;
-    }
-    .card .input-group input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
-    }
-    .card button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 12px;
-      border: none;
-      border-radius: 6px;
-      background: #4e54c8;
-      color: #fff;
-      font-size: 16px;
+    button {
+      width: 100%; padding: 12px; margin-top: 12px;
+      border: none; border-radius: 6px;
+      background: #4e54c8; color: #fff; font-size: 16px;
       cursor: pointer;
     }
-    .card button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
     .error {
-      margin-top: 12px;
-      color: #e74c3c;
-      font-size: 14px;
-      min-height: 1.2em;
+      margin-top: 12px; color: #e74c3c;
+      font-size: 14px; min-height: 1.2em;
     }
   </style>
 </head>
@@ -72,8 +52,8 @@
     <h1>ورود به سامانه</h1>
 
     <div class="input-group">
-      <label for="email">ایمیل</label>
-      <input type="email" id="email" placeholder="your@example.com">
+      <label for="username">نام کاربری</label>
+      <input type="text" id="username" placeholder="مثلاً: admin">
     </div>
 
     <div class="input-group">
@@ -88,7 +68,6 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    // تنظیمات Supabase
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co'
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU'
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -99,38 +78,35 @@
     btn.addEventListener('click', async () => {
       err.textContent = ''
       btn.disabled = true
-      const email = document.getElementById('email').value.trim()
-      const password = document.getElementById('password').value.trim()
 
-      if (!email || !password) {
+      const username = document.getElementById('username').value.trim()
+      const password = document.getElementById('password').value.trim()
+      if (!username || !password) {
         err.textContent = 'همهٔ فیلدها را پر کنید.'
         btn.disabled = false
         return
       }
 
-      // لاگین با ایمیل/رمز
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        err.textContent = 'ایمیل یا رمز اشتباه است'
-        btn.disabled = false
-        return
-      }
-
-      // دریافت نقش کاربر
-      const { data: roleData, error: roleError } = await supabase
+      // جستجو بر اساس username/password
+      const { data, error } = await supabase
         .from('users')
         .select('role')
-        .eq('email', email)
-        .single()
+        .eq('username', username)
+        .eq('password', password)
 
-      if (roleError || !roleData) {
-        err.textContent = 'خطا در شناسایی نقش کاربر.'
+      if (error) {
+        err.textContent = 'خطا در ارتباط با پایگاه داده.'
+        btn.disabled = false
+        return
+      }
+      if (!data.length) {
+        err.textContent = 'نام کاربری یا رمز اشتباه است.'
         btn.disabled = false
         return
       }
 
-      // هدایت براساس نقش
-      window.location.href = roleData.role === 'admin' ? 'admin.html' : 'quiz.html'
+      const role = data[0].role
+      window.location.href = role === 'admin' ? 'admin.html' : 'quiz.html'
     })
   </script>
 
