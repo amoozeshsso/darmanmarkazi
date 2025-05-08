@@ -30,7 +30,7 @@
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .action-column { min-width: 150px; }
   </style>
-  <!-- بارگذاری کتابخانه supabase-js -->
+  <!-- Load supabase-js library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
@@ -79,19 +79,19 @@
         </tr>
       </thead>
       <tbody id="userList">
-        <tr><td colspan="4">در حال بارگذاری کاربران...</td></tr>
+        <tr>
+          <td colspan="4">در حال بارگذاری کاربران...</td>
+        </tr>
       </tbody>
     </table>
   </div>
 
   <script>
-    // پیکربندی Supabase:
-    // لطفاً مقادیر supabaseUrl و supabaseKey را متناسب با پروژه خود تنظیم کنید.
+    // پیکربندی Supabase - تنظیمات مطابق با اطلاعات شما:
     const supabaseUrl = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-    const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'; // جایگزین کنید
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // انتظار برای بارگذاری کامل صفحه
     document.addEventListener('DOMContentLoaded', () => {
       initApp();
     });
@@ -108,7 +108,7 @@
       }
     };
 
-    // بارگذاری کاربران از پایگاه داده Supabase
+    // بارگذاری کاربران از جدول "users" در Supabase
     const loadUsers = async () => {
       setLoading(true);
       try {
@@ -123,7 +123,8 @@
       } catch (error) {
         console.error('خطای بارگذاری کاربران:', error);
         showError('خطای بارگذاری کاربران: ' + error.message);
-        document.getElementById('userList').innerHTML = `<tr><td colspan="4">خطا در بارگذاری اطلاعات</td></tr>`;
+        document.getElementById('userList').innerHTML =
+          `<tr><td colspan="4">خطا در بارگذاری اطلاعات</td></tr>`;
       } finally {
         setLoading(false);
       }
@@ -134,7 +135,8 @@
       const userList = document.getElementById('userList');
       userList.innerHTML = '';
       if (!users || users.length === 0) {
-        userList.innerHTML = `<tr><td colspan="4">هیچ کاربری یافت نشد</td></tr>`;
+        userList.innerHTML =
+          `<tr><td colspan="4">هیچ کاربری یافت نشد</td></tr>`;
         return;
       }
       users.sort((a, b) => a.user_id - b.user_id);
@@ -153,7 +155,7 @@
       });
     };
 
-    // تابع فرار از کاراکترهای HTML
+    // فرار از کاراکترهای HTML
     const escapeHTML = (str) => {
       if (!str) return '';
       return String(str)
@@ -224,7 +226,7 @@
       });
     };
 
-    // تابع تغییر وضعیت بارگذاری
+    // تغییر وضعیت بارگذاری
     const setLoading = (isLoading) => {
       document.getElementById('loading').style.display = isLoading ? 'block' : 'none';
       document.querySelectorAll('button').forEach(btn => btn.disabled = isLoading);
