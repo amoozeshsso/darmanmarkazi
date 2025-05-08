@@ -2,73 +2,58 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>ورود به آزمون</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>ورود به سیستم</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body {
-      font-family: Tahoma;
-      background-color: #f4f4f4;
-      text-align: center;
-      padding-top: 100px;
-    }
-    .login-box {
-      background: white;
-      padding: 30px;
-      width: 300px;
-      margin: auto;
-      border-radius: 10px;
-      box-shadow: 0 0 10px gray;
-    }
-    input, button {
-      width: 90%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-    }
-    .error { color: red; }
+    body { font-family: Tahoma; background: #f2f2f2; direction: rtl; text-align: center; padding: 50px; }
+    .box { background: white; max-width: 400px; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px gray; }
+    input, button { margin: 10px 0; padding: 10px; width: 90%; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
+    h2 { color: #007bff; }
   </style>
 </head>
 <body>
-  <div class="login-box">
-    <h2>ورود به سیستم</h2>
+  <div class="box">
+    <h2>ورود به سامانه</h2>
     <input type="email" id="email" placeholder="ایمیل">
     <input type="password" id="password" placeholder="رمز عبور">
     <button onclick="login()">ورود</button>
-    <p class="error" id="error"></p>
+    <p id="error" style="color:red;"></p>
   </div>
 
   <script>
-    const supabase = supabase.createClient(
-      'https://qdccjbakfuywvdqfcoyg.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU'
-    );
+    const supabaseUrl = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
     async function login() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
+
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
-        document.getElementById('error').innerText = "ایمیل یا رمز اشتباه است";
+        document.getElementById("error").innerText = "ورود ناموفق: " + error.message;
         return;
       }
 
-      // نقش را از جدول user_roles می‌خوانیم
-      const { data: roles } = await supabase
-        .from('user_roles')
+      // دریافت نقش از جدول users
+      const { data: userData, error: roleError } = await supabase
+        .from('users')
         .select('role')
         .eq('email', email)
         .single();
 
-      if (!roles) {
-        document.getElementById('error').innerText = "نقش کاربر مشخص نیست";
+      if (roleError || !userData) {
+        document.getElementById("error").innerText = "نقش کاربر پیدا نشد!";
         return;
       }
 
-      if (roles.role === 'admin') {
-        window.location.href = 'admin.html';
+      const role = userData.role;
+
+      if (role === "admin") {
+        window.location.href = "admin.html";
       } else {
-        window.location.href = 'quiz.html';
+        window.location.href = "quiz.html";
       }
     }
   </script>
