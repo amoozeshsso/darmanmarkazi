@@ -2,59 +2,55 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>ورود به سیستم</title>
+  <title>ورود به سامانه آزمون</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body { font-family: Tahoma; background: #f2f2f2; direction: rtl; text-align: center; padding: 50px; }
-    .box { background: white; max-width: 400px; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px gray; }
-    input, button { margin: 10px 0; padding: 10px; width: 90%; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
-    h2 { color: #007bff; }
+    body { font-family: Tahoma; background: #f3f3f3; text-align: center; margin-top: 100px; }
+    input, button { padding: 10px; margin: 10px; width: 250px; border-radius: 5px; border: 1px solid #ccc; }
+    .box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px gray; display: inline-block; }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h2>ورود به سامانه</h2>
-    <input type="email" id="email" placeholder="ایمیل">
-    <input type="password" id="password" placeholder="رمز عبور">
-    <button id="loginBtn">ورود</button>
-    <p id="error" style="color:red;"></p>
-  </div>
 
-  <!-- اسکریپت مدرن با type="module" -->
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+<div class="box">
+  <h2>ورود کاربران</h2>
+  <input type="text" id="username" placeholder="نام کاربری">
+  <input type="password" id="password" placeholder="رمز عبور">
+  <button onclick="login()">ورود</button>
+  <p id="error" style="color:red;"></p>
+</div>
 
-    const supabaseUrl = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+<script>
+  // پیکربندی Supabase
+  const supabaseUrl = "https://qdccjbakfuywvdqfcoyg.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU";
+  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+  async function login() {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .eq('password', password);
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      document.getElementById("error").innerText = "خطا در ارتباط با پایگاه داده";
+      return;
+    }
 
-      if (error) {
-        document.getElementById("error").innerText = "ورود ناموفق: " + error.message;
-        return;
-      }
-
-      const { data: userData, error: roleError } = await supabase
-        .from('users')
-        .select('role')
-        .eq('email', email)
-        .single();
-
-      if (roleError || !userData) {
-        document.getElementById("error").innerText = "نقش کاربر پیدا نشد!";
-        return;
-      }
-
-      if (userData.role === "admin") {
+    if (data.length > 0) {
+      if (username === "admin") {
         window.location.href = "admin.html";
       } else {
         window.location.href = "quiz.html";
       }
-    });
-  </script>
+    } else {
+      document.getElementById("error").innerText = "نام کاربری یا رمز اشتباه است";
+    }
+  }
+</script>
+
 </body>
 </html>
