@@ -8,7 +8,7 @@
       font-family: Tahoma; 
       background: #f9f9f9; 
       text-align: center; 
-      padding-top: 50px; 
+      padding: 50px; 
       direction: rtl;
     }
     pre {
@@ -28,25 +28,28 @@
   <pre id="output">در حال بارگذاری...</pre>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    // 1) ایمپورت از نسخه‌ی ESM Supabase
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    const supabase = createClient(
-      'https://qdccjbakfuywvdqfcoyg.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU'
-    );
+    // 2) پیکربندی کلاینت
+    const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // 3) تابع فوری برای خواندن کل جدول users
     (async () => {
       const { data, error } = await supabase
-        .from('users')     // نام جدول lowercase
-        .select('*');      // همه ستون‌ها
+        .from('users')   // مطمئن شوید نام جدول دقیقاً users است
+        .select('*');    // همهٔ ستون‌ها
 
-      console.log('DEBUG users data:', data, 'error:', error);
+      console.log('DEBUG users data:', data);
+      console.log('DEBUG users error:', error);
 
-      const output = document.getElementById('output');
+      const out = document.getElementById('output');
       if (error) {
-        output.textContent = `❌ خطا: ${error.message}`;
+        out.textContent = '❌ خطا: ' + error.message;
       } else {
-        output.textContent = JSON.stringify(data, null, 2);
+        out.textContent = JSON.stringify(data, null, 2);
       }
     })();
   </script>
