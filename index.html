@@ -4,59 +4,97 @@
   <meta charset="UTF-8">
   <title>ورود به سامانه آزمون</title>
   <style>
-    body { font-family: Tahoma; background: #F3F3F3; padding-top: 80px; text-align: center; direction: rtl; }
-    .box { background: white; display: inline-block; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    input, button { display: block; width: 250px; margin: 10px auto; padding: 10px; border-radius: 5px; border: 1px solid #CCC; font-size: 16px; }
-    #error { color: red; height: 1.2em; }
+    body {
+      font-family: Tahoma;
+      background: #F3F3F3;
+      padding-top: 80px;
+      text-align: center;
+      direction: rtl;
+    }
+    .box {
+      background: white;
+      display: inline-block;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    input, button {
+      display: block;
+      width: 250px;
+      margin: 10px auto;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #CCC;
+      font-size: 16px;
+    }
+    #error {
+      color: red;
+      min-height: 1.2em;
+    }
   </style>
 </head>
 <body>
 
   <div class="box">
-    <h2>ورود کاربران</h2>
+    <h2>ورود به سامانه</h2>
     <input type="text" id="username" placeholder="نام کاربری">
     <input type="password" id="password" placeholder="رمز عبور">
     <button id="loginbtn">ورود</button>
     <p id="error"></p>
   </div>
 
-  <!-- 1) نسخه UMD Supabase -->
+  <!-- 1) بارگذاری نسخه‌ی UMD کتابخانه Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.32.0/dist/umd/index.min.js"></script>
 
-  <!-- 2) کد لاگین -->
+  <!-- 2) کد اتصال و لاگین -->
   <script>
+    // پیکربندی Supabase
     const SUPABASE_URL = "https://qdccjbakfuywvdqfcoyg.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ...";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // 3) DIAGNOSTIC: نمایش تمام ردیف‌های جدول users
+    (async () => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*');
+      console.log("DEBUG — users data:", data);
+      console.log("DEBUG — users error:", error);
+    })();
+
+    // 4) رویداد کلیک دکمه لاگین
     document.getElementById("loginbtn").addEventListener("click", async () => {
-      const u = document.getElementById("username").value.trim();
-      const p = document.getElementById("password").value.trim();
-      const err = document.getElementById("error");
-      err.textContent = "";
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const errorEl = document.getElementById("error");
+      errorEl.textContent = "";
 
-      if (!u || !p) {
-        err.textContent = "لطفاً نام کاربری و رمز را وارد کنید.";
+      if (!username || !password) {
+        errorEl.textContent = "لطفاً نام کاربری و رمز را وارد کنید.";
         return;
       }
 
+      // جستجوی نقش کاربر
       const { data, error } = await supabase
         .from('users')
         .select('role')
-        .eq('username', u)
-        .eq('password', p);
+        .eq('username', username)
+        .eq('password', password);
 
       if (error) {
-        console.error(error);
-        err.textContent = "خطا در پایگاه داده.";
-        return;
-      }
-      if (!data || data.length === 0) {
-        err.textContent = "نام کاربری یا رمز اشتباه است.";
+        console.error("Database Error:", error);
+        errorEl.textContent = "خطا در ارتباط با پایگاه داده.";
         return;
       }
 
-      if (data[0].role === 'admin') {
+      if (!data || data.length === 0) {
+        errorEl.textContent = "نام کاربری یا رمز اشتباه است.";
+        return;
+      }
+
+      // هدایت بر اساس نقش
+      const role = data[0].role;
+      if (role === 'admin') {
         window.location.href = 'admin.html';
       } else {
         window.location.href = 'quiz.html';
