@@ -19,45 +19,41 @@
     <p id="error" style="color:red;"></p>
   </div>
 
-  <!-- بارگذاری کتابخانه Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- اسکریپت مدرن با type="module" -->
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-  <!-- جاوااسکریپت بعد از بارگذاری Supabase -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const supabaseUrl = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-      document.getElementById("loginBtn").addEventListener("click", async () => {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
 
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-        if (error) {
-          document.getElementById("error").innerText = "ورود ناموفق: " + error.message;
-          return;
-        }
+      if (error) {
+        document.getElementById("error").innerText = "ورود ناموفق: " + error.message;
+        return;
+      }
 
-        // بررسی نقش
-        const { data: userData, error: roleError } = await supabase
-          .from('users')
-          .select('role')
-          .eq('email', email)
-          .single();
+      const { data: userData, error: roleError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('email', email)
+        .single();
 
-        if (roleError || !userData) {
-          document.getElementById("error").innerText = "نقش کاربر پیدا نشد!";
-          return;
-        }
+      if (roleError || !userData) {
+        document.getElementById("error").innerText = "نقش کاربر پیدا نشد!";
+        return;
+      }
 
-        if (userData.role === "admin") {
-          window.location.href = "admin.html";
-        } else {
-          window.location.href = "quiz.html";
-        }
-      });
+      if (userData.role === "admin") {
+        window.location.href = "admin.html";
+      } else {
+        window.location.href = "quiz.html";
+      }
     });
   </script>
 </body>
