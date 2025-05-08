@@ -5,137 +5,33 @@
   <title>پنل مدیریت کاربران</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
-      font-family: Tahoma;
-      background: #f8f8f8;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      color: #333;
-      text-align: center;
-    }
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-    th {
-      background: #2c3e50;
-      color: white;
-      padding: 12px;
-      text-align: center;
-    }
-    td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: center;
-    }
-    tr:nth-child(even) {
-      background-color: #f2f2f2;
-    }
-    tr:hover {
-      background-color: #e9f7ef;
-    }
-    button {
-      padding: 8px 12px;
-      margin: 2px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    button:hover {
-      opacity: 0.8;
-    }
-    .add-btn {
-      background: #27ae60;
-      color: white;
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-    }
-    .edit-btn {
-      background: #2980b9;
-      color: white;
-    }
-    .delete-btn {
-      background: #c0392b;
-      color: white;
-    }
-    #formBox {
-      margin: 20px auto;
-      padding: 20px;
-      background: #fff;
-      border-radius: 8px;
-      max-width: 600px;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-    }
-    input,
-    select {
-      padding: 10px;
-      margin: 8px 0;
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    input:focus,
-    select:focus {
-      border-color: #3498db;
-      outline: none;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-      color: #555;
-      font-weight: bold;
-    }
-    #error,
-    #success {
-      margin-top: 15px;
-      text-align: center;
-      padding: 10px;
-      border-radius: 4px;
-    }
-    #error {
-      color: white;
-      background-color: rgba(231, 76, 60, 0.8);
-    }
-    #success {
-      color: white;
-      background-color: rgba(46, 204, 113, 0.8);
-    }
-    .loading {
-      text-align: center;
-      margin: 20px;
-    }
-    .spinner {
-      border: 4px solid #f3f3f3;
-      border-radius: 50%;
-      border-top: 4px solid #3498db;
-      width: 30px;
-      height: 30px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto;
-    }
-    @keyframes spin {
-      0% {
-        transform: rotate(0deg);
-      }
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-    .action-column {
-      min-width: 150px;
-    }
+    body { font-family: Tahoma; background: #f8f8f8; margin: 0; padding: 20px; }
+    h1 { color: #333; text-align: center; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    th { background: #2c3e50; color: white; padding: 12px; text-align: center; }
+    td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #e9f7ef; }
+    button { padding: 8px 12px; margin: 2px; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s; }
+    button:hover { opacity: 0.8; }
+    .add-btn { background: #27ae60; color: white; width: 100%; padding: 10px; font-size: 16px; }
+    .edit-btn { background: #2980b9; color: white; }
+    .delete-btn { background: #c0392b; color: white; }
+    #formBox { margin: 20px auto; padding: 20px; background: #fff; border-radius: 8px; max-width: 600px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+    input, select { padding: 10px; margin: 8px 0; width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
+    input:focus, select:focus { border-color: #3498db; outline: none; }
+    label { display: block; margin-top: 10px; color: #555; font-weight: bold; }
+    #error, #success { margin-top: 15px; text-align: center; padding: 10px; border-radius: 4px; }
+    #error { color: white; background-color: rgba(231, 76, 60, 0.8); }
+    #success { color: white; background-color: rgba(46, 204, 113, 0.8); }
+    .loading { text-align: center; margin: 20px; }
+    .spinner { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #3498db; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .action-column { min-width: 150px; }
   </style>
+  <!-- بارگذاری کتابخانه supabase-js -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
   <div class="container">
@@ -183,107 +79,26 @@
         </tr>
       </thead>
       <tbody id="userList">
-        <tr>
-          <td colspan="4">در حال بارگذاری کاربران...</td>
-        </tr>
+        <tr><td colspan="4">در حال بارگذاری کاربران...</td></tr>
       </tbody>
     </table>
   </div>
 
   <script>
-    // کلاس مدیریت ذخیره‌سازی کاربران در LocalStorage
-    class UserStorage {
-      constructor() {
-        this.storageKey = 'admin_users';
-        this.users = this.loadUsers();
-      }
-      
-      loadUsers() {
-        try {
-          const storedUsers = localStorage.getItem(this.storageKey);
-          if (storedUsers) {
-            return JSON.parse(storedUsers);
-          }
-          const defaultUsers = [
-            { id: 1, username: 'admin', password: 'admin123', role: 'admin' },
-            { id: 2, username: 'user1', password: 'user123', role: 'user' }
-          ];
-          this.saveUsers(defaultUsers);
-          return defaultUsers;
-        } catch (error) {
-          console.error('Error loading users from storage:', error);
-          return [];
-        }
-      }
-      
-      saveUsers(users) {
-        try {
-          localStorage.setItem(this.storageKey, JSON.stringify(users));
-          this.users = users;
-        } catch (error) {
-          console.error('Error saving users to storage:', error);
-          throw new Error('خطا در ذخیره‌سازی داده‌ها');
-        }
-      }
-      
-      getAllUsers() {
-        return [...this.users];
-      }
-      
-      getUserById(id) {
-        return this.users.find(user => user.id === id) || null;
-      }
-      
-      addUser(userData) {
-        if (this.users.some(user => user.username === userData.username)) {
-          throw new Error('این نام کاربری قبلاً استفاده شده است');
-        }
-        const maxId = this.users.reduce((max, user) => Math.max(max, user.id), 0);
-        const newUser = { id: maxId + 1, ...userData };
-        this.users.push(newUser);
-        this.saveUsers(this.users);
-        return newUser;
-      }
-      
-      updateUser(id, userData) {
-        id = Number(id);
-        const index = this.users.findIndex(user => user.id === id);
-        if (index === -1) {
-          throw new Error('کاربر یافت نشد');
-        }
-        if (userData.username !== this.users[index].username && 
-            this.users.some(user => user.id !== id && user.username === userData.username)) {
-          throw new Error('این نام کاربری قبلاً استفاده شده است');
-        }
-        if (!userData.password) {
-          userData.password = this.users[index].password;
-        }
-        this.users[index] = { ...this.users[index], ...userData };
-        this.saveUsers(this.users);
-        return this.users[index];
-      }
-      
-      deleteUser(id) {
-        id = Number(id);
-        const index = this.users.findIndex(user => user.id === id);
-        if (index === -1) {
-          throw new Error('کاربر یافت نشد');
-        }
-        this.users.splice(index, 1);
-        this.saveUsers(this.users);
-        return true;
-      }
-    }
+    // پیکربندی Supabase:
+    // لطفاً مقادیر supabaseUrl و supabaseKey را متناسب با پروژه خود تنظیم کنید.
+    const supabaseUrl = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+    const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'; // جایگزین کنید
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    const userStorage = new UserStorage();
-
+    // انتظار برای بارگذاری کامل صفحه
     document.addEventListener('DOMContentLoaded', () => {
       initApp();
     });
 
-    const initApp = () => {
+    const initApp = async () => {
       try {
-        loadUsers();
+        await loadUsers();
         setupFormHandler();
         showSuccess('سیستم با موفقیت بارگذاری شد');
         setTimeout(hideMessages, 2000);
@@ -293,20 +108,28 @@
       }
     };
 
-    const loadUsers = () => {
+    // بارگذاری کاربران از پایگاه داده Supabase
+    const loadUsers = async () => {
       setLoading(true);
       try {
-        const users = userStorage.getAllUsers();
+        const { data: users, error } = await supabase
+          .from('users')
+          .select('user_id, username, role')
+          .order('user_id');
+        if (error) {
+          throw error;
+        }
         renderUsers(users);
       } catch (error) {
-        console.error('Error loading users:', error);
-        showError('خطا در بارگذاری کاربران: ' + error.message);
+        console.error('خطای بارگذاری کاربران:', error);
+        showError('خطای بارگذاری کاربران: ' + error.message);
         document.getElementById('userList').innerHTML = `<tr><td colspan="4">خطا در بارگذاری اطلاعات</td></tr>`;
       } finally {
         setLoading(false);
       }
     };
 
+    // نمایش کاربران در جدول
     const renderUsers = (users) => {
       const userList = document.getElementById('userList');
       userList.innerHTML = '';
@@ -314,22 +137,23 @@
         userList.innerHTML = `<tr><td colspan="4">هیچ کاربری یافت نشد</td></tr>`;
         return;
       }
-      users.sort((a, b) => a.id - b.id);
+      users.sort((a, b) => a.user_id - b.user_id);
       users.forEach(user => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td>${user.id}</td>
+          <td>${user.user_id}</td>
           <td>${escapeHTML(user.username)}</td>
           <td>${user.role === 'admin' ? 'ادمین' : 'کاربر'}</td>
           <td class="action-column">
-            <button class="edit-btn" onclick="handleEdit(${user.id})">ویرایش</button>
-            <button class="delete-btn" onclick="handleDelete(${user.id})">حذف</button>
+            <button class="edit-btn" onclick="handleEdit(${user.user_id})">ویرایش</button>
+            <button class="delete-btn" onclick="handleDelete(${user.user_id})">حذف</button>
           </td>
         `;
         userList.appendChild(row);
       });
     };
 
+    // تابع فرار از کاراکترهای HTML
     const escapeHTML = (str) => {
       if (!str) return '';
       return String(str)
@@ -340,9 +164,10 @@
         .replace(/'/g, "&#039;");
     };
 
+    // تنظیم رویداد ارسال فرم
     const setupFormHandler = () => {
       const form = document.getElementById('userForm');
-      form.addEventListener('submit', (e) => {
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const editId = document.getElementById('editId').value;
         const username = document.getElementById('username').value.trim();
@@ -361,22 +186,35 @@
           showError('لطفاً نقش کاربر را انتخاب کنید');
           return;
         }
-
+    
         setLoading(true);
         try {
           if (editId) {
+            // به‌روزرسانی کاربر موجود
             const updateData = { username, role };
             if (password) {
               updateData.password = password;
             }
-            userStorage.updateUser(editId, updateData);
+            const { error } = await supabase
+              .from('users')
+              .update(updateData)
+              .eq('user_id', editId);
+            if (error) {
+              throw error;
+            }
             showSuccess('کاربر با موفقیت به‌روز شد');
           } else {
-            userStorage.addUser({ username, password, role });
+            // ایجاد کاربر جدید
+            const { error } = await supabase
+              .from('users')
+              .insert([{ username, password, role }]);
+            if (error) {
+              throw error;
+            }
             showSuccess('کاربر جدید با موفقیت ایجاد شد');
           }
           resetForm();
-          loadUsers();
+          await loadUsers();
         } catch (error) {
           console.error('Error saving user:', error);
           showError(error.message);
@@ -386,20 +224,25 @@
       });
     };
 
+    // تابع تغییر وضعیت بارگذاری
     const setLoading = (isLoading) => {
       document.getElementById('loading').style.display = isLoading ? 'block' : 'none';
       document.querySelectorAll('button').forEach(btn => btn.disabled = isLoading);
     };
 
-    const handleEdit = (id) => {
+    // ویرایش کاربر
+    const handleEdit = async (user_id) => {
       try {
-        const user = userStorage.getUserById(Number(id));
-        if (!user) {
-          showError('کاربر مورد نظر یافت نشد');
-          return;
+        const { data: user, error } = await supabase
+          .from('users')
+          .select('user_id, username, role')
+          .eq('user_id', user_id)
+          .single();
+        if (error || !user) {
+          throw error || new Error('کاربر مورد نظر یافت نشد');
         }
         document.getElementById('formTitle').textContent = 'ویرایش کاربر';
-        document.getElementById('editId').value = user.id;
+        document.getElementById('editId').value = user.user_id;
         document.getElementById('username').value = user.username;
         document.getElementById('password').value = '';
         document.getElementById('role').value = user.role;
@@ -411,13 +254,20 @@
       }
     };
 
-    const handleDelete = (id) => {
+    // حذف کاربر
+    const handleDelete = async (user_id) => {
       if (!confirm('آیا از حذف این کاربر اطمینان دارید؟')) return;
       setLoading(true);
       try {
-        userStorage.deleteUser(Number(id));
+        const { error } = await supabase
+          .from('users')
+          .delete()
+          .eq('user_id', user_id);
+        if (error) {
+          throw error;
+        }
         showSuccess('کاربر با موفقیت حذف شد');
-        loadUsers();
+        await loadUsers();
       } catch (error) {
         console.error('Error deleting user:', error);
         showError('خطا در حذف کاربر: ' + error.message);
@@ -426,6 +276,7 @@
       }
     };
 
+    // مخفی کردن پیام‌ها
     const hideMessages = () => {
       document.getElementById('error').style.display = 'none';
       document.getElementById('success').style.display = 'none';
@@ -455,6 +306,7 @@
       }
     };
 
+    // پاکسازی فرم
     const resetForm = () => {
       document.getElementById('formTitle').textContent = 'افزودن کاربر جدید';
       document.getElementById('editId').value = '';
