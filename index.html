@@ -3,43 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <title>ورود به سامانه آزمون</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: Tahoma;
+      font-family: Tahoma, sans-serif;
       background: #F3F3F3;
-      text-align: center;
-      padding-top: 80px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       direction: rtl;
+      margin: 0;
     }
     .box {
       background: white;
-      display: inline-block;
       padding: 30px;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 360px;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
     }
     input, button {
-      width: 250px;
-      padding: 10px;
-      margin: 10px auto;
-      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
       border: 1px solid #CCC;
       border-radius: 5px;
       font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #4e54c8;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
     #error {
-      color: red;
+      color: #e74c3c;
       min-height: 1.2em;
-    }
-    pre.debug {
-      text-align: left;
-      background: #fff;
-      padding: 15px;
-      border: 1px solid #ccc;
-      max-width: 90%;
-      margin: 20px auto;
-      white-space: pre-wrap;
-      word-break: break-all;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -53,9 +64,6 @@
     <p id="error"></p>
   </div>
 
-  <!-- نمایش محتویات جدول برای دیباگ -->
-  <pre class="debug" id="debugOutput">در حال بارگذاری جدول users...</pre>
-
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
@@ -63,27 +71,19 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU'
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-    // 1) دیباگ: خواندن جدول users
-    const debugEl = document.getElementById('debugOutput')
-    const { data: users, error: usersError } = await supabase
-      .from('users')
-      .select('*')
-    console.log('DEBUG — users data:', users, 'error:', usersError)
-    if (usersError) {
-      debugEl.textContent = `❌ خطا در خواندن جدول users: ${usersError.message}`
-    } else {
-      debugEl.textContent = JSON.stringify(users, null, 2)
-    }
+    const btn = document.getElementById('loginBtn')
+    const err = document.getElementById('error')
 
-    // 2) رویداد لاگین
-    document.getElementById('loginBtn').addEventListener('click', async () => {
+    btn.addEventListener('click', async () => {
+      err.textContent = ''
+      btn.disabled = true
+
       const username = document.getElementById('username').value.trim()
       const password = document.getElementById('password').value.trim()
-      const errorEl = document.getElementById('error')
-      errorEl.textContent = ''
 
       if (!username || !password) {
-        errorEl.textContent = 'لطفاً نام کاربری و رمز را وارد کنید.'
+        err.textContent = 'لطفاً همهٔ فیلدها را پر کنید.'
+        btn.disabled = false
         return
       }
 
@@ -92,14 +92,18 @@
         .select('role')
         .eq('username', username)
         .eq('password', password)
+        .in('role', ['admin', 'user'])
 
       if (error) {
-        console.error('Database Error:', error)
-        errorEl.textContent = 'خطا در ارتباط با پایگاه داده.'
+        err.textContent = 'خطا در ارتباط با پایگاه داده.'
+        console.error(error)
+        btn.disabled = false
         return
       }
+
       if (!data.length) {
-        errorEl.textContent = 'نام کاربری یا رمز اشتباه است.'
+        err.textContent = 'نام کاربری یا رمز اشتباه است.'
+        btn.disabled = false
         return
       }
 
