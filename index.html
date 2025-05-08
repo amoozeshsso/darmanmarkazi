@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>ورود به سامانه آزمون</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- ممانعت از ذخیره‌سازی کش -->
+  <!-- جلوگیری از کش -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -12,49 +12,29 @@
     body {
       font-family: Tahoma, sans-serif;
       background: #F3F3F3;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      direction: rtl;
-      margin: 0;
+      display: flex; justify-content: center; align-items: center;
+      height: 100vh; margin: 0; direction: rtl;
     }
     .box {
-      background: white;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      width: 90%;
-      max-width: 360px;
-      text-align: center;
+      background: #fff; padding: 30px;
+      border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 90%; max-width: 360px; text-align: center;
     }
-    h2 {
-      margin-bottom: 20px;
-      color: #333;
-    }
+    h2 { margin-bottom: 20px; color: #333; }
     input, button {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border: 1px solid #CCC;
-      border-radius: 5px;
-      font-size: 16px;
-      box-sizing: border-box;
+      width: 100%; padding: 12px; margin: 10px 0;
+      border: 1px solid #CCC; border-radius: 5px;
+      font-size: 16px; box-sizing: border-box;
     }
     button {
-      background: #4e54c8;
-      color: #fff;
-      border: none;
+      background: #4e54c8; color: #fff; border: none;
       cursor: pointer;
     }
     button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+      opacity: 0.6; cursor: not-allowed;
     }
     #error {
-      color: #e74c3c;
-      min-height: 1.2em;
-      margin-top: 10px;
+      color: #e74c3c; min-height: 1.2em; margin-top: 10px;
     }
   </style>
 </head>
@@ -63,105 +43,65 @@
   <div class="box">
     <h2>ورود به سامانه</h2>
     <form id="loginForm" autocomplete="off">
-      <input type="text" id="username" name="username" placeholder="نام کاربری" autocomplete="off">
-      <input type="password" id="password" name="password" placeholder="رمز عبور" autocomplete="off">
+      <input type="text" id="username" name="username" placeholder="نام کاربری" required>
+      <input type="password" id="password" name="password" placeholder="رمز عبور" required>
       <button type="submit" id="loginBtn">ورود</button>
       <p id="error"></p>
     </form>
   </div>
 
-  <script type="module">
-    // استفاده از یک تابع IIFE برای محدود کردن دسترسی به متغیرها
-    (async () => {
-      try {
-        const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
-        
-        // رمزنگاری کلیدها با استفاده از Base64
-        const SUPABASE_URL = atob('aHR0cHM6Ly9xZGNjamJha2Z1eXd2ZHFmY295Zy5zdXBhYmFzZS5jbw==');
-        const SUPABASE_KEY = atob('ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnBjM01pT2lKemRYQmhZbUZ6WlNJc0luSmxaaUk2SW5Ga1kyTnFZbUZyWm5WNWQzWmtjV1pqYjNsbklpd2ljbTlzWlNJNkltRnViMjRpTENKcFlYUWlPakUzTkRZek56azNNVEVzSW1WNGNDSTZNakEyTVRrMU5UY3hNWDAuY3dwYnZDRjNRczNNZzFHQVlQaW1palhueUREelFFUnVUYl9rMlhabDVaVQ==');
-        
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  <!-- 1) بارگذاری UMD Supabase برای موبایل و دسکتاپ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/index.min.js"></script>
 
-        // گرفتن المان‌های مورد نیاز
-        const form = document.getElementById('loginForm');
-        const err = document.getElementById('error');
-        const btn = document.getElementById('loginBtn');
+  <script>
+    // 2) مقداردهی مستقیم URL و KEY
+    const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // افزودن رویداد submit به فرم
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          err.textContent = '';
-          btn.disabled = true;
+    const form = document.getElementById('loginForm');
+    const btn = document.getElementById('loginBtn');
+    const err = document.getElementById('error');
 
-          try {
-            // گرفتن مقادیر فرم با FormData
-            const formData = new FormData(form);
-            const username = formData.get('username').trim();
-            const password = formData.get('password').trim();
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      err.textContent = '';
+      btn.disabled = true;
 
-            if (!username || !password) {
-              throw new Error('لطفاً همهٔ فیلدها را پر کنید.');
-            }
+      const username = form.username.value.trim();
+      const password = form.password.value.trim();
 
-            // ایجاد یک هش ساده از رمز عبور (این فقط یک لایه اضافی است)
-            const hashedPassword = await crypto.subtle.digest(
-              'SHA-256',
-              new TextEncoder().encode(password)
-            ).then(hash => Array.from(new Uint8Array(hash))
-              .map(b => b.toString(16).padStart(2, '0'))
-              .join('')
-            );
+      // کوئری با فیلتر نقش معتبر
+      const { data, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('username', username)
+        .eq('password', password)
+        .in('role', ['admin', 'user']);
 
-            const { data, error } = await supabase
-              .from('users')
-              .select('role')
-              .eq('username', username)
-              .eq('password_hash', hashedPassword)
-              .in('role', ['admin', 'user'])
-              .single();
-
-            if (error) throw new Error('خطا در ارتباط با پایگاه داده.');
-            if (!data) throw new Error('نام کاربری یا رمز اشتباه است.');
-
-            // پاک کردن فرم
-            form.reset();
-            
-            // ایجاد یک توکن موقت برای احراز هویت
-            sessionStorage.setItem('auth_token', btoa(Date.now().toString()));
-            
-            // هدایت کاربر
-            window.location.href = data.role === 'admin' ? 'admin.html' : 'quiz.html';
-
-          } catch (error) {
-            err.textContent = error.message;
-            btn.disabled = false;
-          }
-        });
-
-        // غیرفعال کردن کلیک راست
-        document.addEventListener('contextmenu', e => e.preventDefault());
-
-        // غیرفعال کردن کلیدهای میانبر خاص
-        document.addEventListener('keydown', e => {
-          if (e.ctrlKey && (e.key === 'u' || e.key === 's')) {
-            e.preventDefault();
-            return false;
-          }
-        });
-
-        // پاک کردن فرم در هنگام بارگذاری صفحه
-        window.addEventListener('load', () => form.reset());
-
-        // پاک کردن فرم در هنگام خروج از صفحه
-        window.addEventListener('beforeunload', () => {
-          form.reset();
-          sessionStorage.clear();
-        });
-
-      } catch (error) {
-        console.error('خطا در بارگذاری منابع مورد نیاز');
+      if (error) {
+        err.textContent = 'خطا در ارتباط با پایگاه داده.';
+        console.error('Supabase Error:', error);
+        btn.disabled = false;
+        return;
       }
-    })();
+
+      if (!data.length) {
+        err.textContent = 'نام کاربری یا رمز اشتباه است.';
+        btn.disabled = false;
+        return;
+      }
+
+      const role = data[0].role;
+      console.log('🔑 Login role:', role);
+
+      // هدایت براساس نقش
+      if (role === 'admin') {
+        window.location.href = 'admin.html';
+      } else {
+        window.location.href = 'quiz.html';
+      }
+    });
   </script>
 
 </body>
