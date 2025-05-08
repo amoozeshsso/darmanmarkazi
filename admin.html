@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <title>پنل مدیریت کاربران</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- کتابخانه Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
+  <!-- کتابخانه Supabase با CDN صحیح -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: Tahoma; background: #f8f8f8; margin: 0; padding: 20px; }
     h1 { color: #333; }
@@ -51,50 +51,192 @@
     <tbody id="userList"></tbody>
   </table>
   <script>
-    // بررسی بارگذاری Supabase
-    if (!window.supabase) {
-      console.error('Supabase library is not loaded');
-      document.getElementById('error').textContent = 'خطا در بارگذاری سیستم.';
-      throw new Error('Supabase library is not defined.');
+    // اطمینان از بارگذاری کامل صفحه
+    document.addEventListener('DOMContentLoaded', function() {
+      initApp();
+    });
+
+    async function initApp() {
+      try {
+        // بررسی بارگذاری Supabase
+        if (typeof supabase === 'undefined') {
+          throw new Error('کتابخانه Supabase بارگذاری نشده است.');
+        }
+
+        // اتصال به Supabase
+        const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // بارگذاری کاربران
+        await loadUsers(supabaseClient);
+        
+        // تنظیم رویداد ارسال فرم
+        setupFormHandler(supabaseClient);
+        
+        showSuccess('سیستم با موفقیت بارگذاری شد.');
+      } catch (error) {
+        console.error('خطای راه‌اندازی:', error);
+        showError('خطا در بارگذاری سیستم: ' + error.message);
+      }
     }
 
-    // اتصال به Supabase
-    const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
     // بارگذاری کاربران
-    async function loadUsers() {
+    async function loadUsers(supabaseClient) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('users')
           .select('id, username, role')
           .order('id', { ascending: true });
 
         if (error) throw error;
-
+        
         const list = document.getElementById('userList');
         list.innerHTML = '';
-        data.forEach((user) => {
+        
+        if (data && data.length > 0) {
+          data.forEach((user) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${user.username}</td>
+              <td>${user.role === 'admin' ? 'ادمین' : 'کاربر'}</td>
+              <td>
+                <button class="edit-btn" onclick='editUser(${JSON.stringify(user)})'>ویرایش</button>
+                <button class="delete-btn" onclick='deleteUser(${user.id})'>حذف</button>
+              </td>
+            `;
+            list.appendChild(tr);
+          });
+        } else {
           const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${user.username}</td>
-            <td>${user.role}</td>
-            <td>
-              <button class="edit-btn" onclick='editUser(${JSON.stringify(user)})'>ویرایش</button>
-              <button class="delete-btn" onclick='deleteUser(${user.id})'>حذف</button>
-            </td>
-          `;
+          tr.innerHTML = '<td colspan="3">هیچ کاربری یافت نشد.</td>';
           list.appendChild(tr);
-        });
+        }
       } catch (error) {
-        console.error('Error loading users:', error);
-        document.getElementById('error').textContent = 'خطا در بارگذاری کاربران.';
+        console.error('خطای بارگذاری کاربران:', error);
+        showError('خطا در بارگذاری کاربران: ' + error.message);
       }
     }
 
-    // فراخوانی اولیه
-    loadUsers();
+    // تنظیم رویداد ارسال فرم
+    function setupFormHandler(supabaseClient) {
+      const form = document.getElementById('userForm');
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const editId = document.getElementById('editId').value;
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const role = document.getElementById('role').value;
+        
+        try {
+          if (!username || !role) {
+            throw new Error('لطفاً تمام فیلدها را پر کنید.');
+          }
+          
+          if (editId) {
+            // ویرایش کاربر
+            const { error } = await supabaseClient
+              .from('users')
+              .update({ 
+                username, 
+                ...(password ? { password } : {}), // اگر رمز وارد شده، آن را به‌روز کن
+                role 
+              })
+              .eq('id', editId);
+              
+            if (error) throw error;
+            showSuccess('کاربر با موفقیت به‌روز شد.');
+          } else {
+            // افزودن کاربر جدید
+            const { error } = await supabaseClient
+              .from('users')
+              .insert([{ username, password, role }]);
+              
+            if (error) throw error;
+            showSuccess('کاربر با موفقیت اضافه شد.');
+          }
+          
+          // پاک کردن فرم و بارگذاری مجدد کاربران
+          resetForm();
+          await loadUsers(supabaseClient);
+        } catch (error) {
+          console.error('خطای ذخیره اطلاعات:', error);
+          showError('خطا در ذخیره اطلاعات: ' + error.message);
+        }
+      });
+    }
+
+    // ویرایش کاربر
+    function editUser(user) {
+      document.getElementById('editId').value = user.id;
+      document.getElementById('username').value = user.username;
+      document.getElementById('password').value = ''; // رمز عبور را خالی می‌گذاریم
+      document.getElementById('role').value = user.role;
+      document.querySelector('.add-btn').textContent = 'به‌روزرسانی';
+      document.getElementById('formBox').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // حذف کاربر
+    async function deleteUser(id) {
+      if (!confirm('آیا از حذف این کاربر اطمینان دارید؟')) return;
+      
+      try {
+        const supabaseClient = supabase.createClient(
+          'https://qdccjbakfuywvdqfcoyg.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU'
+        );
+        
+        const { error } = await supabaseClient
+          .from('users')
+          .delete()
+          .eq('id', id);
+          
+        if (error) throw error;
+        
+        showSuccess('کاربر با موفقیت حذف شد.');
+        await loadUsers(supabaseClient);
+      } catch (error) {
+        console.error('خطای حذف کاربر:', error);
+        showError('خطا در حذف کاربر: ' + error.message);
+      }
+    }
+
+    // نمایش خطا
+    function showError(message) {
+      const errorElement = document.getElementById('error');
+      errorElement.textContent = message;
+      errorElement.style.display = 'block';
+      document.getElementById('success').style.display = 'none';
+      
+      // پاک کردن پیام خطا بعد از 5 ثانیه
+      setTimeout(() => {
+        errorElement.style.display = 'none';
+      }, 5000);
+    }
+
+    // نمایش پیام موفقیت
+    function showSuccess(message) {
+      const successElement = document.getElementById('success');
+      successElement.textContent = message;
+      successElement.style.display = 'block';
+      document.getElementById('error').style.display = 'none';
+      
+      // پاک کردن پیام موفقیت بعد از 3 ثانیه
+      setTimeout(() => {
+        successElement.style.display = 'none';
+      }, 3000);
+    }
+
+    // پاک کردن فرم
+    function resetForm() {
+      document.getElementById('editId').value = '';
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('role').value = '';
+      document.querySelector('.add-btn').textContent = 'ذخیره';
+    }
   </script>
 </body>
 </html>
