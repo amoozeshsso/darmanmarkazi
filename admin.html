@@ -1,150 +1,142 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>پنل مدیریت | سامانه آزمون</title>
+  <meta charset="UTF-8" />
+  <title>پنل مدیریت کاربران</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
     body {
-      font-family: Tahoma, sans-serif;
-      background: #eef2f7;
-      direction: rtl;
-      padding: 20px;
+      font-family: Tahoma;
+      background: #f8f8f8;
+      margin: 0; padding: 20px;
     }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    }
-    h2 {
-      text-align: center;
-      color: #2c3e50;
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-    input, textarea, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-    textarea { resize: vertical; }
-    button {
-      background: #4e54c8;
-      color: #fff;
-      border: none;
-      cursor: pointer;
+    h1 { color: #333; }
+    table {
+      width: 100%; border-collapse: collapse;
       margin-top: 20px;
     }
-    button:hover {
-      background: #3b3fa5;
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px; text-align: center;
     }
-    .logout {
-      background: #c0392b;
+    button {
+      padding: 6px 10px;
+      margin: 2px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .add-btn { background: #27ae60; color: white; }
+    .edit-btn { background: #2980b9; color: white; }
+    .delete-btn { background: #c0392b; color: white; }
+    #formBox {
+      margin-top: 20px;
+      padding: 10px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    input, select {
+      padding: 8px; margin: 5px;
+      width: 180px;
     }
   </style>
 </head>
 <body>
+  <h1>مدیریت کاربران</h1>
 
-  <div class="container">
-    <h2>پنل مدیریت آزمون</h2>
-
-    <label for="quizTitle">عنوان آزمون</label>
-    <input type="text" id="quizTitle" placeholder="مثلاً: آزمون ریاضی">
-
-    <label for="quizTime">مدت زمان (دقیقه)</label>
-    <input type="number" id="quizTime" placeholder="مثلاً: 20">
-
-    <label for="questionText">متن سؤال</label>
-    <textarea id="questionText" rows="3" placeholder="متن سؤال را اینجا وارد کنید..."></textarea>
-
-    <label>گزینه‌ها</label>
-    <input type="text" id="opt1" placeholder="گزینه ۱">
-    <input type="text" id="opt2" placeholder="گزینه ۲">
-    <input type="text" id="opt3" placeholder="گزینه ۳">
-    <input type="text" id="opt4" placeholder="گزینه ۴">
-
-    <label for="correct">شماره پاسخ صحیح (۱ تا ۴)</label>
-    <select id="correct">
-      <option value="">انتخاب کنید</option>
-      <option value="1">گزینه ۱</option>
-      <option value="2">گزینه ۲</option>
-      <option value="3">گزینه ۳</option>
-      <option value="4">گزینه ۴</option>
-    </select>
-
-    <button id="addBtn">➕ افزودن سؤال</button>
-    <button id="logoutBtn" class="logout">خروج از حساب</button>
+  <div id="formBox">
+    <h3>افزودن / ویرایش کاربر</h3>
+    <form id="userForm">
+      <input type="hidden" id="editId" />
+      <input type="text" id="username" placeholder="نام کاربری" required />
+      <input type="password" id="password" placeholder="رمز عبور" required />
+      <select id="role" required>
+        <option value="">نقش</option>
+        <option value="admin">ادمین</option>
+        <option value="user">کاربر</option>
+      </select>
+      <button type="submit" class="add-btn">ذخیره</button>
+    </form>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  <table>
+    <thead>
+      <tr>
+        <th>نام کاربری</th>
+        <th>نقش</th>
+        <th>عملیات</th>
+      </tr>
+    </thead>
+    <tbody id="userList"></tbody>
+  </table>
 
-    // تنظیمات Supabase
-    const supabaseUrl = 'https://qdccjbakfuywvdqfcoyg.supabase.co'
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU'
-    const supabase = createClient(supabaseUrl, supabaseKey)
+  <script>
+    const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+    const supabase = window.Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const addBtn = document.getElementById('addBtn')
-    const logoutBtn = document.getElementById('logoutBtn')
+    const form = document.getElementById('userForm');
+    const list = document.getElementById('userList');
 
-    addBtn.addEventListener('click', async () => {
-      const title = document.getElementById('quizTitle').value.trim()
-      const time = parseInt(document.getElementById('quizTime').value)
-      const question = document.getElementById('questionText').value.trim()
-      const options = [
-        document.getElementById('opt1').value.trim(),
-        document.getElementById('opt2').value.trim(),
-        document.getElementById('opt3').value.trim(),
-        document.getElementById('opt4').value.trim()
-      ]
-      const correct = parseInt(document.getElementById('correct').value)
-
-      if (!title || !time || !question || options.some(o=>!o) || !correct) {
-        alert('لطفاً تمام فیلدها را کامل کنید.')
-        return
-      }
-
-      // درج آزمون (یک ردیف در questions)
+    async function loadUsers() {
       const { data, error } = await supabase
-        .from('questions')
-        .insert([{
-          quiz_title: title,
-          duration: time,
-          question_text: question,
-          option1: options[0],
-          option2: options[1],
-          option3: options[2],
-          option4: options[3],
-          correct_option: correct
-        }])
-
-      if (error) {
-        console.error('Error inserting question:', error)
-        alert('خطا در ذخیره‌سازی سؤال.')
-      } else {
-        alert('سؤال با موفقیت ذخیره شد ✅')
-        // پاک‌کردن فیلدها
-        document.querySelectorAll('#quizTitle, #quizTime, #questionText, #opt1, #opt2, #opt3, #opt4, #correct')
-          .forEach(el=> el.value = '')
+        .from('users')
+        .select('*')
+        .order('id', { ascending: true });
+      list.innerHTML = '';
+      if (data) {
+        data.forEach(user => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${user.username}</td>
+            <td>${user.role}</td>
+            <td>
+              <button class="edit-btn" onclick='editUser(${JSON.stringify(user)})'>ویرایش</button>
+              <button class="delete-btn" onclick='deleteUser(${user.id})'>حذف</button>
+            </td>
+          `;
+          list.appendChild(tr);
+        });
       }
-    })
+    }
 
-    logoutBtn.addEventListener('click', async () => {
-      await supabase.auth.signOut()
-      window.location.href = 'index.html'
-    })
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('editId').value;
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const role = document.getElementById('role').value;
+
+      if (!username || !password || !role) return;
+
+      if (id) {
+        await supabase.from('users').update({ username, password, role }).eq('id', id);
+      } else {
+        await supabase.from('users').insert([{ username, password, role }]);
+      }
+
+      form.reset();
+      document.getElementById('editId').value = '';
+      loadUsers();
+    });
+
+    window.editUser = (user) => {
+      document.getElementById('editId').value = user.id;
+      document.getElementById('username').value = user.username;
+      document.getElementById('password').value = user.password;
+      document.getElementById('role').value = user.role;
+    }
+
+    window.deleteUser = async (id) => {
+      if (confirm('آیا مطمئن هستید؟')) {
+        await supabase.from('users').delete().eq('id', id);
+        loadUsers();
+      }
+    }
+
+    loadUsers();
   </script>
-
 </body>
 </html>
