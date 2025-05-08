@@ -10,9 +10,10 @@
   <meta http-equiv="Expires" content="0" />
   <!-- حذف favicon -->
   <link rel="icon" href="data:," />
-  <!-- بارگذاری UMD Bundle Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
+  <!-- بارگذاری Supabase Client - تغییر به نسخه جدید -->
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
+    /* همان استایل‌های قبلی */
     body {
       font-family: Tahoma, sans-serif;
       background: #f3f3f3;
@@ -115,12 +116,14 @@
   </div>
 
   <script>
-    (async () => {
+    // اطمینان از بارگذاری کامل صفحه
+    document.addEventListener('DOMContentLoaded', async () => {
+      // تنظیمات Supabase
       const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
 
-      // ایجاد کلاینت Supabase
-      const supabase = window.Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      // ایجاد کلاینت Supabase با استفاده از supabase-js
+      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const form = document.getElementById('loginForm');
       const btn = document.getElementById('loginBtn');
@@ -162,27 +165,26 @@
           // اعتبارسنجی ورودی
           validateInput(username, password);
 
-          // بررسی کاربر در جدول users با استفاده از RPC
+          // بررسی کاربر در جدول users با استفاده از select
           const { data, error } = await supabase
-            .rpc('check_user_credentials', {
-              p_username: username,
-              p_password: password
-            });
+            .from('users')
+            .select('role')
+            .eq('username', username)
+            .eq('password', password)
+            .single();
 
           if (error) throw error;
 
-          if (!data || !data.length) {
+          if (!data) {
             throw new Error('نام کاربری یا رمز عبور اشتباه است.');
           }
 
-          const userInfo = data[0];
-          
           // ذخیره اطلاعات نشست
-          sessionStorage.setItem('userRole', userInfo.role);
+          sessionStorage.setItem('userRole', data.role);
           sessionStorage.setItem('loginTime', new Date().toISOString());
 
           // هدایت به صفحه مناسب
-          window.location.href = userInfo.role === 'admin' ? 'admin.html' : 'quiz.html';
+          window.location.href = data.role === 'admin' ? 'admin.html' : 'quiz.html';
 
         } catch (error) {
           console.error('Login Error:', error);
@@ -210,18 +212,7 @@
         form.reset();
         sessionStorage.clear();
       });
-
-      // غیرفعال کردن DevTools
-      setInterval(() => {
-        const devtools = /./;
-        devtools.toString = function() {
-          form.reset();
-          sessionStorage.clear();
-        }
-        console.log('%c', devtools);
-      }, 1000);
-
-    })();
+    });
   </script>
 </body>
 </html>
