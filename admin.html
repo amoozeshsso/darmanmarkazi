@@ -4,59 +4,26 @@
   <meta charset="UTF-8" />
   <title>پنل مدیریت کاربران</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
+  <!-- کتابخانه Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <style>
-    body {
-      font-family: Tahoma;
-      background: #f8f8f8;
-      margin: 0;
-      padding: 20px;
-    }
+    body { font-family: Tahoma; background: #f8f8f8; margin: 0; padding: 20px; }
     h1 { color: #333; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: center;
-    }
-    button {
-      padding: 6px 10px;
-      margin: 2px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    button { padding: 6px 10px; margin: 2px; border: none; border-radius: 4px; cursor: pointer; }
     .add-btn { background: #27ae60; color: white; }
     .edit-btn { background: #2980b9; color: white; }
     .delete-btn { background: #c0392b; color: white; }
-    #formBox {
-      margin-top: 20px;
-      padding: 10px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    input, select {
-      padding: 8px;
-      margin: 5px;
-      width: calc(100% - 16px);
-      box-sizing: border-box;
-    }
-    #error, #success {
-      margin-top: 10px;
-      text-align: center;
-    }
+    #formBox { margin-top: 20px; padding: 10px; background: #fff; border-radius: 8px; }
+    input, select { padding: 8px; margin: 5px; width: calc(100% - 16px); box-sizing: border-box; }
+    #error, #success { margin-top: 10px; text-align: center; }
     #error { color: red; }
     #success { color: green; }
   </style>
 </head>
 <body>
   <h1>مدیریت کاربران</h1>
-
   <div id="formBox">
     <h3>افزودن / ویرایش کاربر</h3>
     <form id="userForm">
@@ -73,7 +40,6 @@
       <p id="success"></p>
     </form>
   </div>
-
   <table>
     <thead>
       <tr>
@@ -84,32 +50,31 @@
     </thead>
     <tbody id="userList"></tbody>
   </table>
-
   <script>
-    // اطلاعات اتصال به Supabase
+    // بررسی بارگذاری Supabase
+    if (!window.supabase) {
+      console.error('Supabase library is not loaded');
+      document.getElementById('error').textContent = 'خطا در بارگذاری سیستم.';
+      throw new Error('Supabase library is not defined.');
+    }
+
+    // اتصال به Supabase
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const form = document.getElementById('userForm');
-    const list = document.getElementById('userList');
-    const errorBox = document.getElementById('error');
-    const successBox = document.getElementById('success');
-
-    // تابع بارگذاری کاربران از پایگاه داده
+    // بارگذاری کاربران
     async function loadUsers() {
       try {
         const { data, error } = await supabase
-          .from('users') // اتصال به جدول
-          .select('id, username, role') // انتخاب ستون‌ها
-          .order('id', { ascending: true }); // مرتب‌سازی بر اساس id
+          .from('users')
+          .select('id, username, role')
+          .order('id', { ascending: true });
 
         if (error) throw error;
 
-        // پاک کردن محتوای قدیمی جدول
+        const list = document.getElementById('userList');
         list.innerHTML = '';
-
-        // افزودن داده‌های جدید به جدول
         data.forEach((user) => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
@@ -120,83 +85,15 @@
               <button class="delete-btn" onclick='deleteUser(${user.id})'>حذف</button>
             </td>
           `;
-          list.appendChild(tr); // افزودن سطر به جدول
+          list.appendChild(tr);
         });
       } catch (error) {
         console.error('Error loading users:', error);
-        errorBox.textContent = 'خطا در بارگذاری کاربران.';
+        document.getElementById('error').textContent = 'خطا در بارگذاری کاربران.';
       }
     }
 
-    // تابع ذخیره یا ویرایش کاربر
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      try {
-        const id = document.getElementById('editId').value;
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
-        const role = document.getElementById('role').value;
-
-        if (!username || !password || !role) {
-          errorBox.textContent = 'لطفاً تمامی فیلدها را پر کنید.';
-          return;
-        }
-
-        let result;
-        if (id) {
-          result = await supabase
-            .from('users')
-            .update({ username, role })
-            .eq('id', id);
-        } else {
-          result = await supabase
-            .from('users')
-            .insert([{ username, password, role }]);
-        }
-
-        if (result.error) throw result.error;
-
-        form.reset();
-        document.getElementById('editId').value = '';
-        errorBox.textContent = '';
-        successBox.textContent = 'اطلاعات با موفقیت ذخیره شد.';
-        setTimeout(() => (successBox.textContent = ''), 3000);
-        loadUsers();
-      } catch (error) {
-        console.error('Error saving user:', error);
-        errorBox.textContent = 'خطا در ذخیره کاربر.';
-      }
-    });
-
-    // تابع ویرایش کاربر
-    window.editUser = (user) => {
-      document.getElementById('editId').value = user.id;
-      document.getElementById('username').value = user.username;
-      document.getElementById('password').value = '';
-      document.getElementById('role').value = user.role;
-    };
-
-    // تابع حذف کاربر
-    window.deleteUser = async (id) => {
-      if (confirm('آیا مطمئن هستید؟')) {
-        try {
-          const { error } = await supabase
-            .from('users')
-            .delete()
-            .eq('id', id);
-          if (error) throw error;
-
-          successBox.textContent = 'کاربر با موفقیت حذف شد.';
-          setTimeout(() => (successBox.textContent = ''), 3000);
-          loadUsers();
-        } catch (error) {
-          console.error('Error deleting user:', error);
-          errorBox.textContent = 'خطا در حذف کاربر.';
-        }
-      }
-    };
-
-    // بارگذاری اولیه کاربران
+    // فراخوانی اولیه
     loadUsers();
   </script>
 </body>
