@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>پنل مدیریت کاربران</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <style>
     body {
       font-family: Tahoma;
@@ -41,6 +41,7 @@
       padding: 8px; margin: 5px;
       width: 180px;
     }
+    #error { color: red; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -58,6 +59,7 @@
         <option value="user">کاربر</option>
       </select>
       <button type="submit" class="add-btn">ذخیره</button>
+      <p id="error"></p>
     </form>
   </div>
 
@@ -75,18 +77,30 @@
   <script>
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-    const supabase = window.Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const form = document.getElementById('userForm');
     const list = document.getElementById('userList');
+    const errorBox = document.getElementById('error');
 
+    // بررسی نقش کاربر
+    async function checkAdminRole() {
+      const userRole = sessionStorage.getItem('userRole');
+      if (userRole !== 'admin') {
+        alert('دسترسی غیرمجاز!');
+        window.location.href = 'login.html'; // هدایت به صفحه ورود
+      }
+    }
+
+    // بارگذاری کاربران
     async function loadUsers() {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('id', { ascending: true });
-      list.innerHTML = '';
-      if (data) {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('id, username, role')
+          .order('id', { ascending: true });
+        if (error) throw error;
+
+        list.innerHTML = '';
         data.forEach(user => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
@@ -99,43 +113,62 @@
           `;
           list.appendChild(tr);
         });
+      } catch (error) {
+        console.error('Error loading users:', error);
+        errorBox.textContent = 'خطا در بارگذاری کاربران.';
       }
     }
 
+    // ذخیره یا ویرایش کاربر
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const id = document.getElementById('editId').value;
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const role = document.getElementById('role').value;
+      try {
+        const id = document.getElementById('editId').value;
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const role = document.getElementById('role').value;
+        if (!username || !password || !role) return;
 
-      if (!username || !password || !role) return;
+        if (id) {
+          const { error } = await supabase.from('users').update({ username, role }).eq('id', id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('users').insert([{ username, password, role }]);
+          if (error) throw error;
+        }
 
-      if (id) {
-        await supabase.from('users').update({ username, password, role }).eq('id', id);
-      } else {
-        await supabase.from('users').insert([{ username, password, role }]);
+        form.reset();
+        document.getElementById('editId').value = '';
+        loadUsers();
+      } catch (error) {
+        console.error('Error saving user:', error);
+        errorBox.textContent = 'خطا در ذخیره کاربر.';
       }
-
-      form.reset();
-      document.getElementById('editId').value = '';
-      loadUsers();
     });
 
+    // ویرایش کاربر
     window.editUser = (user) => {
       document.getElementById('editId').value = user.id;
       document.getElementById('username').value = user.username;
-      document.getElementById('password').value = user.password;
+      document.getElementById('password').value = ''; // رمز عبور نباید نمایش داده شود
       document.getElementById('role').value = user.role;
     }
 
+    // حذف کاربر
     window.deleteUser = async (id) => {
       if (confirm('آیا مطمئن هستید؟')) {
-        await supabase.from('users').delete().eq('id', id);
-        loadUsers();
+        const { error } = await supabase.from('users').delete().eq('id', id);
+        if (error) {
+          console.error('Error deleting user:', error);
+          errorBox.textContent = 'خطا در حذف کاربر.';
+        } else {
+          loadUsers();
+        }
       }
     }
 
+    // اجرای اولیه
+    checkAdminRole();
     loadUsers();
   </script>
 </body>
