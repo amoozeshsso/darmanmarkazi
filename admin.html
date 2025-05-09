@@ -115,6 +115,27 @@
         }
         showLoading(false);
       };
+      const loadUsers = async () => {
+  showLoading(true);
+  hideMessages();
+  // ← اینجا می‌خواهیم لاگ را اضافه کنیم
+  const { data, error } = await supabase
+    .from('users')
+    .select('id,username,role')
+    .order('id');
+  // ← دقیقا بعد از این خط لاگ را اضافه کنید:
+  console.log('SUPABASE:', { data, error });
+  
+  if (error) {
+    showError(error.message);
+    list.innerHTML = '<tr><td colspan="4">خطا در دریافت داده‌ها</td></tr>';
+  } else {
+    // باقی پردازش داده‌ها...
+  }
+  
+  showLoading(false);
+};
+
 
       form.addEventListener('submit', async e => {
         e.preventDefault();
