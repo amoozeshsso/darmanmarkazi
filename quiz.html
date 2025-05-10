@@ -1,168 +1,67 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <title>شرکت در آزمون</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
-  <style>
-    body { font-family: Tahoma; background: #f8f8f8; margin: 0; padding: 20px; }
-    h1, h2 { text-align: center; color: #333; }
-    .container { max-width: 800px; margin: auto; }
-    .box { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    label { display: block; margin-top: 12px; color: #555; font-weight: bold; }
-    select, button { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
-    button { background: #4e54c8; color: #fff; cursor: pointer; }
-    .question { margin-bottom: 20px; padding: 12px; border-radius: 6px; background: #f3f7fa; }
-    .answers { margin-top: 10px; }
-    .answers label { font-weight: normal; margin-right: 16px; }
-    #result { background: #e8f5e9; color: #2d7a2d; padding: 15px; border-radius: 6px; margin-top: 20px; text-align: center; font-size: 18px; }
-    #error { color: #e74c3c; margin-top: 10px; text-align: center; }
-    #loading { display: none; text-align: center; margin: 20px 0; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: auto; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>شرکت در آزمون</h1>
-    <div class="box" id="examBox">
-      <label for="examSelect">انتخاب آزمون:</label>
-      <select id="examSelect"><option value="">-- آزمون را انتخاب کنید --</option></select>
-      <div id="error"></div>
-    </div>
-    <div id="loading"><div class="spinner"></div><p>در حال بارگذاری...</p></div>
-    <form id="quizForm" style="display:none;">
-      <div id="questions"></div>
-      <button type="submit">ثبت پاسخ‌ها و دریافت نمره</button>
-    </form>
-    <div id="result" style="display:none;"></div>
-  </div>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      // فقط کاربر معمولی اجازه ورود دارد
-      if (sessionStorage.getItem('userRole') !== 'user') {
-        alert('شما مجاز به شرکت در آزمون نیستید!');
-        window.location.href = 'index.html';
-      }
+// ثبت پاسخ‌ها و محاسبه نمره
+quizForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  resultBox.style.display = 'none';
+  loading.style.display = 'block';
 
-      const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  // گرفتن user_id از جدول users
+  const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('username', username)
+    .single();
+  if (userError || !userData) {
+    loading.style.display = 'none';
+    errorBox.textContent = 'خطا در شناسایی کاربر!';
+    return;
+  }
+  const user_id = userData.id;
 
-      const examSelect = document.getElementById('examSelect');
-      const loading = document.getElementById('loading');
-      const errorBox = document.getElementById('error');
-      const quizForm = document.getElementById('quizForm');
-      const questionsBox = document.getElementById('questions');
-      const resultBox = document.getElementById('result');
+  let correct = 0;
+  let total = questions.length;
+  let answers = [];
 
-      let questions = [];
-      let selectedExamId = null;
-      let username = sessionStorage.getItem('username');
-
-      // بارگذاری لیست آزمون‌ها
-      const loadExams = async () => {
-        loading.style.display = 'block';
-        errorBox.textContent = '';
-        const { data, error } = await supabase.from('exams').select('*').order('id');
-        if (error) {
-          errorBox.textContent = 'خطا در دریافت آزمون‌ها!';
-        } else {
-          examSelect.innerHTML = '<option value="">-- آزمون را انتخاب کنید --</option>' +
-            data.map(exam => `<option value="${exam.id}">${exam.title}</option>`).join('');
-        }
-        loading.style.display = 'none';
-      };
-
-      // بارگذاری سوالات آزمون انتخاب‌شده
-      examSelect.addEventListener('change', async () => {
-        selectedExamId = examSelect.value;
-        questionsBox.innerHTML = '';
-        quizForm.style.display = 'none';
-        resultBox.style.display = 'none';
-        if (!selectedExamId) return;
-        loading.style.display = 'block';
-        const { data, error } = await supabase.from('questions').select('*').eq('exam_id', selectedExamId).order('id');
-        loading.style.display = 'none';
-        if (error || !data.length) {
-          errorBox.textContent = 'سوالی برای این آزمون ثبت نشده است!';
-          return;
-        }
-        questions = data;
-        errorBox.textContent = '';
-        renderQuestions();
-      });
-
-      // نمایش سوالات و گزینه‌ها
-      function renderQuestions() {
-        quizForm.style.display = 'block';
-        questionsBox.innerHTML = questions.map((q, idx) => `
-          <div class="question">
-            <div><b>سوال ${idx + 1}:</b> ${q.question_text}</div>
-            <div class="answers">
-              <label><input type="radio" name="q${q.id}" value="1" required> ${q.option1}</label>
-              <label><input type="radio" name="q${q.id}" value="2"> ${q.option2}</label>
-              <label><input type="radio" name="q${q.id}" value="3"> ${q.option3}</label>
-              <label><input type="radio" name="q${q.id}" value="4"> ${q.option4}</label>
-            </div>
-          </div>
-        `).join('');
-      }
-
-      // ثبت پاسخ‌ها و محاسبه نمره
-      quizForm.addEventListener('submit', async e => {
-        e.preventDefault();
-        resultBox.style.display = 'none';
-        loading.style.display = 'block';
-
-        // گرفتن user_id از جدول users
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('id')
-          .eq('username', username)
-          .single();
-        if (userError || !userData) {
-          loading.style.display = 'none';
-          errorBox.textContent = 'خطا در شناسایی کاربر!';
-          return;
-        }
-        const user_id = userData.id;
-
-        let correct = 0;
-        let total = questions.length;
-        let answers = [];
-
-        questions.forEach(q => {
-          const selected = quizForm.elements[`q${q.id}`].value;
-          if (Number(selected) === q.correct_option) correct++;
-          answers.push({
-            user_id,
-            exam_id: Number(selectedExamId),
-            question_id: q.id,
-            selected_option: Number(selected)
-          });
-        });
-
-        // پاک کردن پاسخ‌های قبلی کاربر برای این آزمون
-        await supabase
-          .from('user_answers')
-          .delete()
-          .eq('user_id', user_id)
-          .eq('exam_id', selectedExamId);
-
-        // ذخیره پاسخ‌های جدید
-        for (const ans of answers) {
-          await supabase.from('user_answers').insert([ans]);
-        }
-
-        loading.style.display = 'none';
-        resultBox.style.display = 'block';
-        resultBox.innerHTML = `تعداد پاسخ صحیح: <b>${correct}</b> از <b>${total}</b> <br> نمره شما: <b>${Math.round((correct/total)*20)}</b> از 20`;
-      });
-
-      await loadExams();
+  questions.forEach(q => {
+    const selected = quizForm.elements[`q${q.id}`].value;
+    if (Number(selected) === q.correct_option) correct++;
+    answers.push({
+      user_id,
+      exam_id: Number(selectedExamId),
+      question_id: q.id,
+      selected_option: Number(selected)
     });
-  </script>
-</body>
-</html>
+  });
+
+  // پاک کردن پاسخ‌های قبلی کاربر برای این آزمون
+  await supabase
+    .from('user_answers')
+    .delete()
+    .eq('user_id', user_id)
+    .eq('exam_id', selectedExamId);
+
+  // ذخیره پاسخ‌های جدید
+  for (const ans of answers) {
+    await supabase.from('user_answers').insert([ans]);
+  }
+
+  // محاسبه و ذخیره نمره از 100 در جدول exam_results
+  const score = Math.round((correct / total) * 100);
+
+  // حذف رکورد قبلی (اگر وجود داشته باشد)
+  await supabase
+    .from('exam_results')
+    .delete()
+    .eq('user_id', user_id)
+    .eq('exam_id', selectedExamId);
+
+  // درج نمره جدید
+  await supabase.from('exam_results').insert([{
+    user_id: user_id,
+    exam_id: Number(selectedExamId),
+    score: score
+  }]);
+
+  loading.style.display = 'none';
+  resultBox.style.display = 'block';
+  resultBox.innerHTML = `تعداد پاسخ صحیح: <b>${correct}</b> از <b>${total}</b> <br> نمره شما: <b>${score}</b> از 100`;
+});
