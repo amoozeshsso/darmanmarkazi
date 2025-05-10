@@ -95,7 +95,7 @@
       const showSuccess = msg => { okEl.textContent = msg; okEl.style.display = 'block'; errEl.style.display = 'none'; };
       const hideMessages = () => { errEl.style.display = okEl.style.display = 'none'; };
 
-      // بارگذاری لیست کاربران
+      // فقط یک بار این تابع را تعریف کن
       const loadUsers = async () => {
         showLoading(true); hideMessages();
         const { data, error } = await supabase.from('users').select('id,username,role').order('id');
