@@ -112,12 +112,18 @@
           return;
         }
 
-        // ذخیره نقش و انتقال به صفحه مناسب
+        // ذخیره اطلاعات ورود در sessionStorage
+        sessionStorage.setItem('userId', data.id);      // 👈 این خط مهم است!
         sessionStorage.setItem('userRole', data.role);
         sessionStorage.setItem('username', data.username);
         sessionStorage.setItem('loginTime', new Date().toISOString());
 
-        window.location.href = data.role === 'admin' ? 'admin-dashboard.html' : 'quiz.html';
+        // انتقال به پنل ادمین یا کاربر
+        if (data.role === 'admin') {
+          window.location.href = 'admin-dashboard.html';
+        } else {
+          window.location.href = 'quiz.html';
+        }
       });
     });
   </script>
