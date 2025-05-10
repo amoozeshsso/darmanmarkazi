@@ -57,7 +57,7 @@
   <div class="box">
     <h2>ورود به سامانه</h2>
     <form id="loginForm" autocomplete="off">
-      <input type="text" id="username" name="username" placeholder="نام کاربری" required minlength="3" />
+      <input type="email" id="email" name="email" placeholder="ایمیل" required />
       <input type="password" id="password" name="password" placeholder="رمز عبور" required minlength="6" />
       <button type="submit" id="loginBtn">ورود</button>
       <p id="error"></p>
@@ -66,11 +66,10 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // مقادیر زیر را دقیقاً از داشبورد Supabase پروژه خود بردارید
+      // مقادیر زیر را از داشبورد Supabase پروژه خود بردارید
       const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-      const SUPABASE_KEY = 'کلید_anon_واقعی_شما'; // اینجا کلید واقعی anon را قرار دهید
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
 
-      // ایجاد کلاینت Supabase
       const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const form = document.getElementById('loginForm');
@@ -87,41 +86,31 @@
         err.textContent = '';
         btn.disabled = true;
 
-        const username = form.username.value.trim();
+        const email = form.email.value.trim();
         const password = form.password.value.trim();
 
-        if (!username || !password) {
+        if (!email || !password) {
           return showError('لطفاً همهٔ فیلدها را پر کنید.');
         }
 
-        // فراخوانی RPC login_user برای دریافت JWT
-        const { data: token, error: rpcError } = await sbClient
-          .rpc('login_user', { p_username: username, p_password: password });
+        // ورود کاربر با ایمیل و پسورد
+        const { data, error } = await sbClient.auth.signInWithPassword({
+          email,
+          password
+        });
 
-        if (rpcError) {
-          console.error('RPC Error:', rpcError);
-          return showError(rpcError.message || 'خطا در ورود به سیستم.');
+        if (error) {
+          console.error('Login Error:', error);
+          return showError(error.message || 'خطا در ورود به سیستم.');
         }
 
-        // ست کردن JWT در کلاینت Supabase
-        await sbClient.auth.setAuth(token);
+        // اطلاعات کاربر و نقش را دریافت کن (در صورت نیاز)
+        // برای مثال: اگر نقش در متادیتا ذخیره شده باشد
+        // const userRole = data.user.user_metadata?.role || 'user';
+        // sessionStorage.setItem('userRole', userRole);
 
-        // گرفتن لیست کاربران (یا کاربر جاری) بر اساس RLS
-        const { data: users, error: selError } = await sbClient
-          .from('users')
-          .select('id, username, role, created_at');
-
-        if (selError) {
-          console.error('Select Error:', selError);
-          return showError('خطا در واکشی لیست کاربران.');
-        }
-
-        // ذخیره نقش و هدایت مطابق نقش
-        const userRole = users.find(u => u.username === username)?.role;
-        sessionStorage.setItem('userRole', userRole);
-        sessionStorage.setItem('loginTime', new Date().toISOString());
-
-        window.location.href = userRole === 'admin' ? 'admin.html' : 'quiz.html';
+        // ریدایرکت بر اساس نقش یا به صفحه اصلی آزمون
+        window.location.href = 'quiz.html';
       });
     });
   </script>
