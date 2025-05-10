@@ -95,11 +95,12 @@
       const showSuccess = msg => { okEl.textContent = msg; okEl.style.display = 'block'; errEl.style.display = 'none'; };
       const hideMessages = () => { errEl.style.display = okEl.style.display = 'none'; };
 
+      // بارگذاری لیست کاربران
       const loadUsers = async () => {
         showLoading(true); hideMessages();
         const { data, error } = await supabase.from('users').select('id,username,role').order('id');
         if (error) {
-          showError(error.message);
+          showError(error.message || 'خطا در دریافت داده‌ها');
           list.innerHTML = '<tr><td colspan="4">خطا در دریافت داده‌ها</td></tr>';
         } else {
           list.innerHTML = data.length ? data.map(u => `
@@ -115,27 +116,6 @@
         }
         showLoading(false);
       };
-      const loadUsers = async () => {
-  showLoading(true);
-  hideMessages();
-  // ← اینجا می‌خواهیم لاگ را اضافه کنیم
-  const { data, error } = await supabase
-    .from('users')
-    .select('id,username,role')
-    .order('id');
-  // ← دقیقا بعد از این خط لاگ را اضافه کنید:
-  console.log('SUPABASE:', { data, error });
-  
-  if (error) {
-    showError(error.message);
-    list.innerHTML = '<tr><td colspan="4">خطا در دریافت داده‌ها</td></tr>';
-  } else {
-    // باقی پردازش داده‌ها...
-  }
-  
-  showLoading(false);
-};
-
 
       form.addEventListener('submit', async e => {
         e.preventDefault();
