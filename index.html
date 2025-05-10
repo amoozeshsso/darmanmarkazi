@@ -92,10 +92,10 @@
           return showError('لطفاً همهٔ فیلدها را پر کنید.');
         }
 
-        // جستجو در جدول users
+        // جستجو در جدول users برای username واردشده
         const { data, error } = await sbClient
           .from('users')
-          .select('id, username, role, password')
+          .select('id, username, password, role')
           .eq('username', username)
           .single();
 
