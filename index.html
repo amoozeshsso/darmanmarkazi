@@ -4,25 +4,8 @@
   <meta charset="UTF-8" />
   <title>ورود به سامانه آزمون</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <link rel="icon" href="data:," />
-
-  <!-- Supabase JS UMD -->
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
-
   <style>
-    body { font-family: Tahoma, sans-serif; background: #f3f3f3; display: flex;
-           justify-content: center; align-items: center; height: 100vh; margin: 0; }
-    .box { background: #fff; padding: 30px; border-radius: 10px;
-           box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 90%; max-width: 360px; text-align: center; }
-    h2 { margin-bottom: 20px; color: #333; }
-    input, button { width: 100%; padding: 12px; margin: 10px 0;
-                    border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
-    button { background: #4e54c8; color: white; border: none; cursor: pointer; }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    #error { color: #e74c3c; min-height: 1.2em; margin-top: 10px; }
+    /* استایل قبلی شما */
   </style>
 </head>
 <body>
@@ -36,23 +19,21 @@
     </form>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      if (!window.supabase) {
-        console.error('Supabase library is not loaded');
-        document.getElementById('error').textContent = 'خطایی در بارگذاری سیستم رخ داده است.';
-        return;
-      }
-
       const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…k2XZl5ZU';
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const SUPABASE_KEY = 'YOUR_ANON_KEY';
+      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const form = document.getElementById('loginForm');
       const btn = document.getElementById('loginBtn');
       const err = document.getElementById('error');
 
-      const showError = msg => { err.textContent = msg; btn.disabled = false; };
+      const showError = msg => {
+        err.textContent = msg;
+        btn.disabled = false;
+      };
 
       form.addEventListener('submit', async e => {
         e.preventDefault();
@@ -66,31 +47,33 @@
           return showError('لطفاً همهٔ فیلدها را پر کنید.');
         }
 
-        // ——— درخواست لاگین با .match() ———
-        const { data, error, status, statusText } = await supabase
+        // فراخوانی RPC login_user که JWT با claim role برمی‌گرداند
+        const { data: token, error: rpcError } = await supabase
+          .rpc('login_user', { p_username: username, p_password: password });
+
+        if (rpcError) {
+          return showError(rpcError.message || 'خطا در ورود به سیستم.');
+        }
+
+        // ست کردن JWT
+        supabase.auth.setAuth(token);
+
+        // حالا کوئری SELECT روی public.users با RLS شما درست کار می‌کند
+        const { data: userList, error: selError } = await supabase
           .from('users')
-          .select('role')
-          .match({ username, password })
-          .single();
+          .select('id, username, role, created_at');
 
-        console.log('Login response:', { data, error, status, statusText });
-
-        if (error) {
-          // اگر خطا 406 است احتمالاً مشکل RLS یا هدرهاست
-          if (status === 406) {
-            return showError('سرویس پاسخِ قابل قبولی ارائه نکرد. لطفاً Policyهای RLS را چک کنید.');
-          }
-          return showError('خطا در ارتباط با پایگاه داده.');
+        if (selError) {
+          return showError('خطا در واکشی لیست کاربران.');
         }
 
-        if (!data) {
-          return showError('نام کاربری یا رمز عبور اشتباه است.');
-        }
+        // مثال: نگهداری role و لیست کاربرها
+        sessionStorage.setItem('userRole', userList.find(u => u.username === username)?.role);
+        sessionStorage.setItem('userList', JSON.stringify(userList));
 
-        // ذخیره نشست و هدایت
-        sessionStorage.setItem('userRole', data.role);
-        sessionStorage.setItem('loginTime', new Date().toISOString());
-        window.location.href = data.role === 'admin' ? 'admin.html' : 'quiz.html';
+        // هدایت به صفحه مناسب
+        const role = sessionStorage.getItem('userRole');
+        window.location.href = role === 'admin' ? 'admin.html' : 'quiz.html';
       });
     });
   </script>
