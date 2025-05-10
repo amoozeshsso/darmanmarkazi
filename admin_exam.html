@@ -174,20 +174,7 @@
         }
       });
 
-      // نمایش نتایج کاربران شرکت‌کننده در آزمون
-      async function showExamResults(examId, examTitle) {
-        resultsBox.style.display = 'block';
-        resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
-
-        // گرفتن سوالات آزمون
-        const { data: questions, error: qErr } = await supabase
-          .from('questions')
-          .select('id, correct_option')
-          .eq('exam_id', examId);
-        if (qErr || !questions.length) {
-          resultsBox.innerHTML = 'سوالی برای این آزمون ثبت نشده است!';
-          return;
-        }
+      showExamResults
         const questionsCount = questions.length;
 
         // گرفتن همه پاسخ‌های کاربران برای این آزمون
