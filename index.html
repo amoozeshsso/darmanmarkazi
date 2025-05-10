@@ -101,11 +101,15 @@
 
         if (error) {
           console.error('DB Error:', error);
-          return showError('خطا در ارتباط با پایگاه داده.');
+          showError('خطا در ارتباط با پایگاه داده یا نام کاربری وجود ندارد.');
+          btn.disabled = false;
+          return;
         }
 
         if (!data || data.password !== password) {
-          return showError('نام کاربری یا رمز عبور اشتباه است.');
+          showError('نام کاربری یا رمز عبور اشتباه است.');
+          btn.disabled = false;
+          return;
         }
 
         // ذخیره نقش و انتقال به صفحه مناسب
