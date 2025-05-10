@@ -5,7 +5,7 @@
   <title>ورود به سامانه آزمون</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    /* استایل قبلی شما */
+    /* … استایل شما … */
   </style>
 </head>
 <body>
@@ -19,21 +19,21 @@
     </form>
   </div>
 
+  <!-- Supabase JS UMD -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
       const SUPABASE_KEY = 'YOUR_ANON_KEY';
-      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      // به window.supabase ارجاع می‌دهیم تا Shadowing نداشته باشیم
+      const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const form = document.getElementById('loginForm');
       const btn = document.getElementById('loginBtn');
       const err = document.getElementById('error');
 
-      const showError = msg => {
-        err.textContent = msg;
-        btn.disabled = false;
-      };
+      const showError = msg => { err.textContent = msg; btn.disabled = false; };
 
       form.addEventListener('submit', async e => {
         e.preventDefault();
@@ -47,33 +47,19 @@
           return showError('لطفاً همهٔ فیلدها را پر کنید.');
         }
 
-        // فراخوانی RPC login_user که JWT با claim role برمی‌گرداند
-        const { data: token, error: rpcError } = await supabase
+        // فراخوانی RPC login_user
+        const { data: token, error: rpcError } = await sbClient
           .rpc('login_user', { p_username: username, p_password: password });
 
         if (rpcError) {
+          console.error('RPC Error:', rpcError);
           return showError(rpcError.message || 'خطا در ورود به سیستم.');
         }
 
         // ست کردن JWT
-        supabase.auth.setAuth(token);
+        sbClient.auth.setAuth(token);
 
-        // حالا کوئری SELECT روی public.users با RLS شما درست کار می‌کند
-        const { data: userList, error: selError } = await supabase
-          .from('users')
-          .select('id, username, role, created_at');
-
-        if (selError) {
-          return showError('خطا در واکشی لیست کاربران.');
-        }
-
-        // مثال: نگهداری role و لیست کاربرها
-        sessionStorage.setItem('userRole', userList.find(u => u.username === username)?.role);
-        sessionStorage.setItem('userList', JSON.stringify(userList));
-
-        // هدایت به صفحه مناسب
-        const role = sessionStorage.getItem('userRole');
-        window.location.href = role === 'admin' ? 'admin.html' : 'quiz.html';
+        // ادامه‌ی عملیات لاگین…
       });
     });
   </script>
