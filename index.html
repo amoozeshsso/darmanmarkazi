@@ -117,7 +117,7 @@
         sessionStorage.setItem('username', data.username);
         sessionStorage.setItem('loginTime', new Date().toISOString());
 
-        window.location.href = data.role === 'admin' ? 'admin-dashboard.' : 'quiz.html';
+        window.location.href = data.role === 'admin' ? 'admin-dashboard.html' : 'quiz.html';
       });
     });
   </script>
