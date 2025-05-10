@@ -1,131 +1,58 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <title>ورود به سامانه آزمون</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <link rel="icon" href="data:," />
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
 
-  <!-- Supabase JS UMD -->
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
+    const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  <style>
-    body {
-      font-family: Tahoma, sans-serif;
-      background: #f3f3f3;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .box {
-      background: #fff;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      width: 90%;
-      max-width: 360px;
-      text-align: center;
-    }
-    h2 { margin-bottom: 20px; color: #333; }
-    input, button {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 16px;
-    }
-    button {
-      background: #4e54c8;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    #error { color: #e74c3c; min-height: 1.2em; margin-top: 10px; }
-  </style>
-</head>
-<body>
-  <div class="box">
-    <h2>ورود به سامانه</h2>
-    <form id="loginForm" autocomplete="off">
-      <input type="text" id="username" name="username" placeholder="نام کاربری" required minlength="3" />
-      <input type="password" id="password" name="password" placeholder="رمز عبور" required minlength="3" />
-      <button type="submit" id="loginBtn">ورود</button>
-      <p id="error"></p>
-    </form>
-  </div>
+    const form = document.getElementById('loginForm');
+    const btn = document.getElementById('loginBtn');
+    const err = document.getElementById('error');
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+    const showError = msg => {
+      err.textContent = msg;
+      btn.disabled = false;
+    };
 
-      const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      err.textContent = '';
+      btn.disabled = true;
 
-      const form = document.getElementById('loginForm');
-      const btn = document.getElementById('loginBtn');
-      const err = document.getElementById('error');
+      const username = form.username.value.trim();
+      const password = form.password.value.trim();
 
-      const showError = msg => {
-        err.textContent = msg;
+      if (!username || !password) {
+        return showError('لطفاً همهٔ فیلدها را پر کنید.');
+      }
+
+      // جستجو در جدول users برای username واردشده
+      const { data, error } = await sbClient
+        .from('users')
+        .select('id, username, password, role')
+        .eq('username', username)
+        .single();
+
+      if (error) {
+        console.error('DB Error:', error);
+        showError('خطا در ارتباط با پایگاه داده یا نام کاربری وجود ندارد.');
         btn.disabled = false;
-      };
+        return;
+      }
 
-      form.addEventListener('submit', async e => {
-        e.preventDefault();
-        err.textContent = '';
-        btn.disabled = true;
+      if (!data || data.password !== password) {
+        showError('نام کاربری یا رمز عبور اشتباه است.');
+        btn.disabled = false;
+        return;
+      }
 
-        const username = form.username.value.trim();
-        const password = form.password.value.trim();
+      // ذخیره اطلاعات ورود در sessionStorage
+      sessionStorage.setItem('userId', data.id);      // 👈 این خط باید اینجا باشد!
+      sessionStorage.setItem('userRole', data.role);
+      sessionStorage.setItem('username', data.username);
+      sessionStorage.setItem('loginTime', new Date().toISOString());
 
-        if (!username || !password) {
-          return showError('لطفاً همهٔ فیلدها را پر کنید.');
-        }
-
-        // جستجو در جدول users برای username واردشده
-        const { data, error } = await sbClient
-          .from('users')
-          .select('id, username, password, role')
-          .eq('username', username)
-          .single();
-
-        if (error) {
-          console.error('DB Error:', error);
-          showError('خطا در ارتباط با پایگاه داده یا نام کاربری وجود ندارد.');
-          btn.disabled = false;
-          return;
-        }
-
-        if (!data || data.password !== password) {
-          showError('نام کاربری یا رمز عبور اشتباه است.');
-          btn.disabled = false;
-          return;
-        }
-
-        // ذخیره اطلاعات ورود در sessionStorage
-        sessionStorage.setItem('userId', data.id);      // 👈 این خط مهم است!
-        sessionStorage.setItem('userRole', data.role);
-        sessionStorage.setItem('username', data.username);
-        sessionStorage.setItem('loginTime', new Date().toISOString());
-
-        // انتقال به پنل ادمین یا کاربر
-        if (data.role === 'admin') {
-          window.location.href = 'admin-dashboard.html';
-        } else {
-          window.location.href = 'quiz.html';
-        }
-      });
+      window.location.href = data.role === 'admin' ? 'admin-dashboard.html' : 'quiz.html';
     });
-  </script>
-</body>
-</html>
+  });
+</script>
