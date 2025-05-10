@@ -174,15 +174,22 @@
         }
       });
 
-      showExamResults
-        const questionsCount = questions.length;
+      // نمایش نتایج کاربران شرکت‌کننده در آزمون (جدید: فقط از exam_results)
+      async function showExamResults(examId, examTitle) {
+        resultsBox.style.display = 'block';
+        resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
 
-        // گرفتن همه پاسخ‌های کاربران برای این آزمون
-        const { data: answers, error: aErr } = await supabase
-          .from('user_answers')
-          .select('user_id, question_id, selected_option')
+        // گرفتن نمرات کاربران از جدول exam_results
+        const { data: results, error: resErr } = await supabase
+          .from('exam_results')
+          .select('user_id, score')
           .eq('exam_id', examId);
-        if (aErr || !answers.length) {
+
+        if (resErr) {
+          resultsBox.innerHTML = 'خطا در دریافت نتایج!';
+          return;
+        }
+        if (!results || !results.length) {
           resultsBox.innerHTML = 'هنوز هیچ کاربری در این آزمون شرکت نکرده است!';
           return;
         }
@@ -196,25 +203,12 @@
           return;
         }
 
-        // گروه‌بندی پاسخ‌ها بر اساس کاربر
-        const userScores = {};
-        answers.forEach(a => {
-          if (!userScores[a.user_id]) userScores[a.user_id] = { correct: 0, total: 0 };
-          const q = questions.find(q => q.id === a.question_id);
-          if (q && a.selected_option === q.correct_option) userScores[a.user_id].correct++;
-          userScores[a.user_id].total++;
-        });
-
-        // ساخت جدول نمایش
-        let html = `<table><tr><th>نام کاربری</th><th>تعداد صحیح</th><th>کل سوالات</th><th>نمره</th></tr>`;
-        Object.entries(userScores).forEach(([userId, scoreObj]) => {
-          const user = users.find(u => u.id == userId);
-          const score = Math.round((scoreObj.correct / questionsCount) * 20);
+        let html = `<table><tr><th>نام کاربری</th><th>نمره (از 100)</th></tr>`;
+        results.forEach(res => {
+          const user = users.find(u => u.id == res.user_id);
           html += `<tr>
-            <td>${user ? user.username : userId}</td>
-            <td>${scoreObj.correct}</td>
-            <td>${questionsCount}</td>
-            <td>${score}</td>
+            <td>${user ? user.username : res.user_id}</td>
+            <td>${res.score}</td>
           </tr>`;
         });
         html += `</table>`;
