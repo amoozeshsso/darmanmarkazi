@@ -66,10 +66,11 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // مقادیر زیر را دقیقاً از داشبورد Supabase پروژه خود بردارید
       const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-      const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE';
+      const SUPABASE_KEY = 'کلید_anon_واقعی_شما'; // اینجا کلید واقعی anon را قرار دهید
 
-      // استفاده از window.supabase برای دسترسی به namespace جهانی
+      // ایجاد کلاینت Supabase
       const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const form = document.getElementById('loginForm');
@@ -103,7 +104,7 @@
         }
 
         // ست کردن JWT در کلاینت Supabase
-        sbClient.auth.setAuth(token);
+        await sbClient.auth.setAuth(token);
 
         // گرفتن لیست کاربران (یا کاربر جاری) بر اساس RLS
         const { data: users, error: selError } = await sbClient
