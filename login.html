@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <title>ورود کاربران</title>
@@ -13,34 +13,50 @@
   </form>
   <p id="message"></p>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // اتصال به Supabase
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // ایجاد کلاینت Supabase
+    const supabase = window.supabase.createClient(
+      SUPABASE_URL, 
+      SUPABASE_ANON_KEY
+    );
 
     const form = document.getElementById('login-form');
     const message = document.getElementById('message');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      message.textContent = '';
+      
       const code = document.getElementById('code').value.trim();
       const password = document.getElementById('password').value.trim();
 
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('code', code)
-        .eq('password', password)
-        .single();
+      try {
+        // ورود با استفاده از سیستم احراز هویت Supabase
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: `${code}@example.com`, // استفاده از کد پرسنلی به عنوان شناسه
+          password: password
+        });
 
-      if (error || !data) {
-        message.textContent = 'کد یا رمز اشتباه است.';
-      } else {
-        message.textContent = `خوش آمدید، ${data.name}!`;
-        // مثلا می‌تونی ریدایرکت کنی:
-        // window.location.href = 'start.html';
+        if (error) throw error;
+
+        // اگر ورود موفقیت آمیز بود
+        message.textContent = `خوش آمدید، کاربر ${code}!`;
+        sessionStorage.setItem('userCode', code);
+        sessionStorage.setItem('userRole', 'user');
+        
+        // انتقال به صفحه اصلی بعد از 1 ثانیه
+        setTimeout(() => {
+          window.location.href = 'start.html';
+        }, 1000);
+
+      } catch (error) {
+        message.textContent = 'کد پرسنلی یا رمز عبور نامعتبر است!';
+        console.error('خطا در ورود:', error);
       }
     });
   </script>
