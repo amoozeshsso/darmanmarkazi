@@ -29,10 +29,9 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // فرض: userId و examId را از sessionStorage یا URL می‌گیریم
+    // userId و examId را از sessionStorage یا URL می‌گیریم
     const userId = sessionStorage.getItem('userId');
     const username = sessionStorage.getItem('username');
-    // فرض: examId را از URL یا sessionStorage می‌گیریم (مثلاً ?exam_id=12)
     const urlParams = new URLSearchParams(window.location.search);
     const examId = urlParams.get('exam_id') || sessionStorage.getItem('examId');
 
@@ -41,10 +40,8 @@
     const errorDiv = document.getElementById('error');
     const examTitle = document.getElementById('examTitle');
 
-    // تعداد مجاز شرکت در آزمون
     const MAX_ATTEMPTS = 3;
 
-    // بارگذاری سوالات و کنترل دفعات شرکت
     async function loadQuiz() {
       errorDiv.textContent = '';
       resultDiv.textContent = '';
@@ -109,7 +106,6 @@
       `).join('') + '<button type="submit">ثبت آزمون</button>';
     }
 
-    // ثبت پاسخ آزمون
     quizForm.onsubmit = async function(e) {
       e.preventDefault();
       errorDiv.textContent = '';
@@ -161,7 +157,6 @@
       quizForm.innerHTML = '';
     };
 
-    // بارگذاری اولیه
     loadQuiz();
   </script>
 </body>
