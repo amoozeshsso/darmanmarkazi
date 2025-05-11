@@ -3,18 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <title>ورود کاربران</title>
+  <style>
+    body { font-family: Tahoma; background: #f8f8f8; }
+    form { background: #fff; padding: 24px; border-radius: 8px; max-width: 350px; margin: 60px auto; box-shadow: 0 3px 12px rgba(0,0,0,0.08);}
+    h2 { text-align: center; color: #333; }
+    label { display: block; margin-top: 18px; color: #555; }
+    input { width: 100%; padding: 10px; margin-top: 6px; border: 1px solid #ddd; border-radius: 5px; font-size: 15px; }
+    button { width: 100%; margin-top: 20px; padding: 10px; background: #4e54c8; color: #fff; border: none; border-radius: 5px; font-size: 16px; cursor: pointer;}
+    #message { text-align: center; margin-top: 18px; font-weight: bold; }
+    #message.error { color: #c0392b; }
+    #message.success { color: #27ae60; }
+  </style>
 </head>
 <body>
-  <h2>ورود</h2>
   <form id="login-form">
-    <label>کد پرسنلی: <input type="text" id="code" required></label><br>
-    <label>رمز عبور: <input type="password" id="password" required></label><br>
+    <h2>ورود</h2>
+    <label>کد پرسنلی:
+      <input type="text" id="code" required autocomplete="username">
+    </label>
+    <label>رمز عبور:
+      <input type="password" id="password" required autocomplete="current-password">
+    </label>
     <button type="submit">ورود</button>
+    <div id="message"></div>
   </form>
-  <p id="message"></p>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    // اطلاعات اتصال به Supabase
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -25,9 +41,16 @@
     form.addEventListener('submit', async e => {
       e.preventDefault();
       message.textContent = '';
+      message.className = '';
 
       const code = document.getElementById('code').value.trim();
       const password = document.getElementById('password').value.trim();
+
+      if (!code || !password) {
+        message.textContent = 'لطفاً کد پرسنلی و رمز عبور را وارد کنید.';
+        message.className = 'error';
+        return;
+      }
 
       try {
         // جستجو در جدول users با کد پرسنلی و رمز عبور
@@ -36,27 +59,39 @@
           .select('*')
           .eq('code', code)
           .eq('password', password)
-          .single();
+          .maybeSingle();
 
-        if (error || !data) {
+        if (error) {
+          message.textContent = 'خطا در ارتباط با سرور!';
+          message.className = 'error';
+          return;
+        }
+        if (!data) {
           message.textContent = 'کد پرسنلی یا رمز عبور اشتباه است.';
+          message.className = 'error';
           return;
         }
 
         // ذخیره اطلاعات در sessionStorage
         sessionStorage.setItem('userCode', data.code);
-        sessionStorage.setItem('userRole', data.role); // فرض بر اینکه ستون role داری
+        sessionStorage.setItem('userRole', data.role || 'user');
         sessionStorage.setItem('username', data.username || data.name || data.code);
 
+        message.textContent = `خوش آمدید، ${data.name || data.username || data.code}!`;
+        message.className = 'success';
+
         // انتقال به صفحه مناسب بر اساس نقش
-        if (data.role === 'admin') {
-          window.location.href = 'admin-dashboard.html';
-        } else {
-          window.location.href = 'quiz.html';
-        }
+        setTimeout(() => {
+          if (data.role === 'admin') {
+            window.location.href = 'admin-dashboard.html';
+          } else {
+            window.location.href = 'quiz.html';
+          }
+        }, 800);
 
       } catch (err) {
         message.textContent = 'خطا در ورود به سیستم!';
+        message.className = 'error';
         console.error(err);
       }
     });
