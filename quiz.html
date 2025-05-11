@@ -24,14 +24,13 @@
     <div id="error"></div>
   </div>
   <script>
-    // مقادیر ثابت (در پروژه واقعی اینها را داینامیک بگذارید)
+    // اطلاعات اتصال به Supabase
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // userId و examId را از sessionStorage یا URL می‌گیریم
+    // دریافت userId و examId
     const userId = sessionStorage.getItem('userId');
-    const username = sessionStorage.getItem('username');
     const urlParams = new URLSearchParams(window.location.search);
     const examId = urlParams.get('exam_id') || sessionStorage.getItem('examId');
 
@@ -42,18 +41,22 @@
 
     const MAX_ATTEMPTS = 3;
 
+    // هدایت کاربر اگر userId یا examId موجود نباشد
+    if (!userId) {
+      alert('لطفاً ابتدا وارد شوید.');
+      window.location.href = 'login.html';
+    }
+    if (!examId) {
+      alert('آزمون مشخص نیست! لطفاً از صفحه لیست آزمون‌ها وارد شوید.');
+      window.location.href = 'exams-list.html'; // یا صفحه مناسب
+    }
+
     async function loadQuiz() {
       errorDiv.textContent = '';
       resultDiv.textContent = '';
       quizForm.innerHTML = 'در حال بارگذاری سوالات...';
 
-      if (!userId || !examId) {
-        errorDiv.textContent = 'خطا: کاربر یا آزمون مشخص نیست!';
-        quizForm.innerHTML = '';
-        return;
-      }
-
-      // کنترل تعداد دفعات شرکت کاربر
+      // بررسی تعداد دفعات شرکت کاربر در این آزمون
       const { data: attempts, error: attErr } = await supabase
         .from('exam_results')
         .select('id')
@@ -72,7 +75,7 @@
         return;
       }
 
-      // گرفتن عنوان آزمون
+      // دریافت عنوان آزمون
       const { data: examData } = await supabase
         .from('exams')
         .select('title')
@@ -80,7 +83,7 @@
         .single();
       if (examData) examTitle.textContent = examData.title;
 
-      // گرفتن سوالات آزمون
+      // دریافت سوالات آزمون
       const { data: questions, error: qErr } = await supabase
         .from('questions')
         .select('*')
@@ -128,7 +131,7 @@
         return;
       }
 
-      // گرفتن سوالات مجدد برای تصحیح
+      // دریافت سوالات برای تصحیح
       const { data: questions } = await supabase
         .from('questions')
         .select('*')
@@ -140,7 +143,7 @@
         if (parseInt(ans) === q.correct_option) correct++;
       });
 
-      // نمره نهایی (مثلاً از 100)
+      // محاسبه نمره نهایی (مثلاً از 100)
       const finalScore = Math.round((correct / questions.length) * 100);
 
       // ثبت نتیجه در exam_results
