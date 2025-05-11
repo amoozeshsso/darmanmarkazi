@@ -264,65 +264,65 @@
 
       // نمایش نتایج کاربران شرکت‌کننده در آزمون (تابع اصلاح شده)
       async function showExamResults(examId, examTitle) {
-        resultsBox.style.display = 'block';
-        resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
+  resultsBox.style.display = 'block';
+  resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
 
-        const numericExamId = Number(examId);
+  const numericExamId = Number(examId);
 
-        // گرفتن همه نتایج این آزمون
-        const { data: results, error: resErr } = await supabase
-          .from('exam_results')
-          .select('user_id, score')
-          .eq('exam_id', numericExamId);
+  // گرفتن همه نتایج این آزمون
+  const { data: results, error: resErr } = await supabase
+    .from('exam_results')
+    .select('user_id, score')
+    .eq('exam_id', numericExamId);
 
-        if (resErr) {
-          resultsBox.innerHTML = 'خطا در دریافت نتایج!';
-          return;
-        }
-        if (!results || !results.length) {
-          resultsBox.innerHTML = 'هنوز هیچ کاربری در این آزمون شرکت نکرده است!';
-          return;
-        }
+  if (resErr) {
+    resultsBox.innerHTML = 'خطا در دریافت نتایج!';
+    return;
+  }
+  if (!results || !results.length) {
+    resultsBox.innerHTML = 'هنوز هیچ کاربری در این آزمون شرکت نکرده است!';
+    return;
+  }
 
-        // گرفتن نام کاربری‌ها
-        const { data: users, error: uErr } = await supabase
-          .from('users')
-          .select('id, username');
-        if (uErr) {
-          resultsBox.innerHTML = 'خطا در دریافت کاربران!';
-          return;
-        }
+  // گرفتن نام کاربری‌ها
+  const { data: users, error: uErr } = await supabase
+    .from('users')
+    .select('id, username');
+  if (uErr) {
+    resultsBox.innerHTML = 'خطا در دریافت کاربران!';
+    return;
+  }
 
-        // محاسبه تعداد دفعات شرکت و بالاترین نمره
-        const userStats = {};
-        results.forEach(res => {
-          if (!userStats[res.user_id]) {
-            userStats[res.user_id] = { count: 0, max: 0 };
-          }
-          userStats[res.user_id].count++;
-          userStats[res.user_id].max = Math.max(userStats[res.user_id].max, res.score);
-        });
+  // محاسبه تعداد دفعات شرکت و بالاترین نمره
+  const userStats = {};
+  results.forEach(res => {
+    if (!userStats[res.user_id]) {
+      userStats[res.user_id] = { count: 0, max: 0 };
+    }
+    userStats[res.user_id].count++;
+    userStats[res.user_id].max = Math.max(userStats[res.user_id].max, res.score);
+  });
 
-        // ساخت جدول خروجی
-        let html = `<table>
-          <tr>
-            <th>نام کاربری</th>
-            <th>تعداد دفعات شرکت</th>
-            <th>بالاترین نمره</th>
-          </tr>`;
-        Object.entries(userStats).forEach(([userId, stats]) => {
-          const user = users.find(u => u.id == userId);
-          html += `<tr>
-            <td>${user ? user.username : userId}</td>
-            <td>${stats.count}</td>
-            <td>${stats.max}</td>
-          </tr>`;
-        });
-        html += `</table>`;
+  // ساخت جدول خروجی
+  let html = `<table>
+    <tr>
+      <th>نام کاربری</th>
+      <th>تعداد دفعات شرکت</th>
+      <th>بالاترین نمره</th>
+    </tr>`;
+  Object.entries(userStats).forEach(([userId, stats]) => {
+    const user = users.find(u => u.id == userId);
+    html += `<tr>
+      <td>${user ? user.username : userId}</td>
+      <td>${stats.count}</td>
+      <td>${stats.max}</td>
+    </tr>`;
+  });
+  html += `</table>`;
 
-        resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3>${html}`;
-        resultsBox.scrollIntoView({ behavior: 'smooth' });
-      }
+  resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3>${html}`;
+  resultsBox.scrollIntoView({ behavior: 'smooth' });
+}
 
       // ... (بقیه کد مدیریت سوالات و سایر بخش‌ها بدون تغییر)
       // این بخش‌ها را از فایل اصلی‌ات حذف یا اضافه نکن، فقط تابع showExamResults را جایگزین کن.
