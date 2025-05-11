@@ -270,7 +270,7 @@
 
   const numericExamId = Number(examId);
 
-  // گرفتن همه نتایج این آزمون
+  // دریافت همه نتایج این آزمون
   const { data: results, error: resErr } = await supabase
     .from('exam_results')
     .select('user_id, score')
@@ -285,7 +285,7 @@
     return;
   }
 
-  // گرفتن نام کاربری‌ها
+  // دریافت نام کاربران
   const { data: users, error: uErr } = await supabase
     .from('users')
     .select('id, username');
@@ -324,7 +324,6 @@
   resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3>${html}`;
   resultsBox.scrollIntoView({ behavior: 'smooth' });
 }
-
       // مدیریت سوالات هر آزمون
       let currentExamId = null;
       async function openQuestionsSection(examId, examTitle) {
