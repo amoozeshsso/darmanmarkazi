@@ -66,12 +66,16 @@
       let selectedExamId = null;
       const username = sessionStorage.getItem('username');
 
-      // بارگذاری لیست آزمون‌ها
+      // بارگذاری لیست آزمون‌های فعال
       async function loadExams() {
         loading.style.display = 'block';
         errorBox.textContent = '';
         try {
-          const { data, error } = await supabase.from('exams').select('*').order('id');
+          const { data, error } = await supabase
+            .from('exams')
+            .select('*')
+            .eq('active', true)
+            .order('id');
           if (error) throw error;
           if (!data.length) {
             examSelect.innerHTML = '<option value="">آزمونی یافت نشد</option>';
@@ -87,7 +91,7 @@
         }
       }
 
-      // بارگذاری سوالات آزمون انتخاب شده
+      // بارگذاری سوالات آزمون انتخاب شده + چک فعال بودن آزمون
       async function loadQuestions(examId) {
         loading.style.display = 'block';
         errorBox.textContent = '';
@@ -96,8 +100,26 @@
         submitBtn.disabled = true;
         resultBox.style.display = 'none';
 
+        // چک فعال بودن آزمون
+        const { data: exam, error: examErr } = await supabase
+          .from('exams')
+          .select('active')
+          .eq('id', examId)
+          .maybeSingle();
+
+        if (examErr || !exam || !exam.active) {
+          errorBox.textContent = 'این آزمون غیرفعال است و امکان شرکت وجود ندارد.';
+          loading.style.display = 'none';
+          quizForm.style.display = 'none';
+          return;
+        }
+
         try {
-          const { data, error } = await supabase.from('questions').select('*').eq('exam_id', examId).order('id');
+          const { data, error } = await supabase
+            .from('questions')
+            .select('*')
+            .eq('exam_id', examId)
+            .order('id');
           if (error) throw error;
           if (!data.length) {
             errorBox.textContent = 'سوالی برای این آزمون ثبت نشده است!';
@@ -138,6 +160,19 @@
         loading.style.display = 'block';
 
         try {
+          // چک مجدد فعال بودن آزمون (امنیت)
+          const { data: exam, error: examErr } = await supabase
+            .from('exams')
+            .select('active')
+            .eq('id', selectedExamId)
+            .maybeSingle();
+
+          if (examErr || !exam || !exam.active) {
+            errorBox.textContent = 'این آزمون غیرفعال است و امکان شرکت وجود ندارد.';
+            loading.style.display = 'none';
+            return;
+          }
+
           // گرفتن user_id از جدول users
           const { data: userData, error: userError } = await supabase
             .from('users')
@@ -219,7 +254,7 @@
         }
       });
 
-      // بارگذاری اولیه لیست آزمون‌ها
+      // بارگذاری اولیه لیست آزمون‌های فعال
       await loadExams();
     });
   </script>
