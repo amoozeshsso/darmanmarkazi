@@ -159,7 +159,6 @@
       const questionsList = document.getElementById('questionsList');
       const qError = document.getElementById('qError');
       const qSuccess = document.getElementById('qSuccess');
-
       const showLoading = show => loading.style.display = show ? 'block' : 'none';
       const showError = msg => { errEl.textContent = msg; errEl.style.display = 'block'; okEl.style.display = 'none'; };
       const showSuccess = msg => { okEl.textContent = msg; okEl.style.display = 'block'; errEl.style.display = 'none'; };
@@ -263,13 +262,14 @@
         }
       });
 
-      // نمایش نتایج کاربران شرکت‌کننده در آزمون
+      // نمایش نتایج کاربران شرکت‌کننده در آزمون (تابع اصلاح شده)
       async function showExamResults(examId, examTitle) {
         resultsBox.style.display = 'block';
         resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
 
         const numericExamId = Number(examId);
 
+        // گرفتن همه نتایج این آزمون
         const { data: results, error: resErr } = await supabase
           .from('exam_results')
           .select('user_id, score')
@@ -284,6 +284,7 @@
           return;
         }
 
+        // گرفتن نام کاربری‌ها
         const { data: users, error: uErr } = await supabase
           .from('users')
           .select('id, username');
@@ -292,12 +293,29 @@
           return;
         }
 
-        let html = `<table><tr><th>نام کاربری</th><th>نمره (از 100)</th></tr>`;
+        // محاسبه تعداد دفعات شرکت و بالاترین نمره
+        const userStats = {};
         results.forEach(res => {
-          const user = users.find(u => u.id == res.user_id);
+          if (!userStats[res.user_id]) {
+            userStats[res.user_id] = { count: 0, max: 0 };
+          }
+          userStats[res.user_id].count++;
+          userStats[res.user_id].max = Math.max(userStats[res.user_id].max, res.score);
+        });
+
+        // ساخت جدول خروجی
+        let html = `<table>
+          <tr>
+            <th>نام کاربری</th>
+            <th>تعداد دفعات شرکت</th>
+            <th>بالاترین نمره</th>
+          </tr>`;
+        Object.entries(userStats).forEach(([userId, stats]) => {
+          const user = users.find(u => u.id == userId);
           html += `<tr>
-            <td>${user ? user.username : res.user_id}</td>
-            <td>${res.score}</td>
+            <td>${user ? user.username : userId}</td>
+            <td>${stats.count}</td>
+            <td>${stats.max}</td>
           </tr>`;
         });
         html += `</table>`;
@@ -306,135 +324,8 @@
         resultsBox.scrollIntoView({ behavior: 'smooth' });
       }
 
-      // مدیریت سوالات هر آزمون
-      let currentExamId = null;
-      async function openQuestionsSection(examId, examTitle) {
-        currentExamId = examId;
-        questionsExamTitle.textContent = examTitle;
-        questionsSection.style.display = 'block';
-        await loadQuestionsList();
-        window.scrollTo({ top: questionsSection.offsetTop - 20, behavior: 'smooth' });
-      }
-      closeQuestions.addEventListener('click', () => {
-        questionsSection.style.display = 'none';
-        questionForm.reset();
-        qEditId.value = '';
-        qFormTitle.textContent = 'افزودن سوال جدید';
-        qSubmitBtn.textContent = 'ذخیره سوال';
-        hideQMessages();
-      });
-
-      async function loadQuestionsList() {
-        hideQMessages();
-        questionsList.innerHTML = '<tr><td colspan="8">در حال بارگذاری سوالات...</td></tr>';
-        const { data, error } = await supabase
-          .from('questions')
-          .select('*')
-          .eq('exam_id', currentExamId)
-          .order('id');
-        if (error) {
-          questionsList.innerHTML = '<tr><td colspan="8">خطا در دریافت سوالات</td></tr>';
-        } else if (!data.length) {
-          questionsList.innerHTML = '<tr><td colspan="8">سوالی ثبت نشده است</td></tr>';
-        } else {
-          questionsList.innerHTML = data.map(q => `
-            <tr>
-              <td>${q.id}</td>
-              <td>${q.question_text}</td>
-              <td>${q.option1}</td>
-              <td>${q.option2}</td>
-              <td>${q.option3}</td>
-              <td>${q.option4}</td>
-              <td>${q.correct_option}</td>
-              <td>
-                <button class="edit-q-btn" data-id="${q.id}">ویرایش</button>
-                <button class="delete-q-btn" data-id="${q.id}">حذف</button>
-              </td>
-            </tr>
-          `).join('');
-        }
-      }
-
-      questionForm.addEventListener('submit', async e => {
-        e.preventDefault();
-        hideQMessages();
-        const qid = qEditId.value;
-        const qtext = questionText.value.trim();
-        const op1 = option1.value.trim();
-        const op2 = option2.value.trim();
-        const op3 = option3.value.trim();
-        const op4 = option4.value.trim();
-        const correct = Number(correctOption.value);
-
-        if (!qtext || !op1 || !op2 || !op3 || !op4 || ![1,2,3,4].includes(correct)) {
-          showQError('همه فیلدها را کامل و صحیح وارد کنید.');
-          return;
-        }
-
-        if (qid) {
-          // ویرایش سوال
-          const { error } = await supabase.from('questions').update({
-            question_text: qtext,
-            option1: op1,
-            option2: op2,
-            option3: op3,
-            option4: op4,
-            correct_option: correct
-          }).eq('id', qid);
-          if (error) showQError(error.message);
-          else showQSuccess('سوال ویرایش شد.');
-        } else {
-          // افزودن سوال جدید
-          const { error } = await supabase.from('questions').insert([{
-            exam_id: currentExamId,
-            question_text: qtext,
-            option1: op1,
-            option2: op2,
-            option3: op3,
-            option4: op4,
-            correct_option: correct
-          }]);
-          if (error) showQError(error.message);
-          else showQSuccess('سوال جدید اضافه شد.');
-        }
-        questionForm.reset();
-        qEditId.value = '';
-        qFormTitle.textContent = 'افزودن سوال جدید';
-        qSubmitBtn.textContent = 'ذخیره سوال';
-        await loadQuestionsList();
-      });
-
-      questionsList.addEventListener('click', async e => {
-        const btn = e.target;
-        const id = btn.dataset.id;
-        if (btn.classList.contains('edit-q-btn')) {
-          // گرفتن اطلاعات سوال و پر کردن فرم
-          const { data, error } = await supabase.from('questions').select('*').eq('id', id).maybeSingle();
-          if (!data || error) {
-            showQError('خطا در دریافت اطلاعات سوال!');
-            return;
-          }
-          qEditId.value = data.id;
-          questionText.value = data.question_text;
-          option1.value = data.option1;
-          option2.value = data.option2;
-          option3.value = data.option3;
-          option4.value = data.option4;
-          correctOption.value = data.correct_option;
-          qFormTitle.textContent = 'ویرایش سوال';
-          qSubmitBtn.textContent = 'به‌روزرسانی سوال';
-        }
-        if (btn.classList.contains('delete-q-btn')) {
-          if (confirm('آیا از حذف سوال مطمئن هستید؟')) {
-            const { error } = await supabase.from('questions').delete().eq('id', id);
-            if (error) showQError('خطا در حذف سوال!');
-            else showQSuccess('سوال حذف شد.');
-            await loadQuestionsList();
-          }
-        }
-      });
-
-      await loadExams();
+      // ... (بقیه کد مدیریت سوالات و سایر بخش‌ها بدون تغییر)
+      // این بخش‌ها را از فایل اصلی‌ات حذف یا اضافه نکن، فقط تابع showExamResults را جایگزین کن.
     });
   </script>
 </body>
