@@ -273,7 +273,7 @@
         }
       });
 
-      // نمایش نتایج کاربران شرکت‌کننده در آزمون (فقط بالاترین نمره و تعداد دفعات شرکت)
+      // نمایش نتایج کاربران شرکت‌کننده در آزمون (با امکان حذف کاربر یا حذف همه)
       async function showExamResults(examId, examTitle) {
         resultsBox.style.display = 'block';
         resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
@@ -283,7 +283,7 @@
         // گرفتن همه نتایج این آزمون
         const { data: results, error: resErr } = await supabase
           .from('exam_results')
-          .select('user_id, score')
+          .select('user_id, score, id')
           .eq('exam_id', numericExamId);
 
         if (resErr) {
@@ -304,34 +304,77 @@
           return;
         }
 
-        // محاسبه تعداد دفعات شرکت و بالاترین نمره
+        // محاسبه تعداد دفعات شرکت و بالاترین نمره و لیست رکوردها
         const userStats = {};
         results.forEach(res => {
           if (!userStats[res.user_id]) {
-            userStats[res.user_id] = { count: 0, max: 0 };
+            userStats[res.user_id] = { count: 0, max: 0, ids: [] };
           }
           userStats[res.user_id].count++;
           userStats[res.user_id].max = Math.max(userStats[res.user_id].max, res.score);
+          userStats[res.user_id].ids.push(res.id);
         });
 
-        // ساخت جدول خروجی
-        let html = `<table>
-          <tr>
-            <th>نام کاربری</th>
-            <th>تعداد دفعات شرکت</th>
-            <th>بالاترین نمره</th>
-          </tr>`;
+        // ساخت جدول خروجی با دکمه حذف
+        let html = `
+          <button id="deleteAllUsers" style="background:#c0392b;color:#fff;margin-bottom:18px;padding:8px 22px;border-radius:6px;cursor:pointer;">حذف همه کاربران این آزمون</button>
+          <table>
+            <tr>
+              <th>نام کاربری</th>
+              <th>تعداد دفعات شرکت</th>
+              <th>بالاترین نمره</th>
+              <th>عملیات</th>
+            </tr>`;
         Object.entries(userStats).forEach(([userId, stats]) => {
           const user = users.find(u => u.id == userId);
           html += `<tr>
             <td>${user ? user.username : userId}</td>
             <td>${stats.count}</td>
             <td>${stats.max}</td>
+            <td>
+              <button class="delete-user-exam" data-userid="${userId}" data-examid="${numericExamId}">حذف کاربر</button>
+            </td>
           </tr>`;
         });
         html += `</table>`;
         resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3>${html}`;
         resultsBox.scrollIntoView({ behavior: 'smooth' });
+
+        // رویداد حذف یک کاربر از آزمون
+        document.querySelectorAll('.delete-user-exam').forEach(btn => {
+          btn.onclick = async function() {
+            if (!confirm('آیا از حذف این کاربر از لیست آزمون مطمئن هستید؟')) return;
+            const userId = btn.dataset.userid;
+            const examId = btn.dataset.examid;
+            // حذف همه رکوردهای این کاربر برای این آزمون
+            const { error } = await supabase
+              .from('exam_results')
+              .delete()
+              .eq('exam_id', examId)
+              .eq('user_id', userId);
+            if (error) {
+              alert('خطا در حذف!');
+            } else {
+              alert('کاربر از لیست آزمون حذف شد.');
+              await showExamResults(examId, examTitle);
+            }
+          };
+        });
+
+        // رویداد حذف همه کاربران آزمون
+        document.getElementById('deleteAllUsers').onclick = async function() {
+          if (!confirm('آیا از حذف همه کاربران این آزمون مطمئن هستید؟')) return;
+          const { error } = await supabase
+            .from('exam_results')
+            .delete()
+            .eq('exam_id', numericExamId);
+          if (error) {
+            alert('خطا در حذف همه!');
+          } else {
+            alert('همه کاربران این آزمون حذف شدند.');
+            await showExamResults(numericExamId, examTitle);
+          }
+        };
       }
 
       // مدیریت سوالات هر آزمون
