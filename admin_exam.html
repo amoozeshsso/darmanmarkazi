@@ -196,6 +196,7 @@
         showLoading(false);
       }
 
+      // جلوگیری از ثبت آزمون تکراری (در افزودن و ویرایش)
       form.addEventListener('submit', async e => {
         e.preventDefault();
         hideMessages();
@@ -204,6 +205,15 @@
         if (!title) return showError('عنوان آزمون را وارد کنید.');
 
         showLoading(true);
+
+        // چک تکراری نبودن عنوان آزمون
+        const { data: exists } = await supabase.from('exams').select('id').eq('title', title);
+        if (exists && exists.length && (!id || exists[0].id != id)) {
+          showError('آزمونی با این عنوان قبلاً ثبت شده است!');
+          showLoading(false);
+          return;
+        }
+
         if (id) {
           const { error } = await supabase.from('exams').update({ title }).eq('id', id);
           if (error) showError(error.message);
@@ -263,13 +273,14 @@
         }
       });
 
-      // نمایش نتایج کاربران شرکت‌کننده در آزمون
+      // نمایش نتایج کاربران شرکت‌کننده در آزمون (فقط بالاترین نمره و تعداد دفعات شرکت)
       async function showExamResults(examId, examTitle) {
         resultsBox.style.display = 'block';
         resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
 
         const numericExamId = Number(examId);
 
+        // گرفتن همه نتایج این آزمون
         const { data: results, error: resErr } = await supabase
           .from('exam_results')
           .select('user_id, score')
@@ -284,6 +295,7 @@
           return;
         }
 
+        // گرفتن نام کاربری‌ها
         const { data: users, error: uErr } = await supabase
           .from('users')
           .select('id, username');
@@ -292,16 +304,32 @@
           return;
         }
 
-        let html = `<table><tr><th>نام کاربری</th><th>نمره (از 100)</th></tr>`;
+        // محاسبه تعداد دفعات شرکت و بالاترین نمره
+        const userStats = {};
         results.forEach(res => {
-          const user = users.find(u => u.id == res.user_id);
+          if (!userStats[res.user_id]) {
+            userStats[res.user_id] = { count: 0, max: 0 };
+          }
+          userStats[res.user_id].count++;
+          userStats[res.user_id].max = Math.max(userStats[res.user_id].max, res.score);
+        });
+
+        // ساخت جدول خروجی
+        let html = `<table>
+          <tr>
+            <th>نام کاربری</th>
+            <th>تعداد دفعات شرکت</th>
+            <th>بالاترین نمره</th>
+          </tr>`;
+        Object.entries(userStats).forEach(([userId, stats]) => {
+          const user = users.find(u => u.id == userId);
           html += `<tr>
-            <td>${user ? user.username : res.user_id}</td>
-            <td>${res.score}</td>
+            <td>${user ? user.username : userId}</td>
+            <td>${stats.count}</td>
+            <td>${stats.max}</td>
           </tr>`;
         });
         html += `</table>`;
-
         resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3>${html}`;
         resultsBox.scrollIntoView({ behavior: 'smooth' });
       }
