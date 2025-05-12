@@ -29,25 +29,58 @@
     const examsList = document.getElementById('examsList');
     const errorDiv = document.getElementById('error');
 
+    // گرفتن userId کاربر لاگین‌شده
+    const userId = sessionStorage.getItem('userId');
+    if (!userId) {
+      alert('لطفاً ابتدا وارد شوید.');
+      window.location.href = 'login.html';
+    }
+
     async function loadExams() {
       examsList.innerHTML = 'در حال بارگذاری...';
       errorDiv.textContent = '';
-      const { data, error } = await supabase
+
+      // دریافت همه آزمون‌های فعال
+      const { data: exams, error: examsError } = await supabase
         .from('exams')
         .select('*')
         .eq('active', true)
         .order('id', { ascending: false });
 
-      if (error) {
+      if (examsError) {
         errorDiv.textContent = 'خطا در دریافت لیست آزمون‌ها!';
         examsList.innerHTML = '';
         return;
       }
-      if (!data.length) {
+      if (!exams.length) {
         examsList.innerHTML = '<div>آزمونی فعال وجود ندارد.</div>';
         return;
       }
-      examsList.innerHTML = data.map(exam => `
+
+      // دریافت لیست آزمون‌هایی که کاربر قبلاً شرکت کرده است
+      const { data: results, error: resultsError } = await supabase
+        .from('exam_results')
+        .select('exam_id')
+        .eq('user_id', userId);
+
+      if (resultsError) {
+        errorDiv.textContent = 'خطا در دریافت سوابق آزمون!';
+        examsList.innerHTML = '';
+        return;
+      }
+
+      // استخراج شناسه آزمون‌هایی که کاربر قبلاً شرکت کرده
+      const attemptedExamIds = results.map(r => r.exam_id);
+
+      // فیلتر آزمون‌هایی که کاربر هنوز شرکت نکرده
+      const availableExams = exams.filter(exam => !attemptedExamIds.includes(exam.id));
+
+      if (!availableExams.length) {
+        examsList.innerHTML = '<div>شما در همه آزمون‌های فعال شرکت کرده‌اید.</div>';
+        return;
+      }
+
+      examsList.innerHTML = availableExams.map(exam => `
         <div class="exam-item">
           <span class="exam-title">${exam.title}</span>
           <button class="enter-btn" onclick="enterExam(${exam.id})">شروع آزمون</button>
