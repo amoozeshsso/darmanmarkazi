@@ -12,6 +12,7 @@
     .question { margin-bottom: 25px; }
     .options label { display: block; margin-bottom: 8px; }
     button { background: #4e54c8; color: #fff; border: none; padding: 12px 30px; border-radius: 6px; font-size: 16px; cursor: pointer; }
+    #timer { text-align:center; font-size:20px; margin:18px 0; color:#c0392b; }
     #result { margin-top: 30px; padding: 18px; border-radius: 8px; background: #eafaf1; color: #222; text-align: center; font-size: 18px; }
     #error { margin-top: 20px; color: #c0392b; text-align: center; }
   </style>
@@ -19,6 +20,7 @@
 <body>
   <div class="container">
     <h1 id="examTitle">آزمون آنلاین</h1>
+    <div id="timer"></div>
     <form id="quizForm"></form>
     <div id="result"></div>
     <div id="error"></div>
@@ -38,8 +40,8 @@
     const resultDiv = document.getElementById('result');
     const errorDiv = document.getElementById('error');
     const examTitle = document.getElementById('examTitle');
+    const timerDiv = document.getElementById('timer');
 
-    // هدایت کاربر اگر userId یا examId موجود نباشد
     if (!userId) {
       alert('لطفاً ابتدا وارد شوید.');
       window.location.href = 'login.html';
@@ -49,20 +51,27 @@
       window.location.href = 'exams-list.html';
     }
 
-    let MAX_ATTEMPTS = 1; // مقدار پیش‌فرض، بعداً از دیتابیس خوانده می‌شود
+    let MAX_ATTEMPTS = 1;
+    let examDuration = 20; // دقیقه
+    let examStartAt = null;
+    let examEndAt = null;
+    let timerInterval = null;
+    let timerStopped = false;
 
     // بارگذاری آزمون و سوالات
     async function loadQuiz() {
       errorDiv.textContent = '';
       resultDiv.textContent = '';
       quizForm.innerHTML = 'در حال بارگذاری سوالات...';
+      timerDiv.textContent = '';
 
-      // دریافت عنوان آزمون و max_attempts
+      // دریافت اطلاعات آزمون
       const { data: examData, error: examErr } = await supabase
         .from('exams')
-        .select('title, max_attempts')
+        .select('title, max_attempts, duration_minutes, start_at, end_at')
         .eq('id', examId)
         .maybeSingle();
+
       if (examErr || !examData) {
         quizForm.innerHTML = '';
         errorDiv.textContent = 'آزمون یافت نشد!';
@@ -70,8 +79,24 @@
       }
       examTitle.textContent = examData.title;
       MAX_ATTEMPTS = examData.max_attempts || 1;
+      examDuration = examData.duration_minutes || 20;
+      examStartAt = examData.start_at ? new Date(examData.start_at) : null;
+      examEndAt = examData.end_at ? new Date(examData.end_at) : null;
 
-      // بررسی تعداد دفعات شرکت کاربر در این آزمون
+      // بررسی زمان شروع و پایان آزمون
+      const now = new Date();
+      if (examStartAt && now < examStartAt) {
+        quizForm.innerHTML = '';
+        errorDiv.innerHTML = `<b>آزمون هنوز شروع نشده است.<br>زمان شروع: ${examStartAt.toLocaleString('fa-IR')}</b>`;
+        return;
+      }
+      if (examEndAt && now > examEndAt) {
+        quizForm.innerHTML = '';
+        errorDiv.innerHTML = `<b>مهلت شرکت در این آزمون به پایان رسیده است.</b>`;
+        return;
+      }
+
+      // بررسی تعداد دفعات شرکت کاربر
       const { data: attempts, error: attErr } = await supabase
         .from('exam_results')
         .select('id')
@@ -114,6 +139,37 @@
           </div>
         </div>
       `).join('') + '<button type="submit">ثبت آزمون</button>';
+
+      // نمایش تایمر و شروع شمارش معکوس
+      showExamTimer(examDuration);
+    }
+
+    // تایمر معکوس و سابمیت خودکار
+    function showExamTimer(minutes) {
+      let totalSeconds = minutes * 60;
+      timerStopped = false;
+
+      function updateTimer() {
+        if (timerStopped) return;
+        let min = Math.floor(totalSeconds / 60);
+        let sec = totalSeconds % 60;
+        timerDiv.textContent = `زمان باقی‌مانده: ${min}:${sec < 10 ? '0' : ''}${sec}`;
+        if (totalSeconds <= 0) {
+          clearInterval(timerInterval);
+          timerDiv.textContent = 'زمان آزمون به پایان رسید!';
+          // غیرفعال کردن دکمه ثبت
+          let submitBtn = quizForm.querySelector('button[type="submit"]');
+          if (submitBtn) submitBtn.disabled = true;
+          // سابمیت خودکار (فقط یک بار)
+          if (!timerStopped) {
+            timerStopped = true;
+            quizForm.dispatchEvent(new Event('submit'));
+          }
+        }
+        totalSeconds--;
+      }
+      updateTimer();
+      timerInterval = setInterval(updateTimer, 1000);
     }
 
     // ثبت پاسخ‌ها و نمره
@@ -122,24 +178,12 @@
       errorDiv.textContent = '';
       resultDiv.textContent = '';
 
-      // کنترل مجدد دفعات شرکت (برای جلوگیری از تقلب)
-      const { data: attempts, error: attErr } = await supabase
-        .from('exam_results')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('exam_id', examId);
-
-      if (attErr) {
-        errorDiv.textContent = 'خطا در بررسی دفعات شرکت!';
-        return;
-      }
-      if (attempts.length >= MAX_ATTEMPTS) {
-        resultDiv.innerHTML = `<b>شما بیش از ${MAX_ATTEMPTS} بار در این آزمون شرکت کرده‌اید و مجاز به شرکت مجدد نیستید.</b>`;
-        quizForm.innerHTML = '';
-        return;
+      // اگر تایمر تمام شده بود، اجازه ثبت مجدد نده
+      if (timerStopped) {
+        timerDiv.textContent = 'زمان آزمون به پایان رسید!';
       }
 
-      // دریافت سوالات برای تصحیح
+      // دریافت آخرین سوالات برای تصحیح
       const { data: questions, error: qErr } = await supabase
         .from('questions')
         .select('*')
@@ -152,8 +196,9 @@
 
       let correct = 0;
       questions.forEach(q => {
-        const ans = quizForm[`q${q.id}`].value;
-        if (parseInt(ans) === q.correct_option) correct++;
+        // اگر کاربر پاسخی نداده باشد، counted نمی‌شود
+        const ansInput = quizForm[`q${q.id}`];
+        if (ansInput && ansInput.value && parseInt(ansInput.value) === q.correct_option) correct++;
       });
 
       // محاسبه نمره نهایی (مثلاً از 100)
@@ -175,6 +220,9 @@
 
       resultDiv.innerHTML = `<b>آزمون با موفقیت ثبت شد.<br>نمره شما: ${finalScore} از 100</b>`;
       quizForm.innerHTML = '';
+      timerDiv.textContent = '';
+      timerStopped = true;
+      clearInterval(timerInterval);
     };
 
     loadQuiz();
