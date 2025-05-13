@@ -22,7 +22,7 @@
     .questions-btn { background: #16a085; color: #fff; }
     #formBox, #questionFormBox { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
     label { display: block; margin-top: 10px; color: #555; font-weight: bold; }
-    input[type="text"], input[type="number"], textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+    input[type="text"], input[type="number"], input[type="datetime-local"], textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
     input:focus, textarea:focus { outline: none; border-color: #3498db; }
     #loading { display: none; text-align: center; margin: 20px 0; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: auto; }
@@ -52,6 +52,12 @@
         <input type="text" id="title" required />
         <label for="maxAttempts">تعداد دفعات مجاز شرکت در آزمون:</label>
         <input type="number" id="maxAttempts" min="1" max="20" value="1" required />
+        <label for="durationMinutes">مدت زمان آزمون (دقیقه):</label>
+        <input type="number" id="durationMinutes" min="1" max="300" value="20" required />
+        <label for="startAt">تاریخ و ساعت شروع آزمون:</label>
+        <input type="datetime-local" id="startAt" required />
+        <label for="endAt">تاریخ و ساعت پایان آزمون (اختیاری):</label>
+        <input type="datetime-local" id="endAt" />
         <button type="submit" id="submitBtn" class="add-btn">ذخیره</button>
       </form>
       <div id="error"></div>
@@ -67,13 +73,16 @@
           <th>شناسه</th>
           <th>عنوان آزمون</th>
           <th>تعداد دفعات مجاز</th>
+          <th>مدت آزمون (دقیقه)</th>
+          <th>شروع</th>
+          <th>پایان</th>
           <th>تاریخ ایجاد</th>
           <th>فعال؟</th>
           <th>عملیات</th>
         </tr>
       </thead>
       <tbody id="examList">
-        <tr><td colspan="6">در حال بارگذاری آزمون‌ها...</td></tr>
+        <tr><td colspan="9">در حال بارگذاری آزمون‌ها...</td></tr>
       </tbody>
     </table>
     <div id="resultsBox" style="display:none;"></div>
@@ -143,6 +152,9 @@
       const editIdInput = document.getElementById('editId');
       const submitBtn = document.getElementById('submitBtn');
       const maxAttemptsInput = document.getElementById('maxAttempts');
+      const durationInput = document.getElementById('durationMinutes');
+      const startAtInput = document.getElementById('startAt');
+      const endAtInput = document.getElementById('endAt');
       const resultsBox = document.getElementById('resultsBox');
 
       // سوالات
@@ -177,25 +189,34 @@
         const { data, error } = await supabase.from('exams').select('*').order('id');
         if (error) {
           showError(error.message || 'خطا در دریافت داده‌ها');
-          list.innerHTML = '<tr><td colspan="6">خطا در دریافت داده‌ها</td></tr>';
+          list.innerHTML = '<tr><td colspan="9">خطا در دریافت داده‌ها</td></tr>';
         } else {
           list.innerHTML = data.length ? data.map(exam => `
             <tr>
               <td>${exam.id}</td>
               <td>${exam.title}</td>
               <td>${exam.max_attempts || 1}</td>
+              <td>${exam.duration_minutes || 20}</td>
+              <td>${exam.start_at ? new Date(exam.start_at).toLocaleString('fa-IR') : '-'}</td>
+              <td>${exam.end_at ? new Date(exam.end_at).toLocaleString('fa-IR') : '-'}</td>
               <td>${exam.created_at ? new Date(exam.created_at).toLocaleString('fa-IR') : ''}</td>
               <td>
                 <input type="checkbox" class="active-toggle" data-id="${exam.id}" ${exam.active ? 'checked' : ''} />
                 <span style="font-size:12px; color:${exam.active ? '#27ae60' : '#c0392b'}">${exam.active ? 'فعال' : 'غیرفعال'}</span>
               </td>
               <td>
-                <button class="edit-btn" data-id="${exam.id}" data-title="${exam.title}" data-max_attempts="${exam.max_attempts || 1}">ویرایش</button>
+                <button class="edit-btn" data-id="${exam.id}" 
+                  data-title="${exam.title}" 
+                  data-max_attempts="${exam.max_attempts || 1}"
+                  data-duration="${exam.duration_minutes || 20}"
+                  data-start="${exam.start_at ? new Date(exam.start_at).toISOString().slice(0,16) : ''}"
+                  data-end="${exam.end_at ? new Date(exam.end_at).toISOString().slice(0,16) : ''}"
+                >ویرایش</button>
                 <button class="delete-btn" data-id="${exam.id}">حذف</button>
                 <button class="result-btn" data-id="${exam.id}" data-title="${exam.title}">مشاهده نتایج</button>
                 <button class="questions-btn" data-id="${exam.id}" data-title="${exam.title}">سوالات آزمون</button>
               </td>
-            </tr>`).join('') : '<tr><td colspan="6">آزمونی یافت نشد</td></tr>';
+            </tr>`).join('') : '<tr><td colspan="9">آزمونی یافت نشد</td></tr>';
         }
         showLoading(false);
       }
@@ -207,8 +228,14 @@
         const id = editIdInput.value;
         const title = document.getElementById('title').value.trim();
         const maxAttempts = parseInt(maxAttemptsInput.value) || 1;
+        const duration = parseInt(durationInput.value) || 20;
+        const startAt = startAtInput.value ? new Date(startAtInput.value).toISOString() : null;
+        const endAt = endAtInput.value ? new Date(endAtInput.value).toISOString() : null;
+
         if (!title) return showError('عنوان آزمون را وارد کنید.');
         if (maxAttempts < 1) return showError('تعداد دفعات مجاز باید حداقل ۱ باشد.');
+        if (duration < 1) return showError('مدت آزمون باید حداقل ۱ دقیقه باشد.');
+        if (!startAt) return showError('تاریخ و ساعت شروع آزمون را وارد کنید.');
 
         showLoading(true);
 
@@ -220,12 +247,21 @@
           return;
         }
 
+        const examData = {
+          title,
+          max_attempts: maxAttempts,
+          duration_minutes: duration,
+          start_at: startAt,
+          end_at: endAt || null,
+          active: true
+        };
+
         if (id) {
-          const { error } = await supabase.from('exams').update({ title, max_attempts: maxAttempts }).eq('id', id);
+          const { error } = await supabase.from('exams').update(examData).eq('id', id);
           if (error) showError(error.message);
           else showSuccess('آزمون با موفقیت ویرایش شد');
         } else {
-          const { error } = await supabase.from('exams').insert([{ title, max_attempts: maxAttempts, active: true }]);
+          const { error } = await supabase.from('exams').insert([examData]);
           if (error) showError(error.message);
           else showSuccess('آزمون جدید اضافه شد');
         }
@@ -234,6 +270,9 @@
         formTitle.textContent = 'افزودن آزمون جدید';
         submitBtn.textContent = 'ذخیره';
         maxAttemptsInput.value = 1;
+        durationInput.value = 20;
+        startAtInput.value = '';
+        endAtInput.value = '';
         await loadExams();
         showLoading(false);
       });
@@ -245,6 +284,9 @@
           editIdInput.value = id;
           document.getElementById('title').value = btn.dataset.title;
           maxAttemptsInput.value = btn.dataset.max_attempts || 1;
+          durationInput.value = btn.dataset.duration || 20;
+          startAtInput.value = btn.dataset.start || '';
+          endAtInput.value = btn.dataset.end || '';
           formTitle.textContent = 'ویرایش آزمون';
           submitBtn.textContent = 'به‌روزرسانی';
           window.scrollTo({ top: 0, behavior: 'smooth' });
