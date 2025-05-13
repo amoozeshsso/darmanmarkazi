@@ -94,7 +94,7 @@
     <div id="resultsBox" style="display:none;"></div>
   </div>
   <script>
-    // راه‌اندازی تقویم شمسی بازشو
+    // راه‌اندازی تقویم شمسی بازشو فقط با انتخاب (تایپ غیرفعال)
     $(function() {
       $('.jalali-picker').persianDatepicker({
         format: 'YYYY/MM/DD HH:mm',
@@ -102,7 +102,7 @@
         initialValue: false,
         autoClose: true,
         calendar: { persian: { locale: 'fa' } }
-      }).attr('readonly', true); // فقط انتخاب با تقویم
+      }).attr('readonly', true);
     });
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -291,7 +291,7 @@
         XLSX.writeFile(wb, filename);
       }
 
-      // نمایش نتایج آزمون و دکمه خروجی اکسل
+      // نمایش نتایج آزمون و دکمه خروجی اکسل و حذف کاربران
       async function showExamResults(examId, examTitle) {
         resultsBox.style.display = 'block';
         resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
@@ -330,19 +330,24 @@
           xlsxRows.push([user ? user.username : res.user_id, res.score]);
         });
 
-        // ساخت جدول نمایش و دکمه خروجی اکسل
+        // ساخت جدول نمایش و دکمه خروجی اکسل و حذف
         let html = `
           <button id="exportExcel" style="background:#27ae60;color:#fff;margin-bottom:18px;padding:8px 22px;border-radius:6px;cursor:pointer;">دانلود خروجی اکسل</button>
+          <button id="deleteAllUsers" style="background:#c0392b;color:#fff;margin-bottom:18px;padding:8px 22px;border-radius:6px;cursor:pointer;">حذف همه کاربران این آزمون</button>
           <table>
             <tr>
               <th>نام کاربری</th>
               <th>نمره</th>
+              <th>عملیات</th>
             </tr>`;
         results.forEach(res => {
           const user = users.find(u => u.id == res.user_id);
           html += `<tr>
             <td>${user ? user.username : res.user_id}</td>
             <td>${res.score}</td>
+            <td>
+              <button class="delete-user-exam" data-userid="${res.user_id}" data-examid="${numericExamId}" style="background:#c0392b;color:#fff;">حذف کاربر</button>
+            </td>
           </tr>`;
         });
         html += `</table>`;
@@ -352,6 +357,41 @@
         // رویداد دکمه خروجی اکسل
         document.getElementById('exportExcel').onclick = function() {
           exportToXLSX(xlsxRows, `exam_${examId}_results.xlsx`);
+        };
+
+        // رویداد حذف یک کاربر از آزمون
+        document.querySelectorAll('.delete-user-exam').forEach(btn => {
+          btn.onclick = async function() {
+            if (!confirm('آیا از حذف این کاربر از لیست آزمون مطمئن هستید؟')) return;
+            const userId = btn.dataset.userid;
+            const examId = btn.dataset.examid;
+            const { error } = await supabase
+              .from('exam_results')
+              .delete()
+              .eq('exam_id', examId)
+              .eq('user_id', userId);
+            if (error) {
+              alert('خطا در حذف!');
+            } else {
+              alert('کاربر از لیست آزمون حذف شد.');
+              await showExamResults(examId, examTitle);
+            }
+          };
+        });
+
+        // رویداد حذف همه کاربران آزمون
+        document.getElementById('deleteAllUsers').onclick = async function() {
+          if (!confirm('آیا از حذف همه کاربران این آزمون مطمئن هستید؟')) return;
+          const { error } = await supabase
+            .from('exam_results')
+            .delete()
+            .eq('exam_id', numericExamId);
+          if (error) {
+            alert('خطا در حذف همه!');
+          } else {
+            alert('همه کاربران این آزمون حذف شدند.');
+            await showExamResults(numericExamId, examTitle);
+          }
         };
       }
 
