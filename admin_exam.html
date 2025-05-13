@@ -4,13 +4,7 @@
   <meta charset="UTF-8" />
   <title>مدیریت آزمون‌ها</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- ترتیب صحیح بارگذاری -->
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/persian-date@0.1.8/dist/persian-date.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <style>
     body { font-family: Tahoma; background: #f8f8f8; margin: 0; padding: 20px; }
     h1 { text-align: center; color: #333; }
@@ -26,21 +20,22 @@
     .delete-btn { background: #c0392b; color: #fff; }
     .result-btn { background: #f39c12; color: #fff; }
     .questions-btn { background: #16a085; color: #fff; }
-    #formBox { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    #formBox, #questionFormBox { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
     label { display: block; margin-top: 10px; color: #555; font-weight: bold; }
-    input[type="text"], input[type="number"], textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+    input[type="text"], input[type="number"], input[type="datetime-local"], textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
     input:focus, textarea:focus { outline: none; border-color: #3498db; }
     #loading { display: none; text-align: center; margin: 20px 0; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    #error, #success { display: none; padding: 10px; margin-top: 15px; border-radius: 4px; text-align: center; }
-    #error { background: rgba(231,76,60,0.8); color: #fff; }
-    #success { background: rgba(46,204,113,0.8); color: #fff; }
+    #error, #success, #qError, #qSuccess { display: none; padding: 10px; margin-top: 15px; border-radius: 4px; text-align: center; }
+    #error, #qError { background: rgba(231,76,60,0.8); color: #fff; }
+    #success, #qSuccess { background: rgba(46,204,113,0.8); color: #fff; }
     .back { margin-bottom: 18px; text-align: right; }
     .back a { background: #4e54c8; color: #fff; padding: 8px 18px; border-radius: 5px; text-decoration: none; }
     #resultsBox { margin-top: 30px; background: #fff; padding: 18px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     #resultsBox table { margin: auto; width: 90%; }
     #resultsBox th { background: #f39c12; }
+    #questionsSection { margin-top: 40px; }
   </style>
 </head>
 <body>
@@ -51,7 +46,7 @@
     <h1>مدیریت آزمون‌ها</h1>
     <div id="formBox">
       <h3 id="formTitle">افزودن آزمون جدید</h3>
-      <form id="examForm" autocomplete="off">
+      <form id="examForm">
         <input type="hidden" id="editId" />
         <label for="title">عنوان آزمون:</label>
         <input type="text" id="title" required />
@@ -60,9 +55,9 @@
         <label for="durationMinutes">مدت زمان آزمون (دقیقه):</label>
         <input type="number" id="durationMinutes" min="1" max="300" value="20" required />
         <label for="startAt">تاریخ و ساعت شروع آزمون:</label>
-        <input type="text" id="startAt" class="jalali-picker" required autocomplete="off" placeholder="انتخاب از تقویم" readonly />
+        <input type="datetime-local" id="startAt" required />
         <label for="endAt">تاریخ و ساعت پایان آزمون (اختیاری):</label>
-        <input type="text" id="endAt" class="jalali-picker" autocomplete="off" placeholder="انتخاب از تقویم" readonly />
+        <input type="datetime-local" id="endAt" />
         <button type="submit" id="submitBtn" class="add-btn">ذخیره</button>
       </form>
       <div id="error"></div>
@@ -91,18 +86,53 @@
       </tbody>
     </table>
     <div id="resultsBox" style="display:none;"></div>
-  </div>
-  <script>
-    $(document).ready(function() {
-      $('.jalali-picker').persianDatepicker({
-        format: 'YYYY/MM/DD HH:mm',
-        timePicker: { enabled: true },
-        initialValue: false,
-        autoClose: true,
-        calendar: { persian: { locale: 'fa' } }
-      }).attr('readonly', true);
-    });
 
+    <!-- بخش مدیریت سوالات -->
+    <div id="questionsSection" style="display:none;">
+      <h2>مدیریت سوالات آزمون: <span id="questionsExamTitle"></span></h2>
+      <button id="closeQuestions" style="margin-bottom:18px;background:#b2bec3;color:#222;padding:8px 16px;border-radius:5px;">بستن</button>
+      <div id="questionFormBox">
+        <h3 id="qFormTitle">افزودن سوال جدید</h3>
+        <form id="questionForm">
+          <input type="hidden" id="qEditId" />
+          <label>متن سوال:</label>
+          <textarea id="questionText" required></textarea>
+          <label>گزینه ۱:</label>
+          <input type="text" id="option1" required />
+          <label>گزینه ۲:</label>
+          <input type="text" id="option2" required />
+          <label>گزینه ۳:</label>
+          <input type="text" id="option3" required />
+          <label>گزینه ۴:</label>
+          <input type="text" id="option4" required />
+          <label>گزینه صحیح (شماره ۱ تا ۴):</label>
+          <input type="number" id="correctOption" min="1" max="4" required />
+          <button type="submit" class="add-btn" id="qSubmitBtn">ذخیره سوال</button>
+        </form>
+        <div id="qError"></div>
+        <div id="qSuccess"></div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>شناسه</th>
+            <th>متن سوال</th>
+            <th>گزینه ۱</th>
+            <th>گزینه ۲</th>
+            <th>گزینه ۳</th>
+            <th>گزینه ۴</th>
+            <th>گزینه صحیح</th>
+            <th>عملیات</th>
+          </tr>
+        </thead>
+        <tbody id="questionsList">
+          <tr><td colspan="8">در حال بارگذاری سوالات...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
     document.addEventListener('DOMContentLoaded', async () => {
       if (sessionStorage.getItem('userRole') !== 'admin') {
         alert('شما دسترسی ادمین ندارید!');
@@ -127,27 +157,31 @@
       const endAtInput = document.getElementById('endAt');
       const resultsBox = document.getElementById('resultsBox');
 
+      // سوالات
+      const questionsSection = document.getElementById('questionsSection');
+      const questionsExamTitle = document.getElementById('questionsExamTitle');
+      const closeQuestions = document.getElementById('closeQuestions');
+      const questionForm = document.getElementById('questionForm');
+      const qFormTitle = document.getElementById('qFormTitle');
+      const qEditId = document.getElementById('qEditId');
+      const questionText = document.getElementById('questionText');
+      const option1 = document.getElementById('option1');
+      const option2 = document.getElementById('option2');
+      const option3 = document.getElementById('option3');
+      const option4 = document.getElementById('option4');
+      const correctOption = document.getElementById('correctOption');
+      const qSubmitBtn = document.getElementById('qSubmitBtn');
+      const questionsList = document.getElementById('questionsList');
+      const qError = document.getElementById('qError');
+      const qSuccess = document.getElementById('qSuccess');
+
       const showLoading = show => loading.style.display = show ? 'block' : 'none';
       const showError = msg => { errEl.textContent = msg; errEl.style.display = 'block'; okEl.style.display = 'none'; };
       const showSuccess = msg => { okEl.textContent = msg; okEl.style.display = 'block'; errEl.style.display = 'none'; };
       const hideMessages = () => { errEl.style.display = okEl.style.display = 'none'; };
-
-      function toJalaliDatetime(dt) {
-        if (!dt) return '';
-        try {
-          return new persianDate(new Date(dt)).format('YYYY/MM/DD HH:mm');
-        } catch (e) {
-          return '';
-        }
-      }
-      function jalaliToIso(jalaliStr) {
-        if (!jalaliStr) return null;
-        try {
-          return new persianDate().parse('YYYY/MM/DD HH:mm', jalaliStr).toDate().toISOString();
-        } catch (e) {
-          return null;
-        }
-      }
+      const showQError = msg => { qError.textContent = msg; qError.style.display = 'block'; qSuccess.style.display = 'none'; };
+      const showQSuccess = msg => { qSuccess.textContent = msg; qSuccess.style.display = 'block'; qError.style.display = 'none'; };
+      const hideQMessages = () => { qError.style.display = qSuccess.style.display = 'none'; };
 
       // بارگذاری لیست آزمون‌ها
       async function loadExams() {
@@ -163,9 +197,9 @@
               <td>${exam.title}</td>
               <td>${exam.max_attempts || 1}</td>
               <td>${exam.duration_minutes || 20}</td>
-              <td>${exam.start_at ? toJalaliDatetime(exam.start_at) : '-'}</td>
-              <td>${exam.end_at ? toJalaliDatetime(exam.end_at) : '-'}</td>
-              <td>${exam.created_at ? toJalaliDatetime(exam.created_at) : ''}</td>
+              <td>${exam.start_at ? new Date(exam.start_at).toLocaleString('fa-IR') : '-'}</td>
+              <td>${exam.end_at ? new Date(exam.end_at).toLocaleString('fa-IR') : '-'}</td>
+              <td>${exam.created_at ? new Date(exam.created_at).toLocaleString('fa-IR') : ''}</td>
               <td>
                 <input type="checkbox" class="active-toggle" data-id="${exam.id}" ${exam.active ? 'checked' : ''} />
                 <span style="font-size:12px; color:${exam.active ? '#27ae60' : '#c0392b'}">${exam.active ? 'فعال' : 'غیرفعال'}</span>
@@ -175,18 +209,19 @@
                   data-title="${exam.title}" 
                   data-max_attempts="${exam.max_attempts || 1}"
                   data-duration="${exam.duration_minutes || 20}"
-                  data-start="${exam.start_at ? toJalaliDatetime(exam.start_at) : ''}"
-                  data-end="${exam.end_at ? toJalaliDatetime(exam.end_at) : ''}"
+                  data-start="${exam.start_at ? new Date(exam.start_at).toISOString().slice(0,16) : ''}"
+                  data-end="${exam.end_at ? new Date(exam.end_at).toISOString().slice(0,16) : ''}"
                 >ویرایش</button>
                 <button class="delete-btn" data-id="${exam.id}">حذف</button>
                 <button class="result-btn" data-id="${exam.id}" data-title="${exam.title}">مشاهده نتایج</button>
+                <button class="questions-btn" data-id="${exam.id}" data-title="${exam.title}">سوالات آزمون</button>
               </td>
             </tr>`).join('') : '<tr><td colspan="9">آزمونی یافت نشد</td></tr>';
         }
         showLoading(false);
       }
 
-      // افزودن یا ویرایش آزمون
+      // جلوگیری از ثبت آزمون تکراری (در افزودن و ویرایش)
       form.addEventListener('submit', async e => {
         e.preventDefault();
         hideMessages();
@@ -194,8 +229,8 @@
         const title = document.getElementById('title').value.trim();
         const maxAttempts = parseInt(maxAttemptsInput.value) || 1;
         const duration = parseInt(durationInput.value) || 20;
-        const startAt = jalaliToIso(startAtInput.value);
-        const endAt = jalaliToIso(endAtInput.value);
+        const startAt = startAtInput.value ? new Date(startAtInput.value).toISOString() : null;
+        const endAt = endAtInput.value ? new Date(endAtInput.value).toISOString() : null;
 
         if (!title) return showError('عنوان آزمون را وارد کنید.');
         if (maxAttempts < 1) return showError('تعداد دفعات مجاز باید حداقل ۱ باشد.');
@@ -204,6 +239,7 @@
 
         showLoading(true);
 
+        // چک تکراری نبودن عنوان آزمون
         const { data: exists } = await supabase.from('exams').select('id').eq('title', title);
         if (exists && exists.length && (!id || exists[0].id != id)) {
           showError('آزمونی با این عنوان قبلاً ثبت شده است!');
@@ -251,13 +287,6 @@
           durationInput.value = btn.dataset.duration || 20;
           startAtInput.value = btn.dataset.start || '';
           endAtInput.value = btn.dataset.end || '';
-          $('.jalali-picker').persianDatepicker('destroy').persianDatepicker({
-            format: 'YYYY/MM/DD HH:mm',
-            timePicker: { enabled: true },
-            initialValue: false,
-            autoClose: true,
-            calendar: { persian: { locale: 'fa' } }
-          }).attr('readonly', true);
           formTitle.textContent = 'ویرایش آزمون';
           submitBtn.textContent = 'به‌روزرسانی';
           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -275,17 +304,26 @@
         if (btn.classList.contains('result-btn')) {
           await showExamResults(id, btn.dataset.title);
         }
+        if (btn.classList.contains('questions-btn')) {
+          await openQuestionsSection(id, btn.dataset.title);
+        }
       });
 
-      // تابع خروجی xlsx برای اکسل با SheetJS
-      function exportToXLSX(rows, filename) {
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-        XLSX.writeFile(wb, filename);
-      }
+      // تغییر وضعیت فعال/غیرفعال
+      list.addEventListener('change', async e => {
+        if (e.target.classList.contains('active-toggle')) {
+          const examId = e.target.dataset.id;
+          const isActive = e.target.checked;
+          showLoading(true);
+          const { error } = await supabase.from('exams').update({ active: isActive }).eq('id', examId);
+          if (error) showError('خطا در تغییر وضعیت آزمون!');
+          else showSuccess(isActive ? 'آزمون فعال شد' : 'آزمون غیرفعال شد');
+          await loadExams();
+          showLoading(false);
+        }
+      });
 
-      // نمایش نتایج آزمون و دکمه خروجی اکسل و حذف کاربران (فقط بیشترین نمره هر کاربر)
+      // نمایش نتایج کاربران شرکت‌کننده در آزمون (با امکان حذف کاربر یا حذف همه)
       async function showExamResults(examId, examTitle) {
         resultsBox.style.display = 'block';
         resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
@@ -316,50 +354,41 @@
           return;
         }
 
-        // فقط بیشترین نمره هر کاربر
-        const userMaxScore = {};
+        // محاسبه تعداد دفعات شرکت و بالاترین نمره و لیست رکوردها
+        const userStats = {};
         results.forEach(res => {
-          if (!userMaxScore[res.user_id] || res.score > userMaxScore[res.user_id].score) {
-            userMaxScore[res.user_id] = { score: res.score, id: res.id };
+          if (!userStats[res.user_id]) {
+            userStats[res.user_id] = { count: 0, max: 0, ids: [] };
           }
+          userStats[res.user_id].count++;
+          userStats[res.user_id].max = Math.max(userStats[res.user_id].max, res.score);
+          userStats[res.user_id].ids.push(res.id);
         });
 
-        // ساخت آرایه خروجی برای اکسل
-        const xlsxRows = [];
-        xlsxRows.push(['نام کاربری', 'نمره']);
-        Object.entries(userMaxScore).forEach(([userId, info]) => {
-          const user = users.find(u => u.id == userId);
-          xlsxRows.push([user ? user.username : userId, info.score]);
-        });
-
-        // ساخت جدول نمایش و دکمه خروجی اکسل و حذف
+        // ساخت جدول خروجی با دکمه حذف
         let html = `
-          <button id="exportExcel" style="background:#27ae60;color:#fff;margin-bottom:18px;padding:8px 22px;border-radius:6px;cursor:pointer;">دانلود خروجی اکسل</button>
           <button id="deleteAllUsers" style="background:#c0392b;color:#fff;margin-bottom:18px;padding:8px 22px;border-radius:6px;cursor:pointer;">حذف همه کاربران این آزمون</button>
           <table>
             <tr>
               <th>نام کاربری</th>
-              <th>بیشترین نمره</th>
+              <th>تعداد دفعات شرکت</th>
+              <th>بالاترین نمره</th>
               <th>عملیات</th>
             </tr>`;
-        Object.entries(userMaxScore).forEach(([userId, info]) => {
+        Object.entries(userStats).forEach(([userId, stats]) => {
           const user = users.find(u => u.id == userId);
           html += `<tr>
             <td>${user ? user.username : userId}</td>
-            <td>${info.score}</td>
+            <td>${stats.count}</td>
+            <td>${stats.max}</td>
             <td>
-              <button class="delete-user-exam" data-userid="${userId}" data-examid="${numericExamId}" style="background:#c0392b;color:#fff;">حذف کاربر</button>
+              <button class="delete-user-exam" data-userid="${userId}" data-examid="${numericExamId}">حذف کاربر</button>
             </td>
           </tr>`;
         });
         html += `</table>`;
         resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3>${html}`;
         resultsBox.scrollIntoView({ behavior: 'smooth' });
-
-        // رویداد دکمه خروجی اکسل
-        document.getElementById('exportExcel').onclick = function() {
-          exportToXLSX(xlsxRows, `exam_${examId}_results.xlsx`);
-        };
 
         // رویداد حذف یک کاربر از آزمون
         document.querySelectorAll('.delete-user-exam').forEach(btn => {
@@ -396,6 +425,131 @@
           }
         };
       }
+
+      // مدیریت سوالات هر آزمون
+      let currentExamId = null;
+      async function openQuestionsSection(examId, examTitle) {
+        currentExamId = examId;
+        questionsExamTitle.textContent = examTitle;
+        questionsSection.style.display = 'block';
+        await loadQuestionsList();
+        window.scrollTo({ top: questionsSection.offsetTop - 20, behavior: 'smooth' });
+      }
+      closeQuestions.addEventListener('click', () => {
+        questionsSection.style.display = 'none';
+        questionForm.reset();
+        qEditId.value = '';
+        qFormTitle.textContent = 'افزودن سوال جدید';
+        qSubmitBtn.textContent = 'ذخیره سوال';
+        hideQMessages();
+      });
+
+      async function loadQuestionsList() {
+        hideQMessages();
+        questionsList.innerHTML = '<tr><td colspan="8">در حال بارگذاری سوالات...</td></tr>';
+        const { data, error } = await supabase
+          .from('questions')
+          .select('*')
+          .eq('exam_id', currentExamId)
+          .order('id');
+        if (error) {
+          questionsList.innerHTML = '<tr><td colspan="8">خطا در دریافت سوالات</td></tr>';
+        } else if (!data.length) {
+          questionsList.innerHTML = '<tr><td colspan="8">سوالی ثبت نشده است</td></tr>';
+        } else {
+          questionsList.innerHTML = data.map(q => `
+            <tr>
+              <td>${q.id}</td>
+              <td>${q.question_text}</td>
+              <td>${q.option1}</td>
+              <td>${q.option2}</td>
+              <td>${q.option3}</td>
+              <td>${q.option4}</td>
+              <td>${q.correct_option}</td>
+              <td>
+                <button class="edit-q-btn" data-id="${q.id}">ویرایش</button>
+                <button class="delete-q-btn" data-id="${q.id}">حذف</button>
+              </td>
+            </tr>
+          `).join('');
+        }
+      }
+
+      questionForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        hideQMessages();
+        const qid = qEditId.value;
+        const qtext = questionText.value.trim();
+        const op1 = option1.value.trim();
+        const op2 = option2.value.trim();
+        const op3 = option3.value.trim();
+        const op4 = option4.value.trim();
+        const correct = Number(correctOption.value);
+
+        if (!qtext || !op1 || !op2 || !op3 || !op4 || ![1,2,3,4].includes(correct)) {
+          showQError('همه فیلدها را کامل و صحیح وارد کنید.');
+          return;
+        }
+
+        if (qid) {
+          const { error } = await supabase.from('questions').update({
+            question_text: qtext,
+            option1: op1,
+            option2: op2,
+            option3: op3,
+            option4: op4,
+            correct_option: correct
+          }).eq('id', qid);
+          if (error) showQError(error.message);
+          else showQSuccess('سوال ویرایش شد.');
+        } else {
+          const { error } = await supabase.from('questions').insert([{
+            exam_id: currentExamId,
+            question_text: qtext,
+            option1: op1,
+            option2: op2,
+            option3: op3,
+            option4: op4,
+            correct_option: correct
+          }]);
+          if (error) showQError(error.message);
+          else showQSuccess('سوال جدید اضافه شد.');
+        }
+        questionForm.reset();
+        qEditId.value = '';
+        qFormTitle.textContent = 'افزودن سوال جدید';
+        qSubmitBtn.textContent = 'ذخیره سوال';
+        await loadQuestionsList();
+      });
+
+      questionsList.addEventListener('click', async e => {
+        const btn = e.target;
+        const id = btn.dataset.id;
+        if (btn.classList.contains('edit-q-btn')) {
+          const { data, error } = await supabase.from('questions').select('*').eq('id', id).maybeSingle();
+          if (!data || error) {
+            showQError('خطا در دریافت اطلاعات سوال!');
+            return;
+          }
+          qEditId.value = data.id;
+          questionText.value = data.question_text;
+          option1.value = data.option1;
+          option2.value = data.option2;
+          option3.value = data.option3;
+          option4.value = data.option4;
+          correctOption.value = data.correct_option;
+          qFormTitle.textContent = 'ویرایش سوال';
+          qSubmitBtn.textContent = 'به‌روزرسانی سوال';
+        }
+        if (btn.classList.contains('delete-q-btn')) {
+          if (confirm('آیا از حذف سوال مطمئن هستید؟')) {
+            const { error } = await supabase.from('questions').delete().eq('id', id);
+            if (error) showQError('خطا در حذف سوال!');
+            else showQSuccess('سوال حذف شد.');
+            await loadQuestionsList();
+          }
+        }
+      });
 
       await loadExams();
     });
