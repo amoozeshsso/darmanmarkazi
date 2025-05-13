@@ -5,187 +5,37 @@
   <title>مدیریت آزمون‌ها</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
-    body { 
-      font-family: Tahoma; 
-      background: #f8f8f8; 
-      margin: 0; 
-      padding: 20px; 
-    }
-    h1 { 
-      text-align: center; 
-      color: #333; 
-    }
-    .container { 
-      max-width: 1100px; 
-      margin: auto; 
-    }
-    table { 
-      width: 100%; 
-      border-collapse: collapse; 
-      margin-top: 20px; 
-      background: #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    th, td { 
-      border: 1px solid #ddd; 
-      padding: 12px; 
-      text-align: center; 
-    }
-    th { 
-      background: #2c3e50; 
-      color: #fff; 
-    }
-    tr:nth-child(even) { 
-      background: #f9f9f9; 
-    }
-    tr:hover { 
-      background: #e9f7ef; 
-    }
-    button { 
-      padding: 8px 16px; 
-      margin: 2px; 
-      border: none; 
-      border-radius: 4px; 
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      opacity: 0.9;
-    }
-    .add-btn { 
-      background: #27ae60; 
-      color: #fff; 
-      width: 100%; 
-      font-size: 16px; 
-      padding: 12px;
-    }
-    .edit-btn { 
-      background: #2980b9; 
-      color: #fff; 
-    }
-    .delete-btn { 
-      background: #c0392b; 
-      color: #fff; 
-    }
-    .result-btn { 
-      background: #f39c12; 
-      color: #fff; 
-    }
-    .questions-btn { 
-      background: #16a085; 
-      color: #fff; 
-    }
-    .export-btn {
-      background: #27ae60;
-      color: #fff;
-    }
-    #formBox, #questionFormBox { 
-      background: #fff; 
-      padding: 25px; 
-      border-radius: 8px; 
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
-      margin-bottom: 30px; 
-    }
-    label { 
-      display: block; 
-      margin-top: 12px; 
-      color: #555; 
-      font-weight: bold; 
-    }
-    input[type="text"], 
-    input[type="number"], 
-    input[type="datetime-local"], 
-    textarea { 
-      width: 100%; 
-      padding: 12px; 
-      margin: 8px 0; 
-      border: 1px solid #ddd; 
-      border-radius: 4px; 
-      box-sizing: border-box; 
-      font-family: Tahoma;
-    }
-    input:focus, 
-    textarea:focus { 
-      outline: none; 
-      border-color: #3498db; 
-      box-shadow: 0 0 5px rgba(52,152,219,0.3);
-    }
-    #loading { 
-      display: none; 
-      text-align: center; 
-      margin: 20px 0; 
-    }
-    .spinner { 
-      border: 4px solid #f3f3f3; 
-      border-top: 4px solid #3498db; 
-      border-radius: 50%; 
-      width: 30px; 
-      height: 30px; 
-      animation: spin 1s linear infinite; 
-      margin: auto; 
-    }
-    @keyframes spin { 
-      0% { transform: rotate(0deg); } 
-      100% { transform: rotate(360deg); } 
-    }
-    #error, #success, #qError, #qSuccess { 
-      display: none; 
-      padding: 12px; 
-      margin-top: 15px; 
-      border-radius: 4px; 
-      text-align: center; 
-    }
-    #error, #qError { 
-      background: rgba(231,76,60,0.8); 
-      color: #fff; 
-    }
-    #success, #qSuccess { 
-      background: rgba(46,204,113,0.8); 
-      color: #fff; 
-    }
-    .back { 
-      margin-bottom: 18px; 
-      text-align: right; 
-    }
-    .back a { 
-      background: #4e54c8; 
-      color: #fff; 
-      padding: 8px 18px; 
-      border-radius: 5px; 
-      text-decoration: none; 
-    }
-    #resultsBox { 
-      margin-top: 30px; 
-      background: #fff; 
-      padding: 25px; 
-      border-radius: 8px; 
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-    }
-    #resultsBox table { 
-      margin: auto; 
-      width: 90%; 
-    }
-    #resultsBox th { 
-      background: #f39c12; 
-    }
-    #questionsSection { 
-      margin-top: 40px; 
-    }
-    .button-group {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .checkbox-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .checkbox-wrapper span {
-      font-size: 14px;
-    }
+    body { font-family: Tahoma; background: #f8f8f8; margin: 0; padding: 20px; }
+    h1 { text-align: center; color: #333; }
+    .container { max-width: 1100px; margin: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    th { background: #2c3e50; color: #fff; }
+    tr:nth-child(even) { background: #f2f2f2; }
+    tr:hover { background: #e9f7ef; }
+    button { padding: 6px 12px; margin: 2px; border: none; border-radius: 4px; cursor: pointer; }
+    .add-btn { background: #27ae60; color: #fff; width: 100%; font-size: 16px; }
+    .edit-btn { background: #2980b9; color: #fff; }
+    .delete-btn { background: #c0392b; color: #fff; }
+    .result-btn { background: #f39c12; color: #fff; }
+    .questions-btn { background: #16a085; color: #fff; }
+    #formBox, #questionFormBox { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    label { display: block; margin-top: 10px; color: #555; font-weight: bold; }
+    input[type="text"], input[type="number"], input[type="datetime-local"], textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+    input:focus, textarea:focus { outline: none; border-color: #3498db; }
+    #loading { display: none; text-align: center; margin: 20px 0; }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    #error, #success, #qError, #qSuccess { display: none; padding: 10px; margin-top: 15px; border-radius: 4px; text-align: center; }
+    #error, #qError { background: rgba(231,76,60,0.8); color: #fff; }
+    #success, #qSuccess { background: rgba(46,204,113,0.8); color: #fff; }
+    .back { margin-bottom: 18px; text-align: right; }
+    .back a { background: #4e54c8; color: #fff; padding: 8px 18px; border-radius: 5px; text-decoration: none; }
+    #resultsBox { margin-top: 30px; background: #fff; padding: 18px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    #resultsBox table { margin: auto; width: 90%; }
+    #resultsBox th { background: #f39c12; }
+    #questionsSection { margin-top: 40px; }
   </style>
 </head>
 <body>
@@ -194,37 +44,29 @@
       <a href="admin-dashboard.html">بازگشت به داشبورد ادمین</a>
     </div>
     <h1>مدیریت آزمون‌ها</h1>
-    
     <div id="formBox">
       <h3 id="formTitle">افزودن آزمون جدید</h3>
       <form id="examForm">
         <input type="hidden" id="editId" />
         <label for="title">عنوان آزمون:</label>
         <input type="text" id="title" required />
-        
         <label for="maxAttempts">تعداد دفعات مجاز شرکت در آزمون:</label>
         <input type="number" id="maxAttempts" min="1" max="20" value="1" required />
-        
         <label for="durationMinutes">مدت زمان آزمون (دقیقه):</label>
         <input type="number" id="durationMinutes" min="1" max="300" value="20" required />
-        
         <label for="startAt">تاریخ و ساعت شروع آزمون:</label>
         <input type="datetime-local" id="startAt" required />
-        
         <label for="endAt">تاریخ و ساعت پایان آزمون (اختیاری):</label>
         <input type="datetime-local" id="endAt" />
-        
         <button type="submit" id="submitBtn" class="add-btn">ذخیره</button>
       </form>
       <div id="error"></div>
       <div id="success"></div>
     </div>
-
     <div id="loading">
       <div class="spinner"></div>
       <p>در حال بارگذاری...</p>
     </div>
-
     <table>
       <thead>
         <tr>
@@ -243,19 +85,18 @@
         <tr><td colspan="9">در حال بارگذاری آزمون‌ها...</td></tr>
       </tbody>
     </table>
-
     <div id="resultsBox" style="display:none;"></div>
 
+    <!-- بخش مدیریت سوالات -->
     <div id="questionsSection" style="display:none;">
       <h2>مدیریت سوالات آزمون: <span id="questionsExamTitle"></span></h2>
-      <button id="closeQuestions" class="delete-btn">بستن</button>
-      
+      <button id="closeQuestions" style="margin-bottom:18px;background:#b2bec3;color:#222;padding:8px 16px;border-radius:5px;">بستن</button>
       <div id="questionFormBox">
         <h3 id="qFormTitle">افزودن سوال جدید</h3>
         <form id="questionForm">
           <input type="hidden" id="qEditId" />
           <label>متن سوال:</label>
-          <textarea id="questionText" required rows="4"></textarea>
+          <textarea id="questionText" required></textarea>
           <label>گزینه ۱:</label>
           <input type="text" id="option1" required />
           <label>گزینه ۲:</label>
@@ -271,7 +112,6 @@
         <div id="qError"></div>
         <div id="qSuccess"></div>
       </div>
-
       <table>
         <thead>
           <tr>
@@ -294,19 +134,15 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      // بررسی دسترسی ادمین
       if (sessionStorage.getItem('userRole') !== 'admin') {
         alert('شما دسترسی ادمین ندارید!');
         window.location.href = 'index.html';
-        return;
       }
 
-      // تنظیمات Supabase
       const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      // عناصر DOM
       const form = document.getElementById('examForm');
       const list = document.getElementById('examList');
       const loading = document.getElementById('loading');
@@ -315,19 +151,30 @@
       const formTitle = document.getElementById('formTitle');
       const editIdInput = document.getElementById('editId');
       const submitBtn = document.getElementById('submitBtn');
+      const maxAttemptsInput = document.getElementById('maxAttempts');
+      const durationInput = document.getElementById('durationMinutes');
+      const startAtInput = document.getElementById('startAt');
+      const endAtInput = document.getElementById('endAt');
       const resultsBox = document.getElementById('resultsBox');
 
-      // عناصر مربوط به سوالات
+      // سوالات
       const questionsSection = document.getElementById('questionsSection');
       const questionsExamTitle = document.getElementById('questionsExamTitle');
       const closeQuestions = document.getElementById('closeQuestions');
       const questionForm = document.getElementById('questionForm');
       const qFormTitle = document.getElementById('qFormTitle');
       const qEditId = document.getElementById('qEditId');
+      const questionText = document.getElementById('questionText');
+      const option1 = document.getElementById('option1');
+      const option2 = document.getElementById('option2');
+      const option3 = document.getElementById('option3');
+      const option4 = document.getElementById('option4');
+      const correctOption = document.getElementById('correctOption');
+      const qSubmitBtn = document.getElementById('qSubmitBtn');
+      const questionsList = document.getElementById('questionsList');
       const qError = document.getElementById('qError');
       const qSuccess = document.getElementById('qSuccess');
-      
-      // توابع کمکی
+
       const showLoading = show => loading.style.display = show ? 'block' : 'none';
       const showError = msg => { errEl.textContent = msg; errEl.style.display = 'block'; okEl.style.display = 'none'; };
       const showSuccess = msg => { okEl.textContent = msg; okEl.style.display = 'block'; errEl.style.display = 'none'; };
@@ -338,14 +185,8 @@
 
       // بارگذاری لیست آزمون‌ها
       async function loadExams() {
-        showLoading(true);
-        hideMessages();
-        
-        const { data, error } = await supabase
-          .from('exams')
-          .select('*')
-          .order('id');
-          
+        showLoading(true); hideMessages();
+        const { data, error } = await supabase.from('exams').select('*').order('id');
         if (error) {
           showError(error.message || 'خطا در دریافت داده‌ها');
           list.innerHTML = '<tr><td colspan="9">خطا در دریافت داده‌ها</td></tr>';
@@ -360,10 +201,8 @@
               <td>${exam.end_at ? new Date(exam.end_at).toLocaleString('fa-IR') : '-'}</td>
               <td>${exam.created_at ? new Date(exam.created_at).toLocaleString('fa-IR') : ''}</td>
               <td>
-                <div class="checkbox-wrapper">
-                  <input type="checkbox" class="active-toggle" data-id="${exam.id}" ${exam.active ? 'checked' : ''} />
-                  <span style="color:${exam.active ? '#27ae60' : '#c0392b'}">${exam.active ? 'فعال' : 'غیرفعال'}</span>
-                </div>
+                <input type="checkbox" class="active-toggle" data-id="${exam.id}" ${exam.active ? 'checked' : ''} />
+                <span style="font-size:12px; color:${exam.active ? '#27ae60' : '#c0392b'}">${exam.active ? 'فعال' : 'غیرفعال'}</span>
               </td>
               <td>
                 <button class="edit-btn" data-id="${exam.id}" 
@@ -374,210 +213,24 @@
                   data-end="${exam.end_at ? new Date(exam.end_at).toISOString().slice(0,16) : ''}"
                 >ویرایش</button>
                 <button class="delete-btn" data-id="${exam.id}">حذف</button>
-                <button class="result-btn" data-id="${exam.id}" data-title="${exam.title}">نتایج</button>
-                <button class="questions-btn" data-id="${exam.id}" data-title="${exam.title}">سوالات</button>
+                <button class="result-btn" data-id="${exam.id}" data-title="${exam.title}">مشاهده نتایج</button>
+                <button class="questions-btn" data-id="${exam.id}" data-title="${exam.title}">سوالات آزمون</button>
               </td>
-            </tr>
-          `).join('') : '<tr><td colspan="9">آزمونی یافت نشد</td></tr>';
+            </tr>`).join('') : '<tr><td colspan="9">آزمونی یافت نشد</td></tr>';
         }
-        
         showLoading(false);
       }
 
-      // نمایش نتایج آزمون
-      async function showExamResults(examId, examTitle) {
-        resultsBox.style.display = 'block';
-        resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
-
-        // دریافت نتایج
-        const { data: results, error: resErr } = await supabase
-          .from('exam_results')
-          .select('user_id, score, id')
-          .eq('exam_id', examId);
-
-        if (resErr) {
-          resultsBox.innerHTML = 'خطا در دریافت نتایج!';
-          return;
-        }
-        if (!results?.length) {
-          resultsBox.innerHTML = 'هنوز هیچ کاربری در این آزمون شرکت نکرده است!';
-          return;
-        }
-
-        // دریافت اطلاعات کاربران
-        const { data: users, error: uErr } = await supabase
-          .from('users')
-          .select('id, username');
-        if (uErr) {
-          resultsBox.innerHTML = 'خطا در دریافت کاربران!';
-          return;
-        }
-
-        // تهیه آرایه برای خروجی اکسل
-        const excelData = results.map(result => {
-          const user = users.find(u => u.id === result.user_id);
-          return {
-            'نام کاربری': user ? user.username : result.user_id,
-            'نمره': result.score
-          };
-        });
-
-        // محاسبه آمار هر کاربر
-        const userStats = {};
-        results.forEach(res => {
-          if (!userStats[res.user_id]) {
-            userStats[res.user_id] = { count: 0, max: 0, ids: [] };
-          }
-          userStats[res.user_id].count++;
-          userStats[res.user_id].max = Math.max(userStats[res.user_id].max, res.score);
-          userStats[res.user_id].ids.push(res.id);
-        });
-
-        // ساخت جدول نتایج
-        let html = `
-          <div class="button-group">
-            <button id="deleteAllUsers" class="delete-btn">حذف همه کاربران</button>
-            <button id="exportExcel" class="export-btn">دریافت فایل اکسل</button>
-          </div>
-          <table>
-            <tr>
-              <th>نام کاربری</th>
-              <th>تعداد دفعات شرکت</th>
-              <th>بالاترین نمره</th>
-              <th>عملیات</th>
-            </tr>
-        `;
-
-        Object.entries(userStats).forEach(([userId, stats]) => {
-          const user = users.find(u => u.id == userId);
-          html += `
-            <tr>
-              <td>${user ? user.username : userId}</td>
-              <td>${stats.count}</td>
-              <td>${stats.max}</td>
-              <td>
-                <button class="delete-user-exam delete-btn" data-userid="${userId}" data-examid="${examId}">حذف کاربر</button>
-              </td>
-            </tr>
-          `;
-        });
-
-        html += '</table>';
-        resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3>${html}`;
-        resultsBox.scrollIntoView({ behavior: 'smooth' });
-
-        // رویداد دریافت اکسل
-        document.getElementById('exportExcel').onclick = function() {
-          const ws = XLSX.utils.json_to_sheet(excelData, {header: ['نام کاربری', 'نمره']});
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, "نتایج");
-          
-          // تنظیم عرض ستون‌ها
-          const wscols = [
-            {wch: 20}, // عرض ستون نام کاربری
-            {wch: 10}  // عرض ستون نمره
-          ];
-          ws['!cols'] = wscols;
-
-          // ذخیره فایل
-          XLSX.writeFile(wb, `نتایج_آزمون_${examTitle}_${new Date().toLocaleDateString('fa-IR')}.xlsx`);
-        };
-
-        // رویداد حذف کاربر
-        document.querySelectorAll('.delete-user-exam').forEach(btn => {
-          btn.onclick = async function() {
-            if (!confirm('آیا از حذف این کاربر از لیست آزمون مطمئن هستید؟')) return;
-            const userId = btn.dataset.userid;
-            const examId = btn.dataset.examid;
-            
-            const { error } = await supabase
-              .from('exam_results')
-              .delete()
-              .eq('exam_id', examId)
-              .eq('user_id', userId);
-              
-            if (error) {
-              alert('خطا در حذف!');
-            } else {
-              alert('کاربر از لیست آزمون حذف شد.');
-              await showExamResults(examId, examTitle);
-            }
-          };
-        });
-
-        // رویداد حذف همه
-        document.getElementById('deleteAllUsers').onclick = async function() {
-          if (!confirm('آیا از حذف همه کاربران این آزمون مطمئن هستید؟')) return;
-          
-          const { error } = await supabase
-            .from('exam_results')
-            .delete()
-            .eq('exam_id', examId);
-            
-          if (error) {
-            alert('خطا در حذف همه!');
-          } else {
-            alert('همه کاربران این آزمون حذف شدند.');
-            await showExamResults(examId, examTitle);
-          }
-        };
-      }
-
-      // مدیریت سوالات
-      let currentExamId = null;
-      
-      async function openQuestionsSection(examId, examTitle) {
-        currentExamId = examId;
-        questionsExamTitle.textContent = examTitle;
-        questionsSection.style.display = 'block';
-        await loadQuestionsList();
-        window.scrollTo({ top: questionsSection.offsetTop - 20, behavior: 'smooth' });
-      }
-
-      async function loadQuestionsList() {
-        hideQMessages();
-        questionsList.innerHTML = '<tr><td colspan="8">در حال بارگذاری سوالات...</td></tr>';
-        
-        const { data, error } = await supabase
-          .from('questions')
-          .select('*')
-          .eq('exam_id', currentExamId)
-          .order('id');
-          
-        if (error) {
-          questionsList.innerHTML = '<tr><td colspan="8">خطا در دریافت سوالات</td></tr>';
-        } else if (!data.length) {
-          questionsList.innerHTML = '<tr><td colspan="8">سوالی ثبت نشده است</td></tr>';
-        } else {
-          questionsList.innerHTML = data.map(q => `
-            <tr>
-              <td>${q.id}</td>
-              <td>${q.question_text}</td>
-              <td>${q.option1}</td>
-              <td>${q.option2}</td>
-              <td>${q.option3}</td>
-              <td>${q.option4}</td>
-              <td>${q.correct_option}</td>
-              <td>
-                <button class="edit-q-btn edit-btn" data-id="${q.id}">ویرایش</button>
-                <button class="delete-q-btn delete-btn" data-id="${q.id}">حذف</button>
-              </td>
-            </tr>
-          `).join('');
-        }
-      }
-
-      // رویدادها
+      // جلوگیری از ثبت آزمون تکراری (در افزودن و ویرایش)
       form.addEventListener('submit', async e => {
         e.preventDefault();
         hideMessages();
-        
         const id = editIdInput.value;
         const title = document.getElementById('title').value.trim();
-        const maxAttempts = parseInt(document.getElementById('maxAttempts').value) || 1;
-        const duration = parseInt(document.getElementById('durationMinutes').value) || 20;
-        const startAt = document.getElementById('startAt').value ? new Date(document.getElementById('startAt').value).toISOString() : null;
-        const endAt = document.getElementById('endAt').value ? new Date(document.getElementById('endAt').value).toISOString() : null;
+        const maxAttempts = parseInt(maxAttemptsInput.value) || 1;
+        const duration = parseInt(durationInput.value) || 20;
+        const startAt = startAtInput.value ? new Date(startAtInput.value).toISOString() : null;
+        const endAt = endAtInput.value ? new Date(endAtInput.value).toISOString() : null;
 
         if (!title) return showError('عنوان آزمون را وارد کنید.');
         if (maxAttempts < 1) return showError('تعداد دفعات مجاز باید حداقل ۱ باشد.');
@@ -586,13 +239,9 @@
 
         showLoading(true);
 
-        // بررسی تکراری نبودن عنوان
-        const { data: exists } = await supabase
-          .from('exams')
-          .select('id')
-          .eq('title', title);
-          
-        if (exists?.length && (!id || exists[0].id != id)) {
+        // چک تکراری نبودن عنوان آزمون
+        const { data: exists } = await supabase.from('exams').select('id').eq('title', title);
+        if (exists && exists.length && (!id || exists[0].id != id)) {
           showError('آزمونی با این عنوان قبلاً ثبت شده است!');
           showLoading(false);
           return;
@@ -616,35 +265,33 @@
           if (error) showError(error.message);
           else showSuccess('آزمون جدید اضافه شد');
         }
-
         form.reset();
         editIdInput.value = '';
         formTitle.textContent = 'افزودن آزمون جدید';
         submitBtn.textContent = 'ذخیره';
-        document.getElementById('maxAttempts').value = 1;
-        document.getElementById('durationMinutes').value = 20;
-        
+        maxAttemptsInput.value = 1;
+        durationInput.value = 20;
+        startAtInput.value = '';
+        endAtInput.value = '';
         await loadExams();
         showLoading(false);
       });
 
       list.addEventListener('click', async e => {
         const btn = e.target;
-        if (!btn.dataset.id) return;
-        
         const id = btn.dataset.id;
         if (btn.classList.contains('edit-btn')) {
           editIdInput.value = id;
           document.getElementById('title').value = btn.dataset.title;
-          document.getElementById('maxAttempts').value = btn.dataset.max_attempts;
-          document.getElementById('durationMinutes').value = btn.dataset.duration;
-          document.getElementById('startAt').value = btn.dataset.start;
-          document.getElementById('endAt').value = btn.dataset.end;
+          maxAttemptsInput.value = btn.dataset.max_attempts || 1;
+          durationInput.value = btn.dataset.duration || 20;
+          startAtInput.value = btn.dataset.start || '';
+          endAtInput.value = btn.dataset.end || '';
           formTitle.textContent = 'ویرایش آزمون';
           submitBtn.textContent = 'به‌روزرسانی';
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        else if (btn.classList.contains('delete-btn')) {
+        if (btn.classList.contains('delete-btn')) {
           if (confirm('آیا از حذف آزمون مطمئن هستید؟')) {
             showLoading(true);
             const { error } = await supabase.from('exams').delete().eq('id', id);
@@ -654,23 +301,21 @@
             showLoading(false);
           }
         }
-        else if (btn.classList.contains('result-btn')) {
+        if (btn.classList.contains('result-btn')) {
           await showExamResults(id, btn.dataset.title);
         }
-        else if (btn.classList.contains('questions-btn')) {
+        if (btn.classList.contains('questions-btn')) {
           await openQuestionsSection(id, btn.dataset.title);
         }
       });
 
+      // تغییر وضعیت فعال/غیرفعال
       list.addEventListener('change', async e => {
         if (e.target.classList.contains('active-toggle')) {
           const examId = e.target.dataset.id;
           const isActive = e.target.checked;
           showLoading(true);
-          const { error } = await supabase
-            .from('exams')
-            .update({ active: isActive })
-            .eq('id', examId);
+          const { error } = await supabase.from('exams').update({ active: isActive }).eq('id', examId);
           if (error) showError('خطا در تغییر وضعیت آزمون!');
           else showSuccess(isActive ? 'آزمون فعال شد' : 'آزمون غیرفعال شد');
           await loadExams();
@@ -678,11 +323,118 @@
         }
       });
 
-      closeQuestions.addEventListener('click', () => {
-        questionsSection.style.display = 'none';
-        questionForm.reset();
-        qEditId.value = '';
-        qFormTitle.textContent = 'افزودن سوال ج
+      // نمایش نتایج کاربران شرکت‌کننده در آزمون (با امکان حذف کاربر یا حذف همه)
+      async function showExamResults(examId, examTitle) {
+        resultsBox.style.display = 'block';
+        resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
+
+        const numericExamId = Number(examId);
+
+        // گرفتن همه نتایج این آزمون
+        const { data: results, error: resErr } = await supabase
+          .from('exam_results')
+          .select('user_id, score, id')
+          .eq('exam_id', numericExamId);
+
+        if (resErr) {
+          resultsBox.innerHTML = 'خطا در دریافت نتایج!';
+          return;
+        }
+        if (!results || !results.length) {
+          resultsBox.innerHTML = 'هنوز هیچ کاربری در این آزمون شرکت نکرده است!';
+          return;
+        }
+
+        // گرفتن نام کاربری‌ها
+        const { data: users, error: uErr } = await supabase
+          .from('users')
+          .select('id, username');
+        if (uErr) {
+          resultsBox.innerHTML = 'خطا در دریافت کاربران!';
+          return;
+        }
+
+        // محاسبه تعداد دفعات شرکت و بالاترین نمره و لیست رکوردها
+        const userStats = {};
+        results.forEach(res => {
+          if (!userStats[res.user_id]) {
+            userStats[res.user_id] = { count: 0, max: 0, ids: [] };
+          }
+          userStats[res.user_id].count++;
+          userStats[res.user_id].max = Math.max(userStats[res.user_id].max, res.score);
+          userStats[res.user_id].ids.push(res.id);
+        });
+
+        // ساخت جدول خروجی با دکمه حذف
+        let html = `
+          <button id="deleteAllUsers" style="background:#c0392b;color:#fff;margin-bottom:18px;padding:8px 22px;border-radius:6px;cursor:pointer;">حذف همه کاربران این آزمون</button>
+          <table>
+            <tr>
+              <th>نام کاربری</th>
+              <th>تعداد دفعات شرکت</th>
+              <th>بالاترین نمره</th>
+              <th>عملیات</th>
+            </tr>`;
+        Object.entries(userStats).forEach(([userId, stats]) => {
+          const user = users.find(u => u.id == userId);
+          html += `<tr>
+            <td>${user ? user.username : userId}</td>
+            <td>${stats.count}</td>
+            <td>${stats.max}</td>
+            <td>
+              <button class="delete-user-exam" data-userid="${userId}" data-examid="${numericExamId}">حذف کاربر</button>
+            </td>
+          </tr>`;
+        });
+        html += `</table>`;
+        resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3>${html}`;
+        resultsBox.scrollIntoView({ behavior: 'smooth' });
+
+        // رویداد حذف یک کاربر از آزمون
+        document.querySelectorAll('.delete-user-exam').forEach(btn => {
+          btn.onclick = async function() {
+            if (!confirm('آیا از حذف این کاربر از لیست آزمون مطمئن هستید؟')) return;
+            const userId = btn.dataset.userid;
+            const examId = btn.dataset.examid;
+            const { error } = await supabase
+              .from('exam_results')
+              .delete()
+              .eq('exam_id', examId)
+              .eq('user_id', userId);
+            if (error) {
+              alert('خطا در حذف!');
+            } else {
+              alert('کاربر از لیست آزمون حذف شد.');
+              await showExamResults(examId, examTitle);
+            }
+          };
+        });
+
+        // رویداد حذف همه کاربران آزمون
+        document.getElementById('deleteAllUsers').onclick = async function() {
+          if (!confirm('آیا از حذف همه کاربران این آزمون مطمئن هستید؟')) return;
+          const { error } = await supabase
+            .from('exam_results')
+            .delete()
+            .eq('exam_id', numericExamId);
+          if (error) {
+            alert('خطا در حذف همه!');
+          } else {
+            alert('همه کاربران این آزمون حذف شدند.');
+            await showExamResults(numericExamId, examTitle);
+          }
+        };
+      }
+
+      // مدیریت سوالات هر آزمون
+      let currentExamId = null;
+      async function openQuestionsSection(examId, examTitle) {
+        currentExamId = examId;
+        questionsExamTitle.textContent = examTitle;
+        questionsSection.style.display = 'block';
+        await loadQuestionsList();
+        window.scrollTo({ top: questionsSection.offsetTop - 20, behavior: 'smooth' });
+      }
       closeQuestions.addEventListener('click', () => {
         questionsSection.style.display = 'none';
         questionForm.reset();
@@ -692,17 +444,47 @@
         hideQMessages();
       });
 
+      async function loadQuestionsList() {
+        hideQMessages();
+        questionsList.innerHTML = '<tr><td colspan="8">در حال بارگذاری سوالات...</td></tr>';
+        const { data, error } = await supabase
+          .from('questions')
+          .select('*')
+          .eq('exam_id', currentExamId)
+          .order('id');
+        if (error) {
+          questionsList.innerHTML = '<tr><td colspan="8">خطا در دریافت سوالات</td></tr>';
+        } else if (!data.length) {
+          questionsList.innerHTML = '<tr><td colspan="8">سوالی ثبت نشده است</td></tr>';
+        } else {
+          questionsList.innerHTML = data.map(q => `
+            <tr>
+              <td>${q.id}</td>
+              <td>${q.question_text}</td>
+              <td>${q.option1}</td>
+              <td>${q.option2}</td>
+              <td>${q.option3}</td>
+              <td>${q.option4}</td>
+              <td>${q.correct_option}</td>
+              <td>
+                <button class="edit-q-btn" data-id="${q.id}">ویرایش</button>
+                <button class="delete-q-btn" data-id="${q.id}">حذف</button>
+              </td>
+            </tr>
+          `).join('');
+        }
+      }
+
       questionForm.addEventListener('submit', async e => {
         e.preventDefault();
         hideQMessages();
-        
         const qid = qEditId.value;
-        const qtext = document.getElementById('questionText').value.trim();
-        const op1 = document.getElementById('option1').value.trim();
-        const op2 = document.getElementById('option2').value.trim();
-        const op3 = document.getElementById('option3').value.trim();
-        const op4 = document.getElementById('option4').value.trim();
-        const correct = Number(document.getElementById('correctOption').value);
+        const qtext = questionText.value.trim();
+        const op1 = option1.value.trim();
+        const op2 = option2.value.trim();
+        const op3 = option3.value.trim();
+        const op4 = option4.value.trim();
+        const correct = Number(correctOption.value);
 
         if (!qtext || !op1 || !op2 || !op3 || !op4 || ![1,2,3,4].includes(correct)) {
           showQError('همه فیلدها را کامل و صحیح وارد کنید.');
@@ -718,7 +500,6 @@
             option4: op4,
             correct_option: correct
           }).eq('id', qid);
-          
           if (error) showQError(error.message);
           else showQSuccess('سوال ویرایش شد.');
         } else {
@@ -731,11 +512,9 @@
             option4: op4,
             correct_option: correct
           }]);
-          
           if (error) showQError(error.message);
           else showQSuccess('سوال جدید اضافه شد.');
         }
-
         questionForm.reset();
         qEditId.value = '';
         qFormTitle.textContent = 'افزودن سوال جدید';
@@ -746,30 +525,22 @@
       questionsList.addEventListener('click', async e => {
         const btn = e.target;
         const id = btn.dataset.id;
-        
         if (btn.classList.contains('edit-q-btn')) {
-          const { data, error } = await supabase
-            .from('questions')
-            .select('*')
-            .eq('id', id)
-            .maybeSingle();
-            
+          const { data, error } = await supabase.from('questions').select('*').eq('id', id).maybeSingle();
           if (!data || error) {
             showQError('خطا در دریافت اطلاعات سوال!');
             return;
           }
-          
           qEditId.value = data.id;
-          document.getElementById('questionText').value = data.question_text;
-          document.getElementById('option1').value = data.option1;
-          document.getElementById('option2').value = data.option2;
-          document.getElementById('option3').value = data.option3;
-          document.getElementById('option4').value = data.option4;
-          document.getElementById('correctOption').value = data.correct_option;
+          questionText.value = data.question_text;
+          option1.value = data.option1;
+          option2.value = data.option2;
+          option3.value = data.option3;
+          option4.value = data.option4;
+          correctOption.value = data.correct_option;
           qFormTitle.textContent = 'ویرایش سوال';
           qSubmitBtn.textContent = 'به‌روزرسانی سوال';
         }
-        
         if (btn.classList.contains('delete-q-btn')) {
           if (confirm('آیا از حذف سوال مطمئن هستید؟')) {
             const { error } = await supabase.from('questions').delete().eq('id', id);
@@ -780,7 +551,6 @@
         }
       });
 
-      // بارگذاری اولیه آزمون‌ها
       await loadExams();
     });
   </script>
