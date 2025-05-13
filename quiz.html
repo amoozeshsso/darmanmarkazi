@@ -29,9 +29,6 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // تعداد مجاز شرکت در آزمون
-    const MAX_ATTEMPTS = 3;
-
     // دریافت userId و examId
     const userId = sessionStorage.getItem('userId');
     const urlParams = new URLSearchParams(window.location.search);
@@ -49,14 +46,30 @@
     }
     if (!examId) {
       alert('آزمون مشخص نیست! لطفاً از صفحه لیست آزمون‌ها وارد شوید.');
-      window.location.href = 'exams-list.html'; // یا صفحه مناسب
+      window.location.href = 'exams-list.html';
     }
+
+    let MAX_ATTEMPTS = 1; // مقدار پیش‌فرض، بعداً از دیتابیس خوانده می‌شود
 
     // بارگذاری آزمون و سوالات
     async function loadQuiz() {
       errorDiv.textContent = '';
       resultDiv.textContent = '';
       quizForm.innerHTML = 'در حال بارگذاری سوالات...';
+
+      // دریافت عنوان آزمون و max_attempts
+      const { data: examData, error: examErr } = await supabase
+        .from('exams')
+        .select('title, max_attempts')
+        .eq('id', examId)
+        .maybeSingle();
+      if (examErr || !examData) {
+        quizForm.innerHTML = '';
+        errorDiv.textContent = 'آزمون یافت نشد!';
+        return;
+      }
+      examTitle.textContent = examData.title;
+      MAX_ATTEMPTS = examData.max_attempts || 1;
 
       // بررسی تعداد دفعات شرکت کاربر در این آزمون
       const { data: attempts, error: attErr } = await supabase
@@ -76,19 +89,6 @@
         resultDiv.innerHTML = `<b>شما بیش از ${MAX_ATTEMPTS} بار در این آزمون شرکت کرده‌اید و مجاز به شرکت مجدد نیستید.</b>`;
         return;
       }
-
-      // دریافت عنوان آزمون
-      const { data: examData, error: examErr } = await supabase
-        .from('exams')
-        .select('title')
-        .eq('id', examId)
-        .maybeSingle();
-      if (examErr || !examData) {
-        quizForm.innerHTML = '';
-        errorDiv.textContent = 'آزمون یافت نشد!';
-        return;
-      }
-      examTitle.textContent = examData.title;
 
       // دریافت سوالات آزمون
       const { data: questions, error: qErr } = await supabase
