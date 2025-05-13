@@ -10,7 +10,6 @@
   <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
-  <!-- SheetJS برای خروجی xlsx -->
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <style>
     body { font-family: Tahoma; background: #f8f8f8; margin: 0; padding: 20px; }
@@ -94,8 +93,7 @@
     <div id="resultsBox" style="display:none;"></div>
   </div>
   <script>
-    // راه‌اندازی تقویم شمسی بازشو فقط با انتخاب (تایپ غیرفعال)
-    $(function() {
+    $(document).ready(function() {
       $('.jalali-picker').persianDatepicker({
         format: 'YYYY/MM/DD HH:mm',
         timePicker: { enabled: true },
@@ -134,7 +132,6 @@
       const showSuccess = msg => { okEl.textContent = msg; okEl.style.display = 'block'; errEl.style.display = 'none'; };
       const hideMessages = () => { errEl.style.display = okEl.style.display = 'none'; };
 
-      // تبدیل تاریخ میلادی به شمسی برای نمایش
       function toJalaliDatetime(dt) {
         if (!dt) return '';
         try {
@@ -143,8 +140,6 @@
           return '';
         }
       }
-
-      // تبدیل تاریخ شمسی به میلادی برای ذخیره
       function jalaliToIso(jalaliStr) {
         if (!jalaliStr) return null;
         try {
@@ -209,7 +204,6 @@
 
         showLoading(true);
 
-        // چک تکراری نبودن عنوان آزمون
         const { data: exists } = await supabase.from('exams').select('id').eq('title', title);
         if (exists && exists.length && (!id || exists[0].id != id)) {
           showError('آزمونی با این عنوان قبلاً ثبت شده است!');
@@ -291,7 +285,7 @@
         XLSX.writeFile(wb, filename);
       }
 
-      // نمایش نتایج آزمون و دکمه خروجی اکسل و حذف کاربران
+      // نمایش نتایج آزمون و دکمه خروجی اکسل و حذف کاربران (فقط بیشترین نمره هر کاربر)
       async function showExamResults(examId, examTitle) {
         resultsBox.style.display = 'block';
         resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
@@ -322,12 +316,20 @@
           return;
         }
 
+        // فقط بیشترین نمره هر کاربر
+        const userMaxScore = {};
+        results.forEach(res => {
+          if (!userMaxScore[res.user_id] || res.score > userMaxScore[res.user_id].score) {
+            userMaxScore[res.user_id] = { score: res.score, id: res.id };
+          }
+        });
+
         // ساخت آرایه خروجی برای اکسل
         const xlsxRows = [];
         xlsxRows.push(['نام کاربری', 'نمره']);
-        results.forEach(res => {
-          const user = users.find(u => u.id == res.user_id);
-          xlsxRows.push([user ? user.username : res.user_id, res.score]);
+        Object.entries(userMaxScore).forEach(([userId, info]) => {
+          const user = users.find(u => u.id == userId);
+          xlsxRows.push([user ? user.username : userId, info.score]);
         });
 
         // ساخت جدول نمایش و دکمه خروجی اکسل و حذف
@@ -337,16 +339,16 @@
           <table>
             <tr>
               <th>نام کاربری</th>
-              <th>نمره</th>
+              <th>بیشترین نمره</th>
               <th>عملیات</th>
             </tr>`;
-        results.forEach(res => {
-          const user = users.find(u => u.id == res.user_id);
+        Object.entries(userMaxScore).forEach(([userId, info]) => {
+          const user = users.find(u => u.id == userId);
           html += `<tr>
-            <td>${user ? user.username : res.user_id}</td>
-            <td>${res.score}</td>
+            <td>${user ? user.username : userId}</td>
+            <td>${info.score}</td>
             <td>
-              <button class="delete-user-exam" data-userid="${res.user_id}" data-examid="${numericExamId}" style="background:#c0392b;color:#fff;">حذف کاربر</button>
+              <button class="delete-user-exam" data-userid="${userId}" data-examid="${numericExamId}" style="background:#c0392b;color:#fff;">حذف کاربر</button>
             </td>
           </tr>`;
         });
