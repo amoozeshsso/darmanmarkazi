@@ -129,7 +129,22 @@
 
       // تبدیل تاریخ میلادی به شمسی برای نمایش
       function toJalaliDatetime(dt) {
-        return new PersianDate(new Date(dt)).format('YYYY/MM/DD HH:mm');
+        if (!dt) return '';
+        try {
+          return new persianDate(new Date(dt)).format('YYYY/MM/DD HH:mm');
+        } catch (e) {
+          return '';
+        }
+      }
+
+      // تبدیل تاریخ شمسی به میلادی برای ذخیره
+      function jalaliToIso(jalaliStr) {
+        if (!jalaliStr) return null;
+        try {
+          return new persianDate().parse('YYYY/MM/DD HH:mm', jalaliStr).toDate().toISOString();
+        } catch (e) {
+          return null;
+        }
       }
 
       // بارگذاری لیست آزمون‌ها
@@ -176,9 +191,8 @@
         const title = document.getElementById('title').value.trim();
         const maxAttempts = parseInt(maxAttemptsInput.value) || 1;
         const duration = parseInt(durationInput.value) || 20;
-        // تبدیل تاریخ شمسی به میلادی ISO
-        const startAt = startAtInput.value ? new PersianDate(startAtInput.value, 'YYYY/MM/DD HH:mm').toDate().toISOString() : null;
-        const endAt = endAtInput.value ? new PersianDate(endAtInput.value, 'YYYY/MM/DD HH:mm').toDate().toISOString() : null;
+        const startAt = jalaliToIso(startAtInput.value);
+        const endAt = jalaliToIso(endAtInput.value);
 
         if (!title) return showError('عنوان آزمون را وارد کنید.');
         if (maxAttempts < 1) return showError('تعداد دفعات مجاز باید حداقل ۱ باشد.');
