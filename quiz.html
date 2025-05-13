@@ -159,6 +159,9 @@
       // محاسبه نمره نهایی (مثلاً از 100)
       const finalScore = Math.round((correct / questions.length) * 100);
 
+      // نمایش مقادیر برای عیب‌یابی
+      console.log('userId:', userId, 'examId:', examId, 'score:', finalScore);
+
       // ثبت نتیجه در exam_results
       const { error: insErr } = await supabase
         .from('exam_results')
@@ -166,6 +169,7 @@
 
       if (insErr) {
         errorDiv.textContent = 'خطا در ثبت نتیجه آزمون!';
+        console.error('Supabase insert error:', insErr);
         return;
       }
 
