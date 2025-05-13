@@ -11,6 +11,7 @@
     h1 { text-align: center; color: #333; }
     .exam-item { background: #f3f7fa; margin: 15px 0; padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
     .exam-title { font-size: 18px; font-weight: bold; color: #222; }
+    .exam-meta { font-size: 13px; color: #888; margin-right: 10px; }
     .enter-btn { background: #4e54c8; color: #fff; border: none; padding: 8px 22px; border-radius: 6px; font-size: 15px; cursor: pointer; }
     #error { margin-top: 20px; color: #c0392b; text-align: center; }
   </style>
@@ -28,8 +29,6 @@
 
     const examsList = document.getElementById('examsList');
     const errorDiv = document.getElementById('error');
-
-    // گرفتن userId کاربر لاگین‌شده
     const userId = sessionStorage.getItem('userId');
     if (!userId) {
       alert('لطفاً ابتدا وارد شوید.');
@@ -40,10 +39,10 @@
       examsList.innerHTML = 'در حال بارگذاری...';
       errorDiv.textContent = '';
 
-      // دریافت همه آزمون‌های فعال
+      // دریافت همه آزمون‌های فعال به همراه max_attempts
       const { data: exams, error: examsError } = await supabase
         .from('exams')
-        .select('*')
+        .select('id, title, max_attempts, active')
         .eq('active', true)
         .order('id', { ascending: false });
 
@@ -57,10 +56,10 @@
         return;
       }
 
-      // دریافت لیست آزمون‌هایی که کاربر قبلاً شرکت کرده است
+      // دریافت تعداد دفعات شرکت کاربر در هر آزمون
       const { data: results, error: resultsError } = await supabase
         .from('exam_results')
-        .select('exam_id')
+        .select('exam_id, id')
         .eq('user_id', userId);
 
       if (resultsError) {
@@ -69,23 +68,36 @@
         return;
       }
 
-      // استخراج شناسه آزمون‌هایی که کاربر قبلاً شرکت کرده
-      const attemptedExamIds = results.map(r => r.exam_id);
+      // شمارش تعداد شرکت در هر آزمون
+      const attemptsMap = {};
+      results.forEach(r => {
+        attemptsMap[r.exam_id] = (attemptsMap[r.exam_id] || 0) + 1;
+      });
 
-      // فیلتر آزمون‌هایی که کاربر هنوز شرکت نکرده
-      const availableExams = exams.filter(exam => !attemptedExamIds.includes(exam.id));
+      // فقط آزمون‌هایی را نمایش بده که کاربر هنوز به سقف مجاز نرسیده است
+      const availableExams = exams.filter(exam => {
+        const max = exam.max_attempts || 1;
+        const count = attemptsMap[exam.id] || 0;
+        return count < max;
+      });
 
       if (!availableExams.length) {
-        examsList.innerHTML = '<div>شما در همه آزمون‌های فعال شرکت کرده‌اید.</div>';
+        examsList.innerHTML = '<div>شما در همه آزمون‌های فعال به سقف مجاز شرکت رسیده‌اید.</div>';
         return;
       }
 
-      examsList.innerHTML = availableExams.map(exam => `
-        <div class="exam-item">
-          <span class="exam-title">${exam.title}</span>
-          <button class="enter-btn" onclick="enterExam(${exam.id})">شروع آزمون</button>
-        </div>
-      `).join('');
+      examsList.innerHTML = availableExams.map(exam => {
+        const max = exam.max_attempts || 1;
+        const count = attemptsMap[exam.id] || 0;
+        return `
+          <div class="exam-item">
+            <span class="exam-title">${exam.title}
+              <span class="exam-meta">(تعداد مجاز: ${max} - شرکت کرده: ${count})</span>
+            </span>
+            <button class="enter-btn" onclick="enterExam(${exam.id})">شروع آزمون</button>
+          </div>
+        `;
+      }).join('');
     }
 
     window.enterExam = function(examId) {
