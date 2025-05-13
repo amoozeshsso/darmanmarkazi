@@ -37,6 +37,8 @@
     #resultsBox th { background: #f39c12; }
     #questionsSection { margin-top: 40px; }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 </head>
 <body>
   <div class="container">
@@ -552,6 +554,63 @@
       });
 
       await loadExams();
+      // نمایش نتایج آزمون و دکمه خروجی اکسل xlsx
+async function showExamResults(examId, examTitle) {
+  resultsBox.style.display = 'block';
+  resultsBox.innerHTML = '<p>در حال دریافت نتایج...</p>';
+  // فرض: جدول نتایج شما در supabase با نام 'exam_results' و ستون‌های 'username' و 'score'
+  const { data, error } = await supabase
+    .from('exam_results')
+    .select('username,score')
+    .eq('exam_id', examId);
+
+  if (error) {
+    resultsBox.innerHTML = `<p style="color:red;">خطا در دریافت نتایج: ${error.message}</p>`;
+    return;
+  }
+  if (!data || !data.length) {
+    resultsBox.innerHTML = '<p>نتیجه‌ای یافت نشد.</p>';
+    return;
+  }
+
+  // ساخت جدول و دکمه خروجی اکسل
+  let html = `
+    <div style="text-align:left; margin-bottom:10px;">
+      <button id="exportExcelBtn" style="background: #16a085; color: #fff; padding: 8px 18px; border-radius: 5px;">دانلود اکسل کاربران</button>
+    </div>
+    <h3>نتایج آزمون: ${examTitle}</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>نام کاربری</th>
+          <th>نمره</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map(row => `<tr><td>${row.username}</td><td>${row.score}</td></tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+  resultsBox.innerHTML = html;
+
+  // رویداد دکمه خروجی اکسل xlsx
+  document.getElementById('exportExcelBtn').onclick = function() {
+    exportToExcel(data);
+  };
+}
+
+// خروجی اکسل xlsx با SheetJS
+function exportToExcel(rows) {
+  const ws_data = [
+    ["نام کاربری", "نمره"],
+    ...rows.map(row => [row.username, row.score])
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "نتایج آزمون");
+  XLSX.writeFile(wb, "exam_users.xlsx");
+}
+
     });
   </script>
 </body>
