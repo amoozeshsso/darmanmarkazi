@@ -356,8 +356,17 @@
     return;
   }
 
+  // فقط بیشترین نمره هر کاربر را نگه دار
+  const bestResultsMap = {};
+  results.forEach(res => {
+    if (!bestResultsMap[res.user_id] || res.score > bestResultsMap[res.user_id].score) {
+      bestResultsMap[res.user_id] = res;
+    }
+  });
+  const bestResults = Object.values(bestResultsMap);
+
   // ساخت آرایه نهایی شامل نام کاربری و نمره
-  const finalResults = results.map(res => {
+  const finalResults = bestResults.map(res => {
     const user = users.find(u => u.id === res.user_id);
     return {
       username: user ? user.username : 'نامشخص',
@@ -409,24 +418,6 @@
   };
 }
 
-
-      // مدیریت سوالات هر آزمون
-      let currentExamId = null;
-      async function openQuestionsSection(examId, examTitle) {
-        currentExamId = examId;
-        questionsExamTitle.textContent = examTitle;
-        questionsSection.style.display = 'block';
-        await loadQuestionsList();
-        window.scrollTo({ top: questionsSection.offsetTop - 20, behavior: 'smooth' });
-      }
-      closeQuestions.addEventListener('click', () => {
-        questionsSection.style.display = 'none';
-        questionForm.reset();
-        qEditId.value = '';
-        qFormTitle.textContent = 'افزودن سوال جدید';
-        qSubmitBtn.textContent = 'ذخیره سوال';
-        hideQMessages();
-      });
 
       async function loadQuestionsList() {
         hideQMessages();
