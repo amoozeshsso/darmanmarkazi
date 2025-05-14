@@ -327,106 +327,88 @@
 
       // نمایش نتایج کاربران شرکت‌کننده در آزمون (با امکان حذف کاربر یا حذف همه)
       async function showExamResults(examId, examTitle) {
-        resultsBox.style.display = 'block';
-        resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
+  resultsBox.style.display = 'block';
+  resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
 
-        const numericExamId = Number(examId);
+  const numericExamId = Number(examId);
 
-        // گرفتن همه نتایج این آزمون
-        const { data: results, error: resErr } = await supabase
-          .from('exam_results')
-          .select('user_id, score, id')
-          .eq('exam_id', numericExamId);
+  // گرفتن همه نتایج این آزمون
+  const { data: results, error: resErr } = await supabase
+    .from('exam_results')
+    .select('user_id, score, id')
+    .eq('exam_id', numericExamId);
 
-        if (resErr) {
-          resultsBox.innerHTML = 'خطا در دریافت نتایج!';
-          return;
-        }
-        if (!results || !results.length) {
-          resultsBox.innerHTML = 'هنوز هیچ کاربری در این آزمون شرکت نکرده است!';
-          return;
-        }
+  if (resErr) {
+    resultsBox.innerHTML = 'خطا در دریافت نتایج!';
+    return;
+  }
+  if (!results || !results.length) {
+    resultsBox.innerHTML = 'هنوز هیچ کاربری در این آزمون شرکت نکرده است!';
+    return;
+  }
 
-        // گرفتن نام کاربری‌ها
-        const { data: users, error: uErr } = await supabase
-          .from('users')
-          .select('id, username');
-        if (uErr) {
-          resultsBox.innerHTML = 'خطا در دریافت کاربران!';
-          return;
-        }
+  // گرفتن نام کاربری‌ها
+  const { data: users, error: uErr } = await supabase
+    .from('users')
+    .select('id, username');
+  if (uErr) {
+    resultsBox.innerHTML = 'خطا در دریافت کاربران!';
+    return;
+  }
 
-        // محاسبه تعداد دفعات شرکت و بالاترین نمره و لیست رکوردها
-        const userStats = {};
-        results.forEach(res => {
-          if (!userStats[res.user_id]) {
-            userStats[res.user_id] = { count: 0, max: 0, ids: [] };
-          }
-          userStats[res.user_id].count++;
-          userStats[res.user_id].max = Math.max(userStats[res.user_id].max, res.score);
-          userStats[res.user_id].ids.push(res.id);
-        });
+  // ساخت آرایه نهایی شامل نام کاربری و نمره
+  const finalResults = results.map(res => {
+    const user = users.find(u => u.id === res.user_id);
+    return {
+      username: user ? user.username : 'نامشخص',
+      score: res.score
+    };
+  });
 
-        // ساخت جدول خروجی با دکمه حذف
-        let html = `
-          <button id="deleteAllUsers" style="background:#c0392b;color:#fff;margin-bottom:18px;padding:8px 22px;border-radius:6px;cursor:pointer;">حذف همه کاربران این آزمون</button>
-          <table>
-            <tr>
-              <th>نام کاربری</th>
-              <th>تعداد دفعات شرکت</th>
-              <th>بالاترین نمره</th>
-              <th>عملیات</th>
-            </tr>`;
-        Object.entries(userStats).forEach(([userId, stats]) => {
-          const user = users.find(u => u.id == userId);
-          html += `<tr>
-            <td>${user ? user.username : userId}</td>
-            <td>${stats.count}</td>
-            <td>${stats.max}</td>
-            <td>
-              <button class="delete-user-exam" data-userid="${userId}" data-examid="${numericExamId}">حذف کاربر</button>
-            </td>
-          </tr>`;
-        });
-        html += `</table>`;
-        resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3>${html}`;
-        resultsBox.scrollIntoView({ behavior: 'smooth' });
+  // ساخت جدول نتایج
+  let table = `
+    <table>
+      <thead>
+        <tr>
+          <th>ردیف</th>
+          <th>نام کاربری</th>
+          <th>نمره</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${finalResults.map((r, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${r.username}</td>
+            <td>${r.score}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    <button id="exportExcelBtn" style="margin-top:18px;background:#27ae60;color:#fff;padding:8px 22px;border-radius:6px;font-size:15px;">دانلود اکسل</button>
+    <button id="closeResultsBtn" style="margin-top:18px;background:#b2bec3;color:#222;padding:8px 22px;border-radius:6px;font-size:15px;margin-right:8px;">بستن</button>
+  `;
+  resultsBox.innerHTML = table;
 
-        // رویداد حذف یک کاربر از آزمون
-        document.querySelectorAll('.delete-user-exam').forEach(btn => {
-          btn.onclick = async function() {
-            if (!confirm('آیا از حذف این کاربر از لیست آزمون مطمئن هستید؟')) return;
-            const userId = btn.dataset.userid;
-            const examId = btn.dataset.examid;
-            const { error } = await supabase
-              .from('exam_results')
-              .delete()
-              .eq('exam_id', examId)
-              .eq('user_id', userId);
-            if (error) {
-              alert('خطا در حذف!');
-            } else {
-              alert('کاربر از لیست آزمون حذف شد.');
-              await showExamResults(examId, examTitle);
-            }
-          };
-        });
+  // دکمه بستن نتایج
+  document.getElementById('closeResultsBtn').onclick = () => {
+    resultsBox.style.display = 'none';
+    resultsBox.innerHTML = '';
+  };
 
-        // رویداد حذف همه کاربران آزمون
-        document.getElementById('deleteAllUsers').onclick = async function() {
-          if (!confirm('آیا از حذف همه کاربران این آزمون مطمئن هستید؟')) return;
-          const { error } = await supabase
-            .from('exam_results')
-            .delete()
-            .eq('exam_id', numericExamId);
-          if (error) {
-            alert('خطا در حذف همه!');
-          } else {
-            alert('همه کاربران این آزمون حذف شدند.');
-            await showExamResults(numericExamId, examTitle);
-          }
-        };
-      }
+  // دکمه دانلود اکسل
+  document.getElementById('exportExcelBtn').onclick = function() {
+    const exportData = finalResults.map(item => ({
+      "نام کاربری": item.username,
+      "نمره": item.score
+    }));
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Results");
+    XLSX.writeFile(wb, (examTitle || "results") + ".xlsx");
+  };
+}
+
 
       // مدیریت سوالات هر آزمون
       let currentExamId = null;
@@ -559,69 +541,40 @@
 async function showExamResults(examId, examTitle) {
   resultsBox.style.display = 'block';
   resultsBox.innerHTML = '<p>در حال دریافت نتایج...</p>';
-
-  // دریافت نتایج از جدول exam_results
-  const { data: results, error } = await supabase
+  // فرض: جدول نتایج شما دارای ستون‌های username و score است
+  const { data, error } = await supabase
     .from('exam_results')
-    .select('username, score')
+    .select('username,score')
     .eq('exam_id', examId);
 
   if (error) {
-    resultsBox.innerHTML = '<div style="color:#c0392b;">خطا در دریافت نتایج آزمون!</div>';
+    resultsBox.innerHTML = `<p style="color:red;">خطا در دریافت نتایج: ${error.message}</p>`;
+    return;
+  }
+  if (!data || !data.length) {
+    resultsBox.innerHTML = '<p>نتیجه‌ای یافت نشد.</p>';
     return;
   }
 
-  if (!results || !results.length) {
-    resultsBox.innerHTML = '<div style="color:#888;">هیچ نتیجه‌ای برای این آزمون ثبت نشده است.</div>';
-    return;
-  }
-
-  // ساخت جدول نتایج
-  let table = `
+  // ساخت جدول و دکمه خروجی اکسل
+  let html = `
+    <div style="text-align:left; margin-bottom:10px;">
+      <button id="exportExcelBtn" style="background: #16a085; color: #fff; padding: 8px 18px; border-radius: 5px;">دانلود اکسل کاربران</button>
+    </div>
     <h3>نتایج آزمون: ${examTitle}</h3>
     <table>
       <thead>
         <tr>
-          <th>ردیف</th>
           <th>نام کاربری</th>
           <th>نمره</th>
         </tr>
       </thead>
       <tbody>
-        ${results.map((r, i) => `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${r.username}</td>
-            <td>${r.score}</td>
-          </tr>
-        `).join('')}
+        ${data.map(row => `<tr><td>${row.username}</td><td>${row.score}</td></tr>`).join('')}
       </tbody>
     </table>
-    <button id="exportExcelBtn" style="margin-top:18px;background:#27ae60;color:#fff;padding:8px 22px;border-radius:6px;font-size:15px;">دانلود اکسل</button>
-    <button id="closeResultsBtn" style="margin-top:18px;background:#b2bec3;color:#222;padding:8px 22px;border-radius:6px;font-size:15px;margin-right:8px;">بستن</button>
   `;
-  resultsBox.innerHTML = table;
-
-  // دکمه بستن نتایج
-  document.getElementById('closeResultsBtn').onclick = () => {
-    resultsBox.style.display = 'none';
-    resultsBox.innerHTML = '';
-  };
-
-  // دکمه دانلود اکسل
-  document.getElementById('exportExcelBtn').onclick = function() {
-    // فقط نام کاربری و نمره را خروجی بگیر
-    const exportData = results.map(item => ({
-      "نام کاربری": item.username,
-      "نمره": item.score
-    }));
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Results");
-    XLSX.writeFile(wb, (examTitle || "results") + ".xlsx");
-  };
-}
-
+  resultsBox.innerHTML = html;
 
   // رویداد دکمه خروجی اکسل xlsx
   document.getElementById('exportExcelBtn').onclick = function() {
