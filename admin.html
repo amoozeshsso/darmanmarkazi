@@ -66,24 +66,6 @@
     <div id="loading">
       <div class="spinner"></div>
       <p>در حال بارگذاری...</p>
-       <button id="deleteAllUsersBtn" class="delete-btn" style="width:100%;margin-bottom:15px;">
-    حذف همه کاربران (به جز ادمین‌ها)
-  </button>
-
-  <table>
-    <thead>
-      <tr>
-        <th>شناسه</th>
-        <th>نام کاربری</th>
-        <th>نقش</th>
-        <th class="action-column">عملیات</th>
-      </tr>
-    </thead>
-    <tbody id="userList">
-      <tr><td colspan="4">در حال بارگذاری کاربران...</td></tr>
-    </tbody>
-  </table>
-</div>
     </div>
     <table>
       <thead>
@@ -264,21 +246,6 @@
           }
         }
       });
-      document.getElementById('deleteAllUsersBtn').addEventListener('click', async () => {
-  if (!confirm('آیا مطمئن هستید که می‌خواهید همه کاربران (به جز ادمین‌ها) را حذف کنید؟')) return;
-  showLoading(true);
-  hideMessages();
-  try {
-    const { error } = await supabase.from('users').delete().neq('role', 'admin');
-    if (error) showError('خطا در حذف کاربران: ' + error.message);
-    else showSuccess('همه کاربران غیر از ادمین‌ها با موفقیت حذف شدند');
-    await loadUsers();
-  } catch (err) {
-    showError('خطا در حذف کاربران');
-  }
-  showLoading(false);
-});
-
 
       await loadUsers();
     });
