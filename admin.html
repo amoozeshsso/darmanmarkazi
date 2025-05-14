@@ -134,12 +134,13 @@
   showLoading(true);
 
   try {
+    // خواندن داده‌های اکسل
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data, { type: 'array' });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-    // فرض: ردیف اول عنوان است، ردیف‌های بعدی داده‌ها
+    // استخراج کاربران از اکسل
     const users = [];
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
@@ -155,17 +156,38 @@
       return;
     }
 
-    // درج گروهی فقط کاربران user
-    const { error } = await supabase.from('users').insert(users);
+    // گرفتن لیست نام کاربری‌های موجود
+    const { data: existing, error: fetchError } = await supabase
+      .from('users')
+      .select('username');
+
+    if (fetchError) {
+      showError('خطا در دریافت کاربران موجود: ' + fetchError.message);
+      showLoading(false);
+      return;
+    }
+
+    const existingUsernames = new Set(existing.map(u => u.username));
+    // فیلتر کردن کاربران غیرتکراری
+    const newUsers = users.filter(u => !existingUsernames.has(u.username));
+
+    if (!newUsers.length) {
+      showError('همه کاربران فایل اکسل تکراری هستند و هیچ کاربری جدیدی اضافه نشد.');
+      showLoading(false);
+      return;
+    }
+
+    // درج کاربران غیرتکراری
+    const { error } = await supabase.from('users').insert(newUsers);
     if (error) showError('خطا در وارد کردن کاربران: ' + error.message);
-    else showSuccess('کاربران با موفقیت وارد شدند');
+    else showSuccess(`${newUsers.length} کاربر جدید با موفقیت وارد شد`);
     await loadUsers();
   } catch (err) {
     showError('خطا در خواندن فایل اکسل');
   }
   showLoading(false);
 });
-// --- پایان کد ایمپورت اکسل ---
+
       form.addEventListener('submit', async e => {
         e.preventDefault();
         hideMessages();
