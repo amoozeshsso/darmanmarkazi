@@ -7,6 +7,8 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <style>
     body { font-family: Tahoma; background: #f8f8f8; margin: 0; padding: 20px; }
@@ -38,6 +40,10 @@
   <div class="container">
     <h1>مدیریت کاربران</h1>
     <div id="formBox">
+      <label for="excelFile">بارگذاری فایل اکسل کاربران (فقط کاربر):</label>
+<input type="file" id="excelFile" accept=".xlsx,.xls" />
+<button type="button" id="importBtn" class="add-btn">وارد کردن کاربران</button>
+
       <h3 id="formTitle">افزودن کاربر جدید</h3>
       <form id="userForm">
         <input type="hidden" id="editId" />
@@ -167,6 +173,51 @@
             const { error } = await supabase.from('users').delete().eq('id', id);
             if (error) showError(error.message);
             else showSuccess('کاربر حذف شد');
+            // --- شروع کد ایمپورت اکسل ---
+document.getElementById('importBtn').addEventListener('click', async () => {
+  hideMessages();
+  const fileInput = document.getElementById('excelFile');
+  const file = fileInput.files[0];
+  if (!file) {
+    showError('لطفاً یک فایل اکسل انتخاب کنید');
+    return;
+  }
+  showLoading(true);
+
+  try {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+    // فرض: ردیف اول عنوان است، ردیف‌های بعدی داده‌ها
+    const users = [];
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const username = row[0]?.toString().trim();
+      const password = row[1]?.toString();
+      if (username && password) {
+        users.push({ username, password, role: 'user' });
+      }
+    }
+    if (!users.length) {
+      showError('هیچ کاربری برای وارد کردن یافت نشد');
+      showLoading(false);
+      return;
+    }
+
+    // درج گروهی فقط کاربران user
+    const { error } = await supabase.from('users').insert(users);
+    if (error) showError('خطا در وارد کردن کاربران: ' + error.message);
+    else showSuccess('کاربران با موفقیت وارد شدند');
+    await loadUsers();
+  } catch (err) {
+    showError('خطا در خواندن فایل اکسل');
+  }
+  showLoading(false);
+});
+// --- پایان کد ایمپورت اکسل ---
+
             await loadUsers();
             showLoading(false);
           }
