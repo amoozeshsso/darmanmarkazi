@@ -330,11 +330,13 @@
   resultsBox.style.display = 'block';
   resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
 
+  const numericExamId = Number(examId);
+
   // گرفتن همه نتایج این آزمون
   const { data: results, error: resErr } = await supabase
     .from('exam_results')
-    .select('user_id, score')
-    .eq('exam_id', Number(examId));
+    .select('user_id, score, id')
+    .eq('exam_id', numericExamId);
 
   if (resErr) {
     resultsBox.innerHTML = 'خطا در دریافت نتایج!';
@@ -354,23 +356,41 @@
     return;
   }
 
-  // ساخت آرایه نهایی شامل نام کاربری و نمره
-  const finalResults = results.map(res => {
-    const user = users.find(u => u.id === res.user_id);
+  // ساخت آرایه نهایی: بیشترین نمره و تعداد دفعات شرکت هر کاربر
+  const userResultsMap = {};
+  results.forEach(res => {
+    if (!userResultsMap[res.user_id]) {
+      userResultsMap[res.user_id] = { maxScore: res.score, count: 1, id: res.id };
+    } else {
+      userResultsMap[res.user_id].count += 1;
+      if (res.score > userResultsMap[res.user_id].maxScore) {
+        userResultsMap[res.user_id].maxScore = res.score;
+        userResultsMap[res.user_id].id = res.id;
+      }
+    }
+  });
+
+  const finalResults = Object.entries(userResultsMap).map(([user_id, data]) => {
+    const user = users.find(u => u.id == user_id);
     return {
+      user_id,
       username: user ? user.username : 'نامشخص',
-      score: res.score
+      maxScore: data.maxScore,
+      count: data.count,
+      result_id: data.id
     };
   });
 
-  // ساخت جدول نتایج
+  // ساخت جدول نتایج با دکمه حذف تکی
   let table = `
     <table>
       <thead>
         <tr>
           <th>ردیف</th>
           <th>نام کاربری</th>
-          <th>نمره</th>
+          <th>بیشترین نمره</th>
+          <th>تعداد دفعات شرکت</th>
+          <th>عملیات</th>
         </tr>
       </thead>
       <tbody>
@@ -378,12 +398,17 @@
           <tr>
             <td>${i + 1}</td>
             <td>${r.username}</td>
-            <td>${r.score}</td>
+            <td>${r.maxScore}</td>
+            <td>${r.count}</td>
+            <td>
+              <button class="delete-user-result-btn" data-userid="${r.user_id}" data-examid="${examId}">حذف</button>
+            </td>
           </tr>
         `).join('')}
       </tbody>
     </table>
     <button id="exportExcelBtn" style="margin-top:18px;background:#27ae60;color:#fff;padding:8px 22px;border-radius:6px;font-size:15px;">دانلود اکسل</button>
+    <button id="deleteAllResultsBtn" style="margin-top:18px;background:#c0392b;color:#fff;padding:8px 22px;border-radius:6px;font-size:15px;margin-right:8px;">حذف همه نتایج</button>
     <button id="closeResultsBtn" style="margin-top:18px;background:#b2bec3;color:#222;padding:8px 22px;border-radius:6px;font-size:15px;margin-right:8px;">بستن</button>
   `;
   resultsBox.innerHTML = table;
@@ -394,18 +419,51 @@
     resultsBox.innerHTML = '';
   };
 
-  // دکمه دانلود اکسل
+  // دکمه خروجی اکسل فقط با نام کاربری و بیشترین نمره
   document.getElementById('exportExcelBtn').onclick = function() {
     const exportData = finalResults.map(item => ({
       "نام کاربری": item.username,
-      "نمره": item.score
+      "بیشترین نمره": item.maxScore
     }));
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Results");
     XLSX.writeFile(wb, (examTitle || "results") + ".xlsx");
   };
+
+  // دکمه حذف همه نتایج کاربران این آزمون
+  document.getElementById('deleteAllResultsBtn').onclick = async function() {
+    if (confirm('آیا از حذف همه نتایج کاربران این آزمون مطمئن هستید؟')) {
+      const { error } = await supabase.from('exam_results').delete().eq('exam_id', examId);
+      if (error) alert('خطا در حذف!');
+      else {
+        alert('همه نتایج کاربران این آزمون حذف شد.');
+        resultsBox.style.display = 'none';
+        resultsBox.innerHTML = '';
+      }
+    }
+  };
+
+  // حذف تکی نتیجه کاربر (بیشترین نمره)
+  resultsBox.addEventListener('click', async function(e) {
+    if (e.target.classList.contains('delete-user-result-btn')) {
+      const userId = e.target.dataset.userid;
+      if (confirm('آیا از حذف نتیجه این کاربر مطمئن هستید؟')) {
+        // فقط رکوردی که بیشترین نمره را دارد حذف می‌شود
+        const best = results.find(r => r.user_id == userId && r.score == userResultsMap[userId].maxScore);
+        if (best) {
+          const { error } = await supabase.from('exam_results').delete().eq('id', best.id);
+          if (error) alert('خطا در حذف!');
+          else {
+            alert('نتیجه کاربر حذف شد.');
+            await showExamResults(examId, examTitle); // رفرش نتایج
+          }
+        }
+      }
+    }
+  });
 }
+
 
 
       // مدیریت سوالات هر آزمون
