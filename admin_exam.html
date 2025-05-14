@@ -326,7 +326,7 @@
       });
 
       // نمایش نتایج کاربران شرکت‌کننده در آزمون (با امکان حذف کاربر یا حذف همه)
-      async function showExamResults(examId, examTitle) {
+     async function showExamResults(examId, examTitle) {
   resultsBox.style.display = 'block';
   resultsBox.innerHTML = `<h3>نتایج آزمون: ${examTitle}</h3><div class="spinner"></div>`;
 
@@ -413,14 +413,19 @@
   `;
   resultsBox.innerHTML = table;
 
+  // رفع مشکل چندبار اجرا شدن رویداد حذف تکی
+  const oldBox = resultsBox;
+  const newBox = oldBox.cloneNode(true);
+  oldBox.parentNode.replaceChild(newBox, oldBox);
+
   // دکمه بستن نتایج
-  document.getElementById('closeResultsBtn').onclick = () => {
-    resultsBox.style.display = 'none';
-    resultsBox.innerHTML = '';
+  newBox.querySelector('#closeResultsBtn').onclick = () => {
+    newBox.style.display = 'none';
+    newBox.innerHTML = '';
   };
 
   // دکمه خروجی اکسل فقط با نام کاربری و بیشترین نمره
-  document.getElementById('exportExcelBtn').onclick = function() {
+  newBox.querySelector('#exportExcelBtn').onclick = function() {
     const exportData = finalResults.map(item => ({
       "نام کاربری": item.username,
       "بیشترین نمره": item.maxScore
@@ -432,20 +437,20 @@
   };
 
   // دکمه حذف همه نتایج کاربران این آزمون
-  document.getElementById('deleteAllResultsBtn').onclick = async function() {
+  newBox.querySelector('#deleteAllResultsBtn').onclick = async function() {
     if (confirm('آیا از حذف همه نتایج کاربران این آزمون مطمئن هستید؟')) {
       const { error } = await supabase.from('exam_results').delete().eq('exam_id', examId);
       if (error) alert('خطا در حذف!');
       else {
         alert('همه نتایج کاربران این آزمون حذف شد.');
-        resultsBox.style.display = 'none';
-        resultsBox.innerHTML = '';
+        newBox.style.display = 'none';
+        newBox.innerHTML = '';
       }
     }
   };
 
   // حذف تکی نتیجه کاربر (بیشترین نمره)
-  resultsBox.addEventListener('click', async function(e) {
+  newBox.addEventListener('click', async function(e) {
     if (e.target.classList.contains('delete-user-result-btn')) {
       const userId = e.target.dataset.userid;
       if (confirm('آیا از حذف نتیجه این کاربر مطمئن هستید؟')) {
