@@ -123,7 +123,49 @@
         }
         showLoading(false);
       };
+      document.getElementById('importBtn').addEventListener('click', async () => {
+  hideMessages();
+  const fileInput = document.getElementById('excelFile');
+  const file = fileInput.files[0];
+  if (!file) {
+    showError('لطفاً یک فایل اکسل انتخاب کنید');
+    return;
+  }
+  showLoading(true);
 
+  try {
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+    // فرض: ردیف اول عنوان است، ردیف‌های بعدی داده‌ها
+    const users = [];
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const username = row[0]?.toString().trim();
+      const password = row[1]?.toString();
+      if (username && password) {
+        users.push({ username, password, role: 'user' });
+      }
+    }
+    if (!users.length) {
+      showError('هیچ کاربری برای وارد کردن یافت نشد');
+      showLoading(false);
+      return;
+    }
+
+    // درج گروهی فقط کاربران user
+    const { error } = await supabase.from('users').insert(users);
+    if (error) showError('خطا در وارد کردن کاربران: ' + error.message);
+    else showSuccess('کاربران با موفقیت وارد شدند');
+    await loadUsers();
+  } catch (err) {
+    showError('خطا در خواندن فایل اکسل');
+  }
+  showLoading(false);
+});
+// --- پایان کد ایمپورت اکسل ---
       form.addEventListener('submit', async e => {
         e.preventDefault();
         hideMessages();
@@ -175,49 +217,7 @@
             if (error) showError(error.message);
             else showSuccess('کاربر حذف شد');
             // --- شروع کد ایمپورت اکسل ---
-document.getElementById('importBtn').addEventListener('click', async () => {
-  hideMessages();
-  const fileInput = document.getElementById('excelFile');
-  const file = fileInput.files[0];
-  if (!file) {
-    showError('لطفاً یک فایل اکسل انتخاب کنید');
-    return;
-  }
-  showLoading(true);
 
-  try {
-    const data = await file.arrayBuffer();
-    const workbook = XLSX.read(data, { type: 'array' });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-    // فرض: ردیف اول عنوان است، ردیف‌های بعدی داده‌ها
-    const users = [];
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      const username = row[0]?.toString().trim();
-      const password = row[1]?.toString();
-      if (username && password) {
-        users.push({ username, password, role: 'user' });
-      }
-    }
-    if (!users.length) {
-      showError('هیچ کاربری برای وارد کردن یافت نشد');
-      showLoading(false);
-      return;
-    }
-
-    // درج گروهی فقط کاربران user
-    const { error } = await supabase.from('users').insert(users);
-    if (error) showError('خطا در وارد کردن کاربران: ' + error.message);
-    else showSuccess('کاربران با موفقیت وارد شدند');
-    await loadUsers();
-  } catch (err) {
-    showError('خطا در خواندن فایل اکسل');
-  }
-  showLoading(false);
-});
-// --- پایان کد ایمپورت اکسل ---
 
             await loadUsers();
             showLoading(false);
