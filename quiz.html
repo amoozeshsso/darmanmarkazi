@@ -71,62 +71,6 @@
         .select('title, max_attempts, duration_minutes, start_at, end_at')
         .eq('id', examId)
         .maybeSingle();
-        // ✅ کد اصلاح شده:
-const { data: exam } = await supabase
-  .from('exams')
-  .select('question_count')
-  .eq('id', examId)
-  .single();
-
-const questionCount = exam?.question_count || 1;
-
-// دریافت سوالات تصادفی
-const { data: questions } = await supabase
-  .from('questions')
-  .select('*')
-  .eq('exam_id', examId)
-  .order('RANDOM()', { ascending: true })
-  .limit(questionCount);
-
-// جابجایی گزینه‌ها
-const shuffledQuestions = questions.map(q => shuffleOptions(q));
-
-// نمایش سوالات به کاربر
-quizForm.innerHTML = shuffledQuestions.map((q, idx) => `
-  <div class="question">
-    <div><b>${idx + 1}.</b> ${q.question_text}</div>
-    <div class="options">
-      ${[q.option1, q.option2, q.option3, q.option4].map((opt, i) => `
-        <label><input type="radio" name="q${q.id}" value="${i + 1}" required> ${opt}</label>
-      `).join('')}
-    </div>
-  </div>
-`).join('') + '<button type="submit">ثبت آزمون</button>';
-
-       if (!shuffledQuestions.length) {
-  quizForm.innerHTML = '';
-  errorDiv.textContent = 'سوالی برای این آزمون ثبت نشده است.';
-  return;
-}
-
-// ساخت فرم سوالات فقط با shuffledQuestions
-quizForm.innerHTML = shuffledQuestions.map((q, idx) => `
-  <div class="question">
-    <div><b>${idx + 1}.</b> ${q.question_text}</div>
-    <div class="options">
-      <label><input type="radio" name="q${q.id}" value="1" required> ${q.option1}</label>
-      <label><input type="radio" name="q${q.id}" value="2"> ${q.option2}</label>
-      <label><input type="radio" name="q${q.id}" value="3"> ${q.option3}</label>
-      <label><input type="radio" name="q${q.id}" value="4"> ${q.option4}</label>
-    </div>
-  </div>
-`).join('') + '<button type="submit">ثبت آزمون</button>';
-
-// برای تصحیح، سوالات تصادفی را نگه دار
-window.currentQuestions = shuffledQuestions;
-
-
-
 
       if (examErr || !examData) {
         quizForm.innerHTML = '';
@@ -172,14 +116,29 @@ window.currentQuestions = shuffledQuestions;
       }
 
       // دریافت سوالات آزمون
-      
+      const { data: questions, error: qErr } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('exam_id', examId);
+
       if (qErr || !questions.length) {
         quizForm.innerHTML = '';
         errorDiv.textContent = 'سوالی برای این آزمون ثبت نشده است.';
         return;
       }
 
-      
+      // ساخت فرم سوالات
+      quizForm.innerHTML = questions.map((q, idx) => `
+        <div class="question">
+          <div><b>${idx + 1}.</b> ${q.question_text}</div>
+          <div class="options">
+            <label><input type="radio" name="q${q.id}" value="1" required> ${q.option1}</label>
+            <label><input type="radio" name="q${q.id}" value="2"> ${q.option2}</label>
+            <label><input type="radio" name="q${q.id}" value="3"> ${q.option3}</label>
+            <label><input type="radio" name="q${q.id}" value="4"> ${q.option4}</label>
+          </div>
+        </div>
+      `).join('') + '<button type="submit">ثبت آزمون</button>';
 
       // نمایش تایمر و شروع شمارش معکوس
       showExamTimer(examDuration);
@@ -214,13 +173,7 @@ window.currentQuestions = shuffledQuestions;
     }
 
     // ثبت پاسخ‌ها و نمره
-    // استفاده از همان سوالات تصادفی که قبلاً گرفتیم
-const questions = window.currentQuestions;
-if (!questions || !questions.length) {
-  errorDiv.textContent = 'خطا در دریافت سوالات!';
-  return;
-}
-
+    quizForm.onsubmit = async function(e) {
       e.preventDefault();
       errorDiv.textContent = '';
       resultDiv.textContent = '';
@@ -231,7 +184,15 @@ if (!questions || !questions.length) {
       }
 
       // دریافت آخرین سوالات برای تصحیح
-      
+      const { data: questions, error: qErr } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('exam_id', examId);
+
+      if (qErr || !questions.length) {
+        errorDiv.textContent = 'خطا در دریافت سوالات!';
+        return;
+      }
 
       let correct = 0;
       questions.forEach(q => {
@@ -265,62 +226,6 @@ if (!questions || !questions.length) {
     };
 
     loadQuiz();
-    // تابع درهم‌ریختن گزینه‌ها و اصلاح گزینه صحیح
-function shuffleOptions(question) {
-  // آرایه گزینه‌ها و تعیین گزینه صحیح اولیه
-  const options = [
-    { text: question.option1, correct: question.correct_option === 1 },
-    { text: question.option2, correct: question.correct_option === 2 },
-    { text: question.option3, correct: question.correct_option === 3 },
-    { text: question.option4, correct: question.correct_option === 4 },
-  ];
-
-  // الگوریتم Fisher-Yates برای جابجایی تصادفی
-  for (let i = options.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [options[i], options[j]] = [options[j], options[i]];
-  }
-
-  // پیدا کردن شماره گزینه صحیح جدید
-  const newCorrectIndex = options.findIndex(opt => opt.correct);
-
-  // بازگشت ساختار جدید سوال با گزینه‌های جابجا شده و گزینه صحیح جدید
-  return {
-    ...question,
-    option1: options[0].text,
-    option2: options[1].text,
-    option3: options[2].text,
-    option4: options[3].text,
-    correct_option: newCorrectIndex + 1 // شماره جدید گزینه صحیح
-  };
-}
-<script>
-  // ... همه کدهای قبلی تو ...
-  
-  // این تابع را اینجا اضافه کن 👇
-  function shuffleOptions(question) {
-    const options = [
-      { text: question.option1, correct: question.correct_option === 1 },
-      { text: question.option2, correct: question.correct_option === 2 },
-      { text: question.option3, correct: question.correct_option === 3 },
-      { text: question.option4, correct: question.correct_option === 4 },
-    ];
-    for (let i = options.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [options[i], options[j]] = [options[j], options[i]];
-    }
-    const newCorrectIndex = options.findIndex(opt => opt.correct);
-    return {
-      ...question,
-      option1: options[0].text,
-      option2: options[1].text,
-      option3: options[2].text,
-      option4: options[3].text,
-      correct_option: newCorrectIndex + 1
-    };
-  }
-</script>
-
   </script>
 </body>
 </html>
