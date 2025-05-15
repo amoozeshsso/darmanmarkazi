@@ -84,6 +84,27 @@
        .order('RANDOM()', { ascending: true })
        .limit(questionCount);
        const shuffledQuestions = questions.map(q => shuffleOptions(q));
+       if (!shuffledQuestions.length) {
+  quizForm.innerHTML = '';
+  errorDiv.textContent = 'سوالی برای این آزمون ثبت نشده است.';
+  return;
+}
+
+// ساخت فرم سوالات فقط با shuffledQuestions
+quizForm.innerHTML = shuffledQuestions.map((q, idx) => `
+  <div class="question">
+    <div><b>${idx + 1}.</b> ${q.question_text}</div>
+    <div class="options">
+      <label><input type="radio" name="q${q.id}" value="1" required> ${q.option1}</label>
+      <label><input type="radio" name="q${q.id}" value="2"> ${q.option2}</label>
+      <label><input type="radio" name="q${q.id}" value="3"> ${q.option3}</label>
+      <label><input type="radio" name="q${q.id}" value="4"> ${q.option4}</label>
+    </div>
+  </div>
+`).join('') + '<button type="submit">ثبت آزمون</button>';
+
+// برای تصحیح، سوالات تصادفی را نگه دار
+window.currentQuestions = shuffledQuestions;
 
 
 
@@ -143,18 +164,7 @@
         return;
       }
 
-      // ساخت فرم سوالات
-      quizForm.innerHTML = questions.map((q, idx) => `
-        <div class="question">
-          <div><b>${idx + 1}.</b> ${q.question_text}</div>
-          <div class="options">
-            <label><input type="radio" name="q${q.id}" value="1" required> ${q.option1}</label>
-            <label><input type="radio" name="q${q.id}" value="2"> ${q.option2}</label>
-            <label><input type="radio" name="q${q.id}" value="3"> ${q.option3}</label>
-            <label><input type="radio" name="q${q.id}" value="4"> ${q.option4}</label>
-          </div>
-        </div>
-      `).join('') + '<button type="submit">ثبت آزمون</button>';
+      
 
       // نمایش تایمر و شروع شمارش معکوس
       showExamTimer(examDuration);
@@ -189,7 +199,13 @@
     }
 
     // ثبت پاسخ‌ها و نمره
-    quizForm.onsubmit = async function(e) {
+    // استفاده از همان سوالات تصادفی که قبلاً گرفتیم
+const questions = window.currentQuestions;
+if (!questions || !questions.length) {
+  errorDiv.textContent = 'خطا در دریافت سوالات!';
+  return;
+}
+
       e.preventDefault();
       errorDiv.textContent = '';
       resultDiv.textContent = '';
@@ -200,15 +216,7 @@
       }
 
       // دریافت آخرین سوالات برای تصحیح
-      const { data: questions, error: qErr } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('exam_id', examId);
-
-      if (qErr || !questions.length) {
-        errorDiv.textContent = 'خطا در دریافت سوالات!';
-        return;
-      }
+      
 
       let correct = 0;
       questions.forEach(q => {
