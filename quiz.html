@@ -71,19 +71,38 @@
         .select('title, max_attempts, duration_minutes, start_at, end_at')
         .eq('id', examId)
         .maybeSingle();
-        const { data: exam } = await supabase
-       .from('exams')
-       .select('question_count')
-       .eq('id', examId)
-       .single();
-       const questionCount = exam?.question_count || 1;
-       const { data: questions } = await supabase
-       .from('questions')
-       .select('*')
-       .eq('exam_id', examId)
-       .order('RANDOM()', { ascending: true })
-       .limit(questionCount);
-       const shuffledQuestions = questions.map(q => shuffleOptions(q));
+        // ✅ کد اصلاح شده:
+const { data: exam } = await supabase
+  .from('exams')
+  .select('question_count')
+  .eq('id', examId)
+  .single();
+
+const questionCount = exam?.question_count || 1;
+
+// دریافت سوالات تصادفی
+const { data: questions } = await supabase
+  .from('questions')
+  .select('*')
+  .eq('exam_id', examId)
+  .order('RANDOM()', { ascending: true })
+  .limit(questionCount);
+
+// جابجایی گزینه‌ها
+const shuffledQuestions = questions.map(q => shuffleOptions(q));
+
+// نمایش سوالات به کاربر
+quizForm.innerHTML = shuffledQuestions.map((q, idx) => `
+  <div class="question">
+    <div><b>${idx + 1}.</b> ${q.question_text}</div>
+    <div class="options">
+      ${[q.option1, q.option2, q.option3, q.option4].map((opt, i) => `
+        <label><input type="radio" name="q${q.id}" value="${i + 1}" required> ${opt}</label>
+      `).join('')}
+    </div>
+  </div>
+`).join('') + '<button type="submit">ثبت آزمون</button>';
+
        if (!shuffledQuestions.length) {
   quizForm.innerHTML = '';
   errorDiv.textContent = 'سوالی برای این آزمون ثبت نشده است.';
@@ -153,11 +172,7 @@ window.currentQuestions = shuffledQuestions;
       }
 
       // دریافت سوالات آزمون
-      const { data: questions, error: qErr } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('exam_id', examId);
-
+      
       if (qErr || !questions.length) {
         quizForm.innerHTML = '';
         errorDiv.textContent = 'سوالی برای این آزمون ثبت نشده است.';
