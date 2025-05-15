@@ -44,6 +44,9 @@
       <label for="excelFile">بارگذاری فایل اکسل کاربران (فقط کاربر):</label>
 <input type="file" id="excelFile" accept=".xlsx,.xls" />
 <button type="button" id="importBtn" class="add-btn">وارد کردن کاربران</button>
+<button type="button" id="deleteAllUsersBtn" class="delete-btn" style="width:100%;font-size:16px;background:#c0392b;margin-bottom:20px;">
+  حذف همه کاربران غیرادمین
+</button>
 
       <h3 id="formTitle">افزودن کاربر جدید</h3>
       <form id="userForm">
@@ -64,6 +67,10 @@
       <div id="success"></div>
     </div>
     <div id="loading">
+      <button type="button" id="deleteAllUsersBtn" class="delete-btn" style="width:100%;font-size:16px;background:#c0392b;margin-bottom:20px;">
+        حذف همه کاربران غیرادمین
+      </button>
+      
       <div class="spinner"></div>
       <p>در حال بارگذاری...</p>
     </div>
@@ -246,6 +253,16 @@
           }
         }
       });
+      document.getElementById('deleteAllUsersBtn').addEventListener('click', async () => {
+  hideMessages();
+  if (!confirm('آیا مطمئن هستید که می‌خواهید همه کاربران غیرادمین را حذف کنید؟')) return;
+  showLoading(true);
+  const { error } = await supabase.from('users').delete().eq('role', 'user');
+  if (error) showError('خطا در حذف کاربران: ' + error.message);
+  else showSuccess('همه کاربران غیرادمین با موفقیت حذف شدند');
+  await loadUsers();
+  showLoading(false);
+});
 
       await loadUsers();
     });
