@@ -662,16 +662,16 @@ document.getElementById('autoQuestionBtn').addEventListener('click', async () =>
   try {
     let questions = [];
     for (let i = 1; i <= count; i++) {
-      const mcq = await generateMCQFromText(text, i);
-      questions.push({
-        exam_id: currentExamId,
-        text: mcq.question,
-        option1: mcq.options[0],
-        option2: mcq.options[1],
-        option3: mcq.options[2],
-        option4: mcq.options[3],
-        correct_option: mcq.correct
-      });
+      const { error } = await supabase.from('questions').insert([{
+  exam_id: currentExamId,
+  // نام ستون صحیح را اینجا بنویسید (مثلاً text را به question تغییر دهید)
+  question: mcq.question,  // به جای text:mcq.question
+  option1: mcq.options[0],
+  option2: mcq.options[1],
+  option3: mcq.options[2],
+  option4: mcq.options[3],
+  correct_option: mcq.correct
+}]);
     }
     const { error } = await supabase.from('questions').insert(questions);
     if (error) {
