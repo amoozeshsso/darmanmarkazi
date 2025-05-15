@@ -94,6 +94,9 @@
       <h2>مدیریت سوالات آزمون: <span id="questionsExamTitle"></span></h2>
       <button id="closeQuestions" style="margin-bottom:18px;background:#b2bec3;color:#222;padding:8px 16px;border-radius:5px;">بستن</button>
       <div id="questionFormBox">
+        <button id="importExcelBtn" style="background:#16a085;color:#fff;margin-bottom:12px;">وارد کردن اکسل سوالات</button>
+<input type="file" id="excelInput" accept=".xlsx,.xls,.csv" style="display:none;">
+
         <h3 id="qFormTitle">افزودن سوال جدید</h3>
         <form id="questionForm">
           <input type="hidden" id="qEditId" />
@@ -474,6 +477,11 @@
       // مدیریت سوالات هر آزمون
       let currentExamId = null;
       async function openQuestionsSection(examId, examTitle) {
+        async function openQuestionsSection(examId, examTitle) {
+  currentExamId = examId;
+  // ... بقیه کد تابع
+}
+
         currentExamId = examId;
         questionsExamTitle.textContent = examTitle;
         questionsSection.style.display = 'block';
@@ -597,6 +605,42 @@
       });
 
       await loadExams();
+      document.getElementById('importExcelBtn').onclick = () => {
+  document.getElementById('excelInput').click();
+};
+
+document.getElementById('excelInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!currentExamId) {
+    alert('ابتدا آزمون مورد نظر را انتخاب کنید.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = async (evt) => {
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet);
+
+    // اضافه کردن exam_id به هر ردیف
+    for (const row of rows) {
+      row.exam_id = currentExamId;
+    }
+
+    // ارسال همه سوالات به صورت یکجا
+    const { error } = await supabase.from('questions').insert(rows);
+    if (error) {
+      alert('خطا در وارد کردن سوالات: ' + error.message);
+    } else {
+      alert('سوالات با موفقیت وارد شدند!');
+      await loadQuestions(currentExamId);
+    }
+    e.target.value = ''; // ریست input
+  };
+  reader.readAsArrayBuffer(file);
+});
+
     });
     // نمایش نتایج آزمون و دکمه خروجی اکسل xlsx فقط با نام کاربری و نمره
 async function showExamResults(examId, examTitle) {
