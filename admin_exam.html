@@ -94,17 +94,6 @@
       <h2>مدیریت سوالات آزمون: <span id="questionsExamTitle"></span></h2>
       <button id="closeQuestions" style="margin-bottom:18px;background:#b2bec3;color:#222;padding:8px 16px;border-radius:5px;">بستن</button>
       <div id="questionFormBox">
-        <div style="margin-bottom:18px;">
-          <label>متن دلخواه برای تولید سؤالات چهارگزینه‌ای:</label>
-          <textarea id="autoQuestionInput" rows="3" placeholder="متن خود را وارد کنید..."></textarea>
-          <div style="margin-top:8px;">
-            <label>چند سؤال تولید شود؟</label>
-            <input type="number" id="autoQuestionCount" min="1" max="10" value="1" style="width:60px;">
-          </div>
-          <button type="button" id="autoQuestionBtn" style="background:#16a085;color:#fff;margin-top:8px;">تولید و افزودن سؤال خودکار</button>
-          <div id="autoQMsg" style="margin-top:8px;display:none;"></div>
-        </div>
-        
         <h3 id="qFormTitle">افزودن سوال جدید</h3>
         <form id="questionForm">
           <input type="hidden" id="qEditId" />
@@ -485,11 +474,6 @@
       // مدیریت سوالات هر آزمون
       let currentExamId = null;
       async function openQuestionsSection(examId, examTitle) {
-        async function openQuestionsSection(examId, examTitle) {
-  currentExamId = examId;
-  // ... بقیه کدها
-}
-
         currentExamId = examId;
         questionsExamTitle.textContent = examTitle;
         questionsSection.style.display = 'block';
@@ -613,85 +597,6 @@
       });
 
       await loadExams();
-      // تابع نمونه برای تولید سؤال (در حالت واقعی اینجا به API هوش مصنوعی وصل می‌شوید)
-async function generateMCQFromText(text, index=1) {
-  return {
-    question: `سؤال شماره ${index} درباره: ${text}`,
-    options: [
-      `گزینه صحیح ${index} برای ${text}`,
-      `گزینه اشتباه ۱ برای ${text}`,
-      `گزینه اشتباه ۲ برای ${text}`,
-      `گزینه اشتباه ۳ برای ${text}`,
-    ],
-    correct: 1 // گزینه صحیح
-  };
-}
-
-document.getElementById('autoQuestionBtn').addEventListener('click', async () => {
-  const msgBox = document.getElementById('autoQMsg');
-  msgBox.style.display = 'none';
-  const text = document.getElementById('autoQuestionInput').value.trim();
-  const count = parseInt(document.getElementById('autoQuestionCount').value, 10);
-
-  if (!text) {
-    msgBox.textContent = 'متن را وارد کنید.';
-    msgBox.style.display = 'block';
-    msgBox.style.background = '#e74c3c';
-    msgBox.style.color = '#fff';
-    return;
-  }
-  if (!currentExamId) {
-    msgBox.textContent = 'ابتدا آزمون را انتخاب کنید.';
-    msgBox.style.display = 'block';
-    msgBox.style.background = '#e74c3c';
-    msgBox.style.color = '#fff';
-    return;
-  }
-  if (!count || count < 1) {
-    msgBox.textContent = 'تعداد سؤال معتبر وارد کنید.';
-    msgBox.style.display = 'block';
-    msgBox.style.background = '#e74c3c';
-    msgBox.style.color = '#fff';
-    return;
-  }
-  msgBox.textContent = 'در حال تولید سؤال...';
-  msgBox.style.display = 'block';
-  msgBox.style.background = '#f1c40f';
-  msgBox.style.color = '#222';
-
-  try {
-    let questions = [];
-    for (let i = 1; i <= count; i++) {
-      const { error } = await supabase.from('questions').insert([{
-  exam_id: currentExamId,
-  // نام ستون صحیح را اینجا بنویسید (مثلاً text را به question تغییر دهید)
-  question: mcq.question,  // به جای text:mcq.question
-  option1: mcq.options[0],
-  option2: mcq.options[1],
-  option3: mcq.options[2],
-  option4: mcq.options[3],
-  correct_option: mcq.correct
-}]);
-    }
-    const { error } = await supabase.from('questions').insert(questions);
-    if (error) {
-      msgBox.textContent = 'خطا در ذخیره سؤال: ' + error.message;
-      msgBox.style.background = '#e74c3c';
-      msgBox.style.color = '#fff';
-    } else {
-      msgBox.textContent = `${count} سؤال چهارگزینه‌ای با موفقیت افزوده شد!`;
-      msgBox.style.background = '#27ae60';
-      msgBox.style.color = '#fff';
-      document.getElementById('autoQuestionInput').value = '';
-      await loadQuestions(currentExamId);
-    }
-  } catch (err) {
-    msgBox.textContent = 'خطا در تولید سؤال!';
-    msgBox.style.background = '#e74c3c';
-    msgBox.style.color = '#fff';
-  }
-});
-
     });
     // نمایش نتایج آزمون و دکمه خروجی اکسل xlsx فقط با نام کاربری و نمره
 async function showExamResults(examId, examTitle) {
