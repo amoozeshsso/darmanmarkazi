@@ -97,35 +97,36 @@
         <button id="importExcelBtn" style="background:#16a085;color:#fff;margin-bottom:12px;">وارد کردن اکسل سوالات</button>
 <input type="file" id="excelInput" accept=".xlsx,.xls,.csv" style="display:none;">
 <div id="questionFormBox">
-  <!-- نمایش ساختار نمونه فایل اکسل -->
-  <div style="margin-bottom:14px;">
-    <b>ساختار فایل اکسل سوالات باید دقیقاً به این صورت باشد:</b>
-    <table style="margin-top:8px;direction:rtl;font-size:15px;border:1px solid #bbb;">
-      <thead>
-        <tr style="background:#f1f1f1;">
-          <th>option1</th>
-          <th>option2</th>
-          <th>option3</th>
-          <th>option4</th>
-          <th>correct_option</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>تهران</td>
-          <td>اراک</td>
-          <td>بوشهر</td>
-          <td>بندر</td>
-          <td>1</td>
-        </tr>
-      </tbody>
-    </table>
-    <div style="font-size:13px;color:#555;margin-top:6px;">
-      <span>
-        
-      </span>
-    </div>
+  <!-- نمایش ساختار صحیح فایل اکسل سوالات -->
+<div style="margin-bottom:14px;">
+  <b>ساختار فایل اکسل سوالات باید دقیقاً به این صورت باشد:</b>
+  <table style="margin-top:8px;direction:rtl;font-size:15px;border:1px solid #bbb;">
+    <thead>
+      <tr style="background:#f1f1f1;">
+        <th>question_text</th>
+        <th>option1</th>
+        <th>option2</th>
+        <th>option3</th>
+        <th>option4</th>
+        <th>correct_option</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>پایتخت ایران کدام است؟</td>
+        <td>تهران</td>
+        <td>اراک</td>
+        <td>بوشهر</td>
+        <td>بندر</td>
+        <td>1</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="font-size:13px;color:#555;margin-top:6px;">
+    
   </div>
+</div>
+
   <!-- پایان نمایش ساختار نمونه اکسل -->
 
   <h3 id="qFormTitle">افزودن سوال جدید</h3>
