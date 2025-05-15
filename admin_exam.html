@@ -486,7 +486,7 @@
       let currentExamId = null;
       async function openQuestionsSection(examId, examTitle) {
         async function openQuestionsSection(examId, examTitle) {
-  setCurrentExamId(examId); // مقداردهی شناسه آزمون انتخاب‌شده
+  currentExamId = examId;
   // ... بقیه کدها
 }
 
@@ -613,12 +613,8 @@
       });
 
       await loadExams();
-      let currentExamId = null;
-function setCurrentExamId(id) { currentExamId = id; }
-
-// این تابع نمونه است؛ اگر به API هوش مصنوعی دسترسی داری، اینجا فراخوانی کن
+      // تابع نمونه برای تولید سؤال (در حالت واقعی اینجا به API هوش مصنوعی وصل می‌شوید)
 async function generateMCQFromText(text, index=1) {
-  // نمونه ساده برای تست
   return {
     question: `سؤال شماره ${index} درباره: ${text}`,
     options: [
