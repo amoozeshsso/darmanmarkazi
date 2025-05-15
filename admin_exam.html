@@ -334,10 +334,10 @@
           editIdInput.value = id;
           document.getElementById('title').value = btn.dataset.title;
           maxAttemptsInput.value = btn.dataset.max_attempts || 1;
-          document.getElementById('questionCount').value = btn.dataset.question_count || 1;
-          durationInput.value = btn.dataset.duration || 20;
+                    durationInput.value = btn.dataset.duration || 20;
           startAtInput.value = btn.dataset.start || '';
           endAtInput.value = btn.dataset.end || '';
+                    document.getElementById('questionCount').value = btn.dataset.question_count || 1;
           formTitle.textContent = 'ویرایش آزمون';
           submitBtn.textContent = 'به‌روزرسانی';
           window.scrollTo({ top: 0, behavior: 'smooth' });
