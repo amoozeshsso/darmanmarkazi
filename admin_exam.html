@@ -54,7 +54,9 @@
         <input type="text" id="title" required />
         <label for="maxAttempts">تعداد دفعات مجاز شرکت در آزمون:</label>
         <input type="number" id="maxAttempts" min="1" max="20" value="1" required />
-        <label for="durationMinutes">مدت زمان آزمون (دقیقه):</label>
+        <label for="questionCount">تعداد سوالات نمایشی در هر آزمون:</label>
+        <input type="number" id="questionCount" min="1" value="1" required style="width:70px;">
+         <label for="durationMinutes">مدت زمان آزمون (دقیقه):</label>
         <input type="number" id="durationMinutes" min="1" max="300" value="20" required />
         <label for="startAt">تاریخ و ساعت شروع آزمون:</label>
         <input type="datetime-local" id="startAt" required />
@@ -249,6 +251,7 @@
                   data-duration="${exam.duration_minutes || 20}"
                   data-start="${exam.start_at ? new Date(exam.start_at).toISOString().slice(0,16) : ''}"
                   data-end="${exam.end_at ? new Date(exam.end_at).toISOString().slice(0,16) : ''}"
+                  data-question_count="${exam.question_count || 1}"
                 >ویرایش</button>
                 <button class="delete-btn" data-id="${exam.id}">حذف</button>
                 <button class="result-btn" data-id="${exam.id}" data-title="${exam.title}">مشاهده نتایج</button>
@@ -266,6 +269,7 @@
         const id = editIdInput.value;
         const title = document.getElementById('title').value.trim();
         const maxAttempts = parseInt(maxAttemptsInput.value) || 1;
+        const questionCount = Number(document.getElementById('questionCount').value) || 1;
         const duration = parseInt(durationInput.value) || 20;
         const startAt = startAtInput.value ? new Date(startAtInput.value).toISOString() : null;
         const endAt = endAtInput.value ? new Date(endAtInput.value).toISOString() : null;
@@ -292,6 +296,7 @@
           start_at: startAt,
           end_at: endAt || null,
           active: true
+          question_count: questionCount
         };
 
         if (id) {
@@ -322,6 +327,7 @@
           editIdInput.value = id;
           document.getElementById('title').value = btn.dataset.title;
           maxAttemptsInput.value = btn.dataset.max_attempts || 1;
+          document.getElementById('questionCount').value = btn.dataset.question_count || 1;
           durationInput.value = btn.dataset.duration || 20;
           startAtInput.value = btn.dataset.start || '';
           endAtInput.value = btn.dataset.end || '';
