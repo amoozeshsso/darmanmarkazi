@@ -195,6 +195,7 @@
       const durationInput = document.getElementById('durationMinutes');
       const startAtInput = document.getElementById('startAt');
       const endAtInput = document.getElementById('endAt');
+      document.getElementById('questionCount').value = btn.dataset.question_count || 1;
       const resultsBox = document.getElementById('resultsBox');
 
       // سوالات
@@ -226,6 +227,8 @@
       // بارگذاری لیست آزمون‌ها
       async function loadExams() {
         showLoading(true); hideMessages();
+        data-question_count="${exam.question_count || 1}"
+
         const { data, error } = await supabase.from('exams').select('*').order('id');
         if (error) {
           showError(error.message || 'خطا در دریافت داده‌ها');
@@ -273,6 +276,8 @@
         const duration = parseInt(durationInput.value) || 20;
         const startAt = startAtInput.value ? new Date(startAtInput.value).toISOString() : null;
         const endAt = endAtInput.value ? new Date(endAtInput.value).toISOString() : null;
+        const questionCount = Number(document.getElementById('questionCount').value) || 1;
+
 
         if (!title) return showError('عنوان آزمون را وارد کنید.');
         if (maxAttempts < 1) return showError('تعداد دفعات مجاز باید حداقل ۱ باشد.');
@@ -296,6 +301,8 @@
           start_at: startAt,
           end_at: endAt || null,
           active: true
+          question_count: questionCount 
+  };
           question_count: questionCount
         };
 
