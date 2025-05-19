@@ -1,24 +1,166 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>داشبورد ادمین</title>
+  <title>داشبورد ادمین - ویرایش صفحه اصلی</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { font-family: Tahoma; background: #f8f8f8; text-align: center; }
-    h1 { margin-top: 60px; }
-    .menu { margin: 40px auto; max-width: 400px; }
-    .menu a { display: block; background: #4e54c8; color: #fff; text-decoration: none; margin: 18px 0; padding: 18px; border-radius: 8px; font-size: 20px; transition: 0.2s; }
-    .menu a:hover { background: #2c3e50; }
+    body {
+      font-family: Tahoma, sans-serif;
+      background: #f3f3f3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin: 10px 0 4px 0;
+      font-size: 15px;
+      color: #444;
+      text-align: right;
+    }
+    input, textarea {
+      width: 96%;
+      margin-bottom: 10px;
+      padding: 7px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      direction: ltr;
+    }
+    textarea { direction: rtl; }
+    button {
+      background: #4e54c8;
+      color: #fff;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      margin-top: 18px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover { background: #3b3f9b; }
+    .success { color: #27ae60; margin-top: 12px; }
+    .error { color: #c0392b; margin-top: 12px; }
+    .preview-img {
+      max-width: 100%;
+      margin: 10px 0;
+      border-radius: 8px;
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <h1>داشبورد ادمین</h1>
-  <div class="menu">
-    <a href="admin.html">مدیریت کاربران</a>
-    <a href="admin_exam.html">مدیریت آزمون‌ها</a>
-    <a href="edit_index.html" class="edit-index-link" style="display:block;background:#27ae60;color:#fff;margin:18px 0;padding:18px;border-radius:8px;font-size:20px;text-decoration:none;">ویرایش صفحه اصلی</a>
-    <a href="index.html">بازگشت به صفحه ورود</a>
+  <div class="container">
+    <h1>ویرایش صفحه اصلی سایت</h1>
+    <form id="editForm">
+      <label>پیام خوش آمدگویی:</label>
+      <textarea id="welcome_text" rows="2"></textarea>
+
+      <label>آدرس عکس (لینک اینترنتی):</label>
+      <input type="text" id="image_url" placeholder="مثلاً: https://..." />
+      <img id="previewImg" class="preview-img" />
+
+      <label>لینک ۱:</label>
+      <input type="text" id="link1_url" placeholder="آدرس لینک ۱">
+      <input type="text" id="link1_text" placeholder="متن لینک ۱">
+
+      <label>لینک ۲:</label>
+      <input type="text" id="link2_url" placeholder="آدرس لینک ۲">
+      <input type="text" id="link2_text" placeholder="متن لینک ۲">
+
+      <label>لینک ۳:</label>
+      <input type="text" id="link3_url" placeholder="آدرس لینک ۳">
+      <input type="text" id="link3_text" placeholder="متن لینک ۳">
+
+      <label>لینک ۴:</label>
+      <input type="text" id="link4_url" placeholder="آدرس لینک ۴">
+      <input type="text" id="link4_text" placeholder="متن لینک ۴">
+
+      <label>لینک ۵:</label>
+      <input type="text" id="link5_url" placeholder="آدرس لینک ۵">
+      <input type="text" id="link5_text" placeholder="متن لینک ۵">
+
+      <button type="submit">ذخیره تغییرات</button>
+    </form>
+    <div id="msg"></div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const SUPABASE_URL = "https://qdccjbakfuywvdqfcoyg.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // بارگذاری داده‌های فعلی
+    async function loadData() {
+      const { data, error } = await supabase
+        .from('site_content')
+        .select('*')
+        .eq('id', 1)
+        .single();
+
+      if (data) {
+        document.getElementById('welcome_text').value = data.welcome_text || '';
+        document.getElementById('image_url').value = data.image_url || '';
+        document.getElementById('previewImg').src = data.image_url || '';
+        document.getElementById('previewImg').style.display = data.image_url ? 'block' : 'none';
+        for (let i = 1; i <= 5; i++) {
+          document.getElementById(`link${i}_url`).value = data[`link${i}_url`] || '';
+          document.getElementById(`link${i}_text`).value = data[`link${i}_text`] || '';
+        }
+      }
+    }
+
+    // پیش‌نمایش عکس
+    document.getElementById('image_url').addEventListener('input', function() {
+      const val = this.value.trim();
+      if (val) {
+        document.getElementById('previewImg').src = val;
+        document.getElementById('previewImg').style.display = 'block';
+      } else {
+        document.getElementById('previewImg').style.display = 'none';
+      }
+    });
+
+    // ذخیره تغییرات
+    document.getElementById('editForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const updates = {
+        id: 1,
+        welcome_text: document.getElementById('welcome_text').value,
+        image_url: document.getElementById('image_url').value,
+      };
+      for (let i = 1; i <= 5; i++) {
+        updates[`link${i}_url`] = document.getElementById(`link${i}_url`).value;
+        updates[`link${i}_text`] = document.getElementById(`link${i}_text`).value;
+      }
+      const { error } = await supabase
+        .from('site_content')
+        .upsert([updates], { onConflict: ['id'] });
+      if (error) {
+        document.getElementById('msg').innerHTML = "<span class='error'>خطا در ذخیره تغییرات!</span>";
+      } else {
+        document.getElementById('msg').innerHTML = "<span class='success'>تغییرات با موفقیت ذخیره شد.</span>";
+      }
+    });
+
+    loadData();
+  </script>
 </body>
 </html>
