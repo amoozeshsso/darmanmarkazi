@@ -73,9 +73,12 @@
       <label>پیام خوش آمدگویی:</label>
       <textarea id="welcome_text" rows="2"></textarea>
 
-      <label>آدرس عکس (لینک اینترنتی):</label>
-      <input type="text" id="image_url" placeholder="مثلاً: https://..." />
+      <label>عکس صفحه اصلی:</label>
+      <input type="file" id="image_file" accept="image/*" />
       <img id="previewImg" class="preview-img" />
+
+      <label>آدرس عکس (اختیاری):</label>
+      <input type="text" id="image_url" placeholder="مثلاً: https://..." />
 
       <label>لینک ۱:</label>
       <input type="text" id="link1_url" placeholder="آدرس لینک ۱">
@@ -107,6 +110,9 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // نام باکت خودت را اینجا وارد کن (مثلاً: 'public' یا 'main-images')
+    const BUCKET_NAME = "public";
+
     // بارگذاری داده‌های فعلی
     async function loadData() {
       const { data, error } = await supabase
@@ -127,24 +133,61 @@
       }
     }
 
-    // پیش‌نمایش عکس
-    document.getElementById('image_url').addEventListener('input', function() {
-      const val = this.value.trim();
+    // پیش‌نمایش عکس آپلودی
+    document.getElementById('image_file').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          document.getElementById('previewImg').src = ev.target.result;
+          document.getElementById('previewImg').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // پیش‌نمایش عکس از آدرس
+    document.getElementById('image_url').addEventListener('input', function(e) {
+      const val = e.target.value.trim();
       if (val) {
         document.getElementById('previewImg').src = val;
         document.getElementById('previewImg').style.display = 'block';
-      } else {
-        document.getElementById('previewImg').style.display = 'none';
       }
     });
 
     // ذخیره تغییرات
     document.getElementById('editForm').addEventListener('submit', async function(e) {
       e.preventDefault();
+      document.getElementById('msg').textContent = "در حال ذخیره ...";
+      let imageUrl = document.getElementById('image_url').value.trim();
+
+      // اگر عکس جدید انتخاب شده، ابتدا آپلود کن
+      const fileInput = document.getElementById('image_file');
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const ext = file.name.split('.').pop();
+        const fileName = `main-image-${Date.now()}.${ext}`;
+        // آپلود در باکت
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from(BUCKET_NAME)
+          .upload(fileName, file, { upsert: true });
+        if (uploadError) {
+          document.getElementById('msg').innerHTML = "<span class='error'>خطا در آپلود عکس!</span>";
+          return;
+        }
+        // گرفتن URL عمومی عکس
+        const { data: publicUrlData } = supabase
+          .storage
+          .from(BUCKET_NAME)
+          .getPublicUrl(fileName);
+        imageUrl = publicUrlData.publicUrl;
+      }
+
       const updates = {
         id: 1,
         welcome_text: document.getElementById('welcome_text').value,
-        image_url: document.getElementById('image_url').value,
+        image_url: imageUrl,
       };
       for (let i = 1; i <= 5; i++) {
         updates[`link${i}_url`] = document.getElementById(`link${i}_url`).value;
@@ -157,6 +200,9 @@
         document.getElementById('msg').innerHTML = "<span class='error'>خطا در ذخیره تغییرات!</span>";
       } else {
         document.getElementById('msg').innerHTML = "<span class='success'>تغییرات با موفقیت ذخیره شد.</span>";
+        if(imageUrl) {
+          document.getElementById('image_url').value = imageUrl;
+        }
       }
     });
 
