@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>ویرایش صفحه اصلی سامانه آزمون</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: Tahoma, sans-serif; background: #f3f3f3; text-align: center; }
+    .edit-container { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 90%; max-width: 400px; margin: 40px auto; }
+    input, textarea { width: 90%; margin: 10px 0; padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 16px; }
+    label { display: block; margin-top: 16px; }
+    button { background: #4e54c8; color: #fff; padding: 12px 30px; border: none; border-radius: 8px; font-size: 18px; margin-top: 18px; cursor: pointer; }
+    button:hover { background: #2c3e50; }
+    .preview-img { max-width: 100%; margin: 10px 0; border-radius: 8px; }
+    .success { color: #27ae60; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="edit-container">
+    <h2>ویرایش صفحه اصلی</h2>
+    <form id="editForm">
+      <label>پیام خوش آمدگویی:</label>
+      <textarea id="welcomeMsg" rows="2"></textarea>
+
+      <label>آدرس عکس (یا آپلود):</label>
+      <input type="text" id="imgUrl" placeholder="مثلاً: images/banner.jpg یا لینک اینترنتی" />
+      <input type="file" id="imgUpload" accept="image/*" />
+
+      <img id="previewImg" class="preview-img" style="display:none;" />
+
+      <label>لینک دلخواه (مثلاً کانال یا سایت):</label>
+      <input type="text" id="customLink" placeholder="https://..." />
+      <input type="text" id="customLinkText" placeholder="متن لینک (مثلاً کانال تلگرام)" />
+
+      <button type="submit">ذخیره تغییرات</button>
+    </form>
+    <div id="msg" class="success"></div>
+  </div>
+
+  <script>
+    // بارگذاری مقادیر قبلی (در localStorage)
+    window.onload = function() {
+      document.getElementById('welcomeMsg').value = localStorage.getItem('index_welcome') || '';
+      document.getElementById('imgUrl').value = localStorage.getItem('index_img') || '';
+      document.getElementById('customLink').value = localStorage.getItem('index_link') || '';
+      document.getElementById('customLinkText').value = localStorage.getItem('index_link_text') || '';
+      const img = localStorage.getItem('index_img');
+      if(img) {
+        document.getElementById('previewImg').src = img;
+        document.getElementById('previewImg').style.display = 'block';
+      }
+    };
+
+    // پیش‌نمایش عکس آپلودی
+    document.getElementById('imgUpload').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if(file) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          document.getElementById('imgUrl').value = ev.target.result;
+          document.getElementById('previewImg').src = ev.target.result;
+          document.getElementById('previewImg').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // پیش‌نمایش عکس از آدرس
+    document.getElementById('imgUrl').addEventListener('input', function(e) {
+      if(e.target.value) {
+        document.getElementById('previewImg').src = e.target.value;
+        document.getElementById('previewImg').style.display = 'block';
+      } else {
+        document.getElementById('previewImg').style.display = 'none';
+      }
+    });
+
+    // ذخیره تغییرات
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      localStorage.setItem('index_welcome', document.getElementById('welcomeMsg').value);
+      localStorage.setItem('index_img', document.getElementById('imgUrl').value);
+      localStorage.setItem('index_link', document.getElementById('customLink').value);
+      localStorage.setItem('index_link_text', document.getElementById('customLinkText').value);
+      document.getElementById('msg').textContent = 'تغییرات ذخیره شد!';
+    });
+  </script>
+</body>
+</html>
