@@ -40,12 +40,45 @@
     a.login-link:hover {
       background-color: #3b3f9b;
     }
+    #mainImg {
+      max-width: 100%;
+      border-radius: 10px;
+      display: none;
+      margin-bottom: 12px;
+    }
+    #customLinkBox {
+      margin-top: 18px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>خوش آمدید به سامانه آزمون</h1>
+    <img id="mainImg" alt="تصویر صفحه اصلی" />
+    <h1 id="welcomeText">خوش آمدید به سامانه آزمون</h1>
     <a href="login.html" class="login-link">ورود به سامانه</a>
+    <div id="customLinkBox"></div>
   </div>
+  <script>
+    // بارگذاری پیام و عکس و لینک از localStorage
+    window.onload = function() {
+      // پیام خوش آمدگویی
+      const msg = localStorage.getItem('index_welcome');
+      if(msg) document.getElementById('welcomeText').textContent = msg;
+
+      // عکس صفحه اصلی
+      const img = localStorage.getItem('index_img');
+      if(img) {
+        document.getElementById('mainImg').src = img;
+        document.getElementById('mainImg').style.display = 'block';
+      }
+
+      // لینک دلخواه
+      const link = localStorage.getItem('index_link');
+      const linkText = localStorage.getItem('index_link_text');
+      if(link && linkText) {
+        document.getElementById('customLinkBox').innerHTML = `<a href="${link}" target="_blank" style="color:#4e54c8;font-size:18px;text-decoration:underline;">${linkText}</a>`;
+      }
+    };
+  </script>
 </body>
 </html>
