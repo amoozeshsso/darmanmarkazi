@@ -46,8 +46,15 @@
       display: none;
       margin-bottom: 12px;
     }
-    #customLinkBox {
+    #linksBox {
       margin-top: 18px;
+    }
+    #linksBox a {
+      color: #4e54c8;
+      font-size: 17px;
+      text-decoration: underline;
+      margin: 8px 0;
+      display: block;
     }
   </style>
 </head>
@@ -56,29 +63,51 @@
     <img id="mainImg" alt="تصویر صفحه اصلی" />
     <h1 id="welcomeText">خوش آمدید به سامانه آزمون</h1>
     <a href="login.html" class="login-link">ورود به سامانه</a>
-    <div id="customLinkBox"></div>
+    <div id="linksBox"></div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
-    // بارگذاری پیام و عکس و لینک از localStorage
-    window.onload = function() {
+    // مقادیر پروژه خود را وارد کنید
+    const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+    const SUPABASE_KEY = "YOUR_PUBLIC_ANON_KEY";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function loadSiteContent() {
+      const { data, error } = await supabase
+        .from('site_content')
+        .select('*')
+        .eq('id', 1)
+        .single();
+
+      if (error || !data) {
+        document.getElementById('linksBox').innerHTML = "<div style='color:red'>خطا در دریافت اطلاعات سایت</div>";
+        return;
+      }
+
       // پیام خوش آمدگویی
-      const msg = localStorage.getItem('index_welcome');
-      if(msg) document.getElementById('welcomeText').textContent = msg;
+      if (data.welcome_text)
+        document.getElementById('welcomeText').textContent = data.welcome_text;
 
-      // عکس صفحه اصلی
-      const img = localStorage.getItem('index_img');
-      if(img) {
-        document.getElementById('mainImg').src = img;
-        document.getElementById('mainImg').style.display = 'block';
+      // عکس اصلی
+      if (data.image_url) {
+        const img = document.getElementById('mainImg');
+        img.src = data.image_url;
+        img.style.display = 'block';
       }
 
-      // لینک دلخواه
-      const link = localStorage.getItem('index_link');
-      const linkText = localStorage.getItem('index_link_text');
-      if(link && linkText) {
-        document.getElementById('customLinkBox').innerHTML = `<a href="${link}" target="_blank" style="color:#4e54c8;font-size:18px;text-decoration:underline;">${linkText}</a>`;
+      // نمایش ۵ لینک
+      let linksHtml = '';
+      for (let i = 1; i <= 5; i++) {
+        const url = data[`link${i}_url`];
+        const text = data[`link${i}_text`];
+        if (url && text) {
+          linksHtml += `<a href="${url}" target="_blank">${text}</a>`;
+        }
       }
-    };
+      document.getElementById('linksBox').innerHTML = linksHtml;
+    }
+
+    loadSiteContent();
   </script>
 </body>
 </html>
