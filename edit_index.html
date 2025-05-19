@@ -8,11 +8,8 @@
     body {
       font-family: Tahoma, sans-serif;
       background: #f3f3f3;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       margin: 0;
+      min-height: 100vh;
     }
     .container {
       background: #fff;
@@ -22,6 +19,7 @@
       width: 90%;
       max-width: 420px;
       text-align: center;
+      margin: 40px auto 40px auto;
     }
     h1 {
       color: #333;
@@ -110,9 +108,8 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // نام باکت Storage خودت را اینجا وارد کن (مثلاً 'public')
+    // نام باکت و پوشه
     const BUCKET_NAME = "main-images";
-    // نام پوشه برای عکس‌ها
     const IMAGE_FOLDER = "index-images";
 
     // بارگذاری داده‌های فعلی
@@ -169,8 +166,7 @@
         const file = fileInput.files[0];
         const ext = file.name.split('.').pop();
         const fileName = `main-image-${Date.now()}.${ext}`;
-        const filePath = `${IMAGE_FOLDER}/${fileName}`; // آپلود در یک پوشه مجازی
-        // آپلود در باکت
+        const filePath = `${IMAGE_FOLDER}/${fileName}`;
         const { data: uploadData, error: uploadError } = await supabase
           .storage
           .from(BUCKET_NAME)
@@ -185,7 +181,6 @@
           .from(BUCKET_NAME)
           .getPublicUrl(filePath);
         imageUrl = publicUrlData.publicUrl;
-        // نمایش آدرس عکس آپلود شده در input
         document.getElementById('image_url').value = imageUrl;
       }
 
