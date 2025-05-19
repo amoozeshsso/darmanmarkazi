@@ -165,18 +165,18 @@
 
       // اگر عکس جدید انتخاب شده، ابتدا آپلود کن
       const fileInput = document.getElementById('image_file');
-      if (fileInput.files.length > 0) {
+      if (fileInput && fileInput.files.length > 0) {
         const file = fileInput.files[0];
         const ext = file.name.split('.').pop();
         const fileName = `main-image-${Date.now()}.${ext}`;
-        const filePath = `${IMAGE_FOLDER}/${fileName}`; // آپلود در یک پوشه
+        const filePath = `${IMAGE_FOLDER}/${fileName}`; // آپلود در یک پوشه مجازی
         // آپلود در باکت
         const { data: uploadData, error: uploadError } = await supabase
           .storage
           .from(BUCKET_NAME)
           .upload(filePath, file, { upsert: true });
         if (uploadError) {
-          document.getElementById('msg').innerHTML = "<span class='error'>خطا در آپلود عکس!</span>";
+          document.getElementById('msg').innerHTML = "<span class='error'>خطا در آپلود عکس! " + uploadError.message + "</span>";
           return;
         }
         // گرفتن URL عمومی عکس
@@ -185,6 +185,8 @@
           .from(BUCKET_NAME)
           .getPublicUrl(filePath);
         imageUrl = publicUrlData.publicUrl;
+        // نمایش آدرس عکس آپلود شده در input
+        document.getElementById('image_url').value = imageUrl;
       }
 
       const updates = {
@@ -203,9 +205,6 @@
         document.getElementById('msg').innerHTML = "<span class='error'>خطا در ذخیره تغییرات!</span>";
       } else {
         document.getElementById('msg').innerHTML = "<span class='success'>تغییرات با موفقیت ذخیره شد.</span>";
-        if(imageUrl) {
-          document.getElementById('image_url').value = imageUrl;
-        }
       }
     });
 
