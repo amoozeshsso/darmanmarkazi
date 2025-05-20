@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Tahoma; background: #f8f8f8; margin: 0; padding: 20px; }
+    body { font-family: 'Vazirmatn', Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 20px; }
     .container { max-width: 600px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); padding: 30px; }
     h1 { text-align: center; color: #333; }
     .question { margin-bottom: 25px; }
@@ -16,17 +16,22 @@
     #timer { text-align:center; font-size:20px; margin:18px 0; color:#c0392b; }
     #result { margin-top: 30px; padding: 18px; border-radius: 8px; background: #eafaf1; color: #222; text-align: center; font-size: 18px; }
     #error { margin-top: 20px; color: #c0392b; text-align: center; }
-    body {
-  font-family: 'Vazirmatn', Tahoma, sans-serif;
-}
-
+    .nav-btns { margin-top: 20px; text-align: center; }
+    .nav-btns button { margin: 0 6px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1 id="examTitle">آزمون آنلاین</h1>
     <div id="timer"></div>
-    <form id="quizForm"></form>
+    <form id="quizForm">
+      <div id="questionBox"></div>
+      <div class="nav-btns" style="display:none;">
+        <button type="button" id="prevBtn">قبلی</button>
+        <button type="button" id="nextBtn">بعدی</button>
+        <button type="submit" id="submitBtn" style="display:none;">ثبت آزمون</button>
+      </div>
+    </form>
     <div id="result"></div>
     <div id="error"></div>
   </div>
@@ -42,10 +47,15 @@
     const examId = urlParams.get('exam_id') || sessionStorage.getItem('examId');
 
     const quizForm = document.getElementById('quizForm');
+    const questionBox = document.getElementById('questionBox');
     const resultDiv = document.getElementById('result');
     const errorDiv = document.getElementById('error');
     const examTitle = document.getElementById('examTitle');
     const timerDiv = document.getElementById('timer');
+    const navBtns = document.querySelector('.nav-btns');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
 
     if (!userId) {
       alert('لطفاً ابتدا وارد شوید.');
@@ -63,12 +73,19 @@
     let timerInterval = null;
     let timerStopped = false;
 
+    // متغیرهای مدیریت سوالات
+    let questions = [];
+    let userAnswers = {};
+    let currentQuestion = 0;
+
     // بارگذاری آزمون و سوالات
     async function loadQuiz() {
       errorDiv.textContent = '';
       resultDiv.textContent = '';
-      quizForm.innerHTML = 'در حال بارگذاری سوالات...';
+      quizForm.reset();
+      questionBox.innerHTML = 'در حال بارگذاری سوالات...';
       timerDiv.textContent = '';
+      navBtns.style.display = 'none';
 
       // دریافت اطلاعات آزمون
       const { data: examData, error: examErr } = await supabase
@@ -78,7 +95,7 @@
         .maybeSingle();
 
       if (examErr || !examData) {
-        quizForm.innerHTML = '';
+        questionBox.innerHTML = '';
         errorDiv.textContent = 'آزمون یافت نشد!';
         return;
       }
@@ -91,12 +108,12 @@
       // بررسی زمان شروع و پایان آزمون
       const now = new Date();
       if (examStartAt && now < examStartAt) {
-        quizForm.innerHTML = '';
+        questionBox.innerHTML = '';
         errorDiv.innerHTML = `<b>آزمون هنوز شروع نشده است.<br>زمان شروع: ${examStartAt.toLocaleString('fa-IR')}</b>`;
         return;
       }
       if (examEndAt && now > examEndAt) {
-        quizForm.innerHTML = '';
+        questionBox.innerHTML = '';
         errorDiv.innerHTML = `<b>مهلت شرکت در این آزمون به پایان رسیده است.</b>`;
         return;
       }
@@ -110,44 +127,115 @@
 
       if (attErr) {
         errorDiv.textContent = 'خطا در بررسی دفعات شرکت!';
-        quizForm.innerHTML = '';
+        questionBox.innerHTML = '';
         return;
       }
 
       if (attempts.length >= MAX_ATTEMPTS) {
-        quizForm.innerHTML = '';
+        questionBox.innerHTML = '';
         resultDiv.innerHTML = `<b>شما بیش از ${MAX_ATTEMPTS} بار در این آزمون شرکت کرده‌اید و مجاز به شرکت مجدد نیستید.</b>`;
         return;
       }
 
       // دریافت سوالات آزمون
-      const { data: questions, error: qErr } = await supabase
+      const { data: qs, error: qErr } = await supabase
         .from('questions')
         .select('*')
         .eq('exam_id', examId);
 
-      if (qErr || !questions.length) {
-        quizForm.innerHTML = '';
+      if (qErr || !qs.length) {
+        questionBox.innerHTML = '';
         errorDiv.textContent = 'سوالی برای این آزمون ثبت نشده است.';
         return;
       }
 
-      // ساخت فرم سوالات
-      quizForm.innerHTML = questions.map((q, idx) => `
-        <div class="question">
-          <div><b>${idx + 1}.</b> ${q.question_text}</div>
-          <div class="options">
-            <label><input type="radio" name="q${q.id}" value="1" required> ${q.option1}</label>
-            <label><input type="radio" name="q${q.id}" value="2"> ${q.option2}</label>
-            <label><input type="radio" name="q${q.id}" value="3"> ${q.option3}</label>
-            <label><input type="radio" name="q${q.id}" value="4"> ${q.option4}</label>
-          </div>
-        </div>
-      `).join('') + '<button type="submit">ثبت آزمون</button>';
-
-      // نمایش تایمر و شروع شمارش معکوس
+      questions = qs;
+      userAnswers = {};
+      currentQuestion = 0;
+      navBtns.style.display = 'block';
+      showQuestion();
       showExamTimer(examDuration);
     }
+
+    function showQuestion() {
+      const q = questions[currentQuestion];
+      if (!q) return;
+      let html = `
+        <div class="question">
+          <div><b>${currentQuestion + 1}.</b> ${q.question_text}</div>
+          <div class="options">
+            <label><input type="radio" name="option" value="1" ${userAnswers[q.id]==1?'checked':''}> ${q.option1}</label>
+            <label><input type="radio" name="option" value="2" ${userAnswers[q.id]==2?'checked':''}> ${q.option2}</label>
+            <label><input type="radio" name="option" value="3" ${userAnswers[q.id]==3?'checked':''}> ${q.option3}</label>
+            <label><input type="radio" name="option" value="4" ${userAnswers[q.id]==4?'checked':''}> ${q.option4}</label>
+          </div>
+        </div>
+      `;
+      questionBox.innerHTML = html;
+      prevBtn.style.display = currentQuestion > 0 ? 'inline-block' : 'none';
+      nextBtn.style.display = currentQuestion < questions.length - 1 ? 'inline-block' : 'none';
+      submitBtn.style.display = currentQuestion === questions.length - 1 ? 'inline-block' : 'none';
+    }
+
+    function saveCurrentAnswer() {
+      const q = questions[currentQuestion];
+      const selected = document.querySelector('input[name="option"]:checked');
+      if (selected) userAnswers[q.id] = parseInt(selected.value);
+    }
+
+    nextBtn.onclick = function() {
+      saveCurrentAnswer();
+      if (currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        showQuestion();
+      }
+    };
+
+    prevBtn.onclick = function() {
+      saveCurrentAnswer();
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        showQuestion();
+      }
+    };
+
+    quizForm.onsubmit = async function(e) {
+      e.preventDefault();
+      saveCurrentAnswer();
+
+      // دریافت آخرین سوالات برای تصحیح
+      const { data: qs, error: qErr } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('exam_id', examId);
+
+      if (qErr || !qs.length) {
+        errorDiv.textContent = 'خطا در دریافت سوالات!';
+        return;
+      }
+
+      let correct = 0;
+      qs.forEach(q => {
+        if (userAnswers[q.id] && userAnswers[q.id] === q.correct_option) correct++;
+      });
+
+      const finalScore = Math.round((correct / qs.length) * 100);
+
+      const { error: insErr } = await supabase
+        .from('exam_results')
+        .insert([{ user_id: userId, exam_id: examId, score: finalScore }]);
+
+      if (insErr) {
+        errorDiv.textContent = 'خطا در ثبت نتیجه آزمون!';
+        return;
+      }
+
+      resultDiv.innerHTML = `<b>آزمون با موفقیت ثبت شد.<br>نمره شما: ${finalScore} از 100</b>`;
+      quizForm.innerHTML = '';
+      timerDiv.textContent = '';
+      timerStopped = true;
+      clearInterval(timerInterval);
+    };
 
     // تایمر معکوس و سابمیت خودکار
     function showExamTimer(minutes) {
@@ -162,10 +250,8 @@
         if (totalSeconds <= 0) {
           clearInterval(timerInterval);
           timerDiv.textContent = 'زمان آزمون به پایان رسید!';
-          // غیرفعال کردن دکمه ثبت
           let submitBtn = quizForm.querySelector('button[type="submit"]');
           if (submitBtn) submitBtn.disabled = true;
-          // سابمیت خودکار (فقط یک بار)
           if (!timerStopped) {
             timerStopped = true;
             quizForm.dispatchEvent(new Event('submit'));
@@ -176,59 +262,6 @@
       updateTimer();
       timerInterval = setInterval(updateTimer, 1000);
     }
-
-    // ثبت پاسخ‌ها و نمره
-    quizForm.onsubmit = async function(e) {
-      e.preventDefault();
-      errorDiv.textContent = '';
-      resultDiv.textContent = '';
-
-      // اگر تایمر تمام شده بود، اجازه ثبت مجدد نده
-      if (timerStopped) {
-        timerDiv.textContent = 'زمان آزمون به پایان رسید!';
-      }
-
-      // دریافت آخرین سوالات برای تصحیح
-      const { data: questions, error: qErr } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('exam_id', examId);
-
-      if (qErr || !questions.length) {
-        errorDiv.textContent = 'خطا در دریافت سوالات!';
-        return;
-      }
-
-      let correct = 0;
-      questions.forEach(q => {
-        // اگر کاربر پاسخی نداده باشد، counted نمی‌شود
-        const ansInput = quizForm[`q${q.id}`];
-        if (ansInput && ansInput.value && parseInt(ansInput.value) === q.correct_option) correct++;
-      });
-
-      // محاسبه نمره نهایی (مثلاً از 100)
-      const finalScore = Math.round((correct / questions.length) * 100);
-
-      // نمایش مقادیر برای عیب‌یابی
-      console.log('userId:', userId, 'examId:', examId, 'score:', finalScore);
-
-      // ثبت نتیجه در exam_results
-      const { error: insErr } = await supabase
-        .from('exam_results')
-        .insert([{ user_id: userId, exam_id: examId, score: finalScore }]);
-
-      if (insErr) {
-        errorDiv.textContent = 'خطا در ثبت نتیجه آزمون!';
-        console.error('Supabase insert error:', insErr);
-        return;
-      }
-
-      resultDiv.innerHTML = `<b>آزمون با موفقیت ثبت شد.<br>نمره شما: ${finalScore} از 100</b>`;
-      quizForm.innerHTML = '';
-      timerDiv.textContent = '';
-      timerStopped = true;
-      clearInterval(timerInterval);
-    };
 
     loadQuiz();
   </script>
