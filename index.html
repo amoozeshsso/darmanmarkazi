@@ -48,41 +48,34 @@
 <body>
   <div class="container">
     <img id="mainImg" alt="تصویر صفحه اصلی" />
-    <h1 id="welcomeText">خوش آمدید به سامانه آزمون</h1>
+    <h1 id="welcomeText">در حال بارگذاری …</h1>
     <a href="login.html" class="login-link">ورود به سامانه</a>
   </div>
 
-  <!-- بارگزاری Supabase v2.42.3 -->
+  <!-- Supabase JS UMD v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <script>
-    const SUPABASE_URL = "https://qdccjbakfuywvdqfcoyg.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
-    // دقت کنید از supabase.createClient مگر اینکه کلاینت دیگری تعریف نکرده باشید
-    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // جایگزین با URL و ANON KEY شما
+    const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function loadSiteContent() {
       const { data, error } = await supabase
         .from('site_content')
-        .select('*')
+        .select('welcome_text, image_url')
         .eq('id', 1)
         .single();
 
       if (error) {
-        console.error('خطا در دریافت اطلاعات سایت:', error.message, error.details);
-        // در صورت نیاز می‌توانید پیام خطا را در رابط کاربری هم نمایش دهید:
-        // document.querySelector('#welcomeText').textContent = 'خطا در بارگذاری داده‌های سایت';
-        return;
-      }
-      if (!data) {
-        console.warn('رکورد site_content پیدا نشد.');
+        console.error('خطا در دریافت اطلاعات سایت:', error);
+        document.getElementById('welcomeText').textContent = 'خطا در بارگذاری داده‌ها';
         return;
       }
 
-      // پیام خوش‌آمدگویی
       if (data.welcome_text) {
         document.getElementById('welcomeText').textContent = data.welcome_text;
       }
-      // عکس اصلی
       if (data.image_url) {
         const img = document.getElementById('mainImg');
         img.src = data.image_url;
