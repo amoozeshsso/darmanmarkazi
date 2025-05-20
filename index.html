@@ -24,10 +24,7 @@
       max-width: 360px;
       text-align: center;
     }
-    h1 {
-      color: #333;
-      margin-bottom: 20px;
-    }
+    h1 { color: #333; margin-bottom: 20px; }
     a.login-link {
       display: inline-block;
       padding: 15px 30px;
@@ -38,18 +35,14 @@
       font-size: 18px;
       transition: background-color 0.3s ease;
     }
-    a.login-link:hover {
-      background-color: #3b3f9b;
-    }
+    a.login-link:hover { background-color: #3b3f9b; }
     #mainImg {
       max-width: 100%;
       border-radius: 10px;
       display: none;
       margin-bottom: 12px;
     }
-    #welcomeText {
-      font-size: 18px;
-    }
+    #welcomeText { font-size: 18px; }
   </style>
 </head>
 <body>
@@ -59,11 +52,13 @@
     <a href="login.html" class="login-link">ورود به سامانه</a>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- بارگزاری Supabase v2.42.3 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <script>
     const SUPABASE_URL = "https://qdccjbakfuywvdqfcoyg.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // دقت کنید از supabase.createClient مگر اینکه کلاینت دیگری تعریف نکرده باشید
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     async function loadSiteContent() {
       const { data, error } = await supabase
@@ -72,16 +67,21 @@
         .eq('id', 1)
         .single();
 
-      if (error || !data) {
-        console.error('خطا در دریافت اطلاعات سایت:', error);
+      if (error) {
+        console.error('خطا در دریافت اطلاعات سایت:', error.message, error.details);
+        // در صورت نیاز می‌توانید پیام خطا را در رابط کاربری هم نمایش دهید:
+        // document.querySelector('#welcomeText').textContent = 'خطا در بارگذاری داده‌های سایت';
+        return;
+      }
+      if (!data) {
+        console.warn('رکورد site_content پیدا نشد.');
         return;
       }
 
-      // پیام خوش آمدگویی
+      // پیام خوش‌آمدگویی
       if (data.welcome_text) {
         document.getElementById('welcomeText').textContent = data.welcome_text;
       }
-
       // عکس اصلی
       if (data.image_url) {
         const img = document.getElementById('mainImg');
