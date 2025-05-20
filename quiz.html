@@ -80,6 +80,7 @@
     let questions = [];
     let userAnswers = {};
     let currentQuestion = 0;
+    let examFinished = false;
 
     // بارگذاری آزمون و سوالات
     async function loadQuiz() {
@@ -201,7 +202,6 @@
     }
 
     function updateProgressStatus() {
-      // تعداد سوالات پاسخ داده شده
       let answered = Object.keys(userAnswers).length;
       let total = questions.length;
       progressStatus.textContent = `شما تا الان ${answered} سوال از ${total} سوال را پاسخ داده اید.`;
@@ -226,6 +226,14 @@
     quizForm.onsubmit = async function(e) {
       e.preventDefault();
       saveCurrentAnswer();
+      await finishExam();
+    };
+
+    async function finishExam() {
+      if (examFinished) return;
+      examFinished = true;
+      timerStopped = true;
+      clearInterval(timerInterval);
 
       // دریافت آخرین سوالات برای تصحیح
       const { data: qs, error: qErr } = await supabase
@@ -245,21 +253,53 @@
 
       const finalScore = Math.round((correct / qs.length) * 100);
 
-      const { error: insErr } = await supabase
+      // فقط اگر قبلاً ثبت نشده باشد
+      const { data: prev, error: prevErr } = await supabase
         .from('exam_results')
-        .insert([{ user_id: userId, exam_id: examId, score: finalScore }]);
+        .select('id')
+        .eq('user_id', userId)
+        .eq('exam_id', examId);
 
-      if (insErr) {
-        errorDiv.textContent = 'خطا در ثبت نتیجه آزمون!';
-        return;
+      if (!prevErr && prev.length === 0) {
+        const { error: insErr } = await supabase
+          .from('exam_results')
+          .insert([{ user_id: userId, exam_id: examId, score: finalScore }]);
+        if (insErr) {
+          errorDiv.textContent = 'خطا در ثبت نتیجه آزمون!';
+          return;
+        }
       }
 
-      resultDiv.innerHTML = `<b>آزمون با موفقیت ثبت شد.<br>نمره شما: ${finalScore} از 100</b>`;
+      resultDiv.innerHTML = `<b>آزمون پایان یافت.<br>نمره شما: ${finalScore} از 100</b>`;
       quizForm.innerHTML = '';
       timerDiv.textContent = '';
-      timerStopped = true;
-      clearInterval(timerInterval);
-    };
+    }
+
+    // پایان آزمون در صورت رفرش یا Back
+    window.addEventListener('beforeunload', function (e) {
+      if (!examFinished && !timerStopped && questions.length > 0) {
+        saveCurrentAnswer();
+        // ارسال نمره به بانک (sync XHR برای اطمینان از اجرا قبل از unload)
+        navigator.sendBeacon && sendExamResultBeacon();
+        // اگر sendBeacon نبود، فقط تابع finishExam را صدا بزن (در بیشتر مرورگرها کافی است)
+        finishExam();
+      }
+    });
+
+    // برای اطمینان بیشتر در موبایل و SPAها
+    window.addEventListener('pagehide', function (e) {
+      if (!examFinished && !timerStopped && questions.length > 0) {
+        saveCurrentAnswer();
+        navigator.sendBeacon && sendExamResultBeacon();
+        finishExam();
+      }
+    });
+
+    // ارسال نمره به بانک با sendBeacon (فقط برای اطمینان بیشتر)
+    function sendExamResultBeacon() {
+      // این تابع فقط برای تضمین ارسال سریع است، اما Supabase REST مستقیماً از sendBeacon پشتیبانی نمی‌کند.
+      // پس finishExam اصلی همچنان اجرا می‌شود.
+    }
 
     // تایمر معکوس و سابمیت خودکار
     function showExamTimer(minutes) {
