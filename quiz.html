@@ -10,6 +10,7 @@
     body { font-family: 'Vazirmatn', Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 20px; }
     .container { max-width: 600px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); padding: 30px; }
     h1 { text-align: center; color: #333; }
+    #progressStatus { text-align: center; margin-bottom: 18px; color: #4e54c8; font-size: 18px; }
     .question { margin-bottom: 25px; }
     .options label { display: block; margin-bottom: 8px; }
     button { background: #4e54c8; color: #fff; border: none; padding: 12px 30px; border-radius: 6px; font-size: 16px; cursor: pointer; }
@@ -24,6 +25,7 @@
   <div class="container">
     <h1 id="examTitle">آزمون آنلاین</h1>
     <div id="timer"></div>
+    <div id="progressStatus"></div>
     <form id="quizForm">
       <div id="questionBox"></div>
       <div class="nav-btns" style="display:none;">
@@ -56,6 +58,7 @@
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const submitBtn = document.getElementById('submitBtn');
+    const progressStatus = document.getElementById('progressStatus');
 
     if (!userId) {
       alert('لطفاً ابتدا وارد شوید.');
@@ -86,6 +89,7 @@
       questionBox.innerHTML = 'در حال بارگذاری سوالات...';
       timerDiv.textContent = '';
       navBtns.style.display = 'none';
+      progressStatus.textContent = '';
 
       // دریافت اطلاعات آزمون
       const { data: examData, error: examErr } = await supabase
@@ -155,6 +159,7 @@
       navBtns.style.display = 'block';
       showQuestion();
       showExamTimer(examDuration);
+      updateProgressStatus();
     }
 
     function showQuestion() {
@@ -175,12 +180,31 @@
       prevBtn.style.display = currentQuestion > 0 ? 'inline-block' : 'none';
       nextBtn.style.display = currentQuestion < questions.length - 1 ? 'inline-block' : 'none';
       submitBtn.style.display = currentQuestion === questions.length - 1 ? 'inline-block' : 'none';
+
+      // هر بار نمایش سوال، وضعیت پاسخ‌ها را آپدیت کن
+      updateProgressStatus();
+
+      // رویداد برای انتخاب گزینه
+      const radios = document.getElementsByName('option');
+      radios.forEach(radio => {
+        radio.onchange = () => {
+          saveCurrentAnswer();
+          updateProgressStatus();
+        };
+      });
     }
 
     function saveCurrentAnswer() {
       const q = questions[currentQuestion];
       const selected = document.querySelector('input[name="option"]:checked');
       if (selected) userAnswers[q.id] = parseInt(selected.value);
+    }
+
+    function updateProgressStatus() {
+      // تعداد سوالات پاسخ داده شده
+      let answered = Object.keys(userAnswers).length;
+      let total = questions.length;
+      progressStatus.textContent = `شما تا الان ${answered} سوال از ${total} سوال را پاسخ داده اید.`;
     }
 
     nextBtn.onclick = function() {
