@@ -58,7 +58,7 @@
     const SUPABASE_URL = "https://qdccjbakfuywvdqfcoyg.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
     // دقت کنید از supabase.createClient مگر اینکه کلاینت دیگری تعریف نکرده باشید
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     async function loadSiteContent() {
       const { data, error } = await supabase
