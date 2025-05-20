@@ -39,7 +39,7 @@
   </div>
   <script>
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-    const SUPABASE_KEY = 'YOUR_SUPABASE_KEY';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const userId = sessionStorage.getItem('userId');
@@ -66,17 +66,13 @@
     let examStartAt = null;
     let examEndAt = null;
     let timerInterval = null;
-    let timerStopped = false;
 
     let questions = [];
     let userAnswers = {};
     let currentQuestion = 0;
 
-    // Load saved answers from sessionStorage
     const saved = sessionStorage.getItem('userAnswers');
-    if (saved) {
-      userAnswers = JSON.parse(saved);
-    }
+    if (saved) userAnswers = JSON.parse(saved);
 
     async function loadQuiz() {
       errorDiv.textContent = '';
@@ -87,7 +83,16 @@
       navBtns.style.display = 'none';
       progressStatus.textContent = '';
 
-      const { data: examData } = await supabase.from('exams').select('title, max_attempts, duration_minutes, start_at, end_at').eq('id', examId).maybeSingle();
+      const { data: examData, error: examError } = await supabase
+        .from('exams')
+        .select('title, max_attempts, duration_minutes, start_at, end_at')
+        .eq('id', examId)
+        .maybeSingle();
+      if (examError || !examData) {
+        errorDiv.innerHTML = '<b>خطا در بارگذاری اطلاعات آزمون.</b>';
+        console.error('Exam load error:', examError);
+        return;
+      }
       examTitle.textContent = examData.title;
       MAX_ATTEMPTS = examData.max_attempts || 1;
       examDuration = examData.duration_minutes || 20;
@@ -95,20 +100,39 @@
       examEndAt = examData.end_at ? new Date(examData.end_at) : null;
 
       const now = new Date();
-      if (examStartAt && now < examStartAt) { errorDiv.innerHTML = `<b>آزمون هنوز شروع نشده است.<br>زمان شروع: ${examStartAt.toLocaleString('fa-IR')}</b>`; return; }
-      if (examEndAt && now > examEndAt) { errorDiv.innerHTML = `<b>مهلت آزمون به پایان رسیده است.</b>`; return; }
+      if (examStartAt && now < examStartAt) {
+        errorDiv.innerHTML = `<b>آزمون هنوز شروع نشده است.<br>زمان شروع: ${examStartAt.toLocaleString('fa-IR')}</b>`;
+        return;
+      }
+      if (examEndAt && now > examEndAt) {
+        errorDiv.innerHTML = '<b>مهلت آزمون به پایان رسیده است.</b>';
+        return;
+      }
 
-      const { data: attempts } = await supabase.from('exam_results').select('id').eq('user_id', userId).eq('exam_id', examId);
-      if (attempts.length >= MAX_ATTEMPTS) { resultDiv.innerHTML = `<b>تعداد مجاز شرکت تمام شده است.</b>`; return; }
+      const { data: attempts } = await supabase
+        .from('exam_results')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('exam_id', examId);
+      if (attempts.length >= MAX_ATTEMPTS) {
+        resultDiv.innerHTML = '<b>تعداد مجاز شرکت تمام شده است.</b>';
+        return;
+      }
 
-      const { data: qs } = await supabase.from('questions').select('*').eq('exam_id', examId);
+      const { data: qs, error: qError } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('exam_id', examId);
+      if (qError) {
+        errorDiv.innerHTML = '<b>خطا در بارگذاری سوالات.</b>';
+        console.error('Questions load error:', qError);
+        return;
+      }
       questions = qs;
       navBtns.style.display = 'block';
 
-      // If page reload or back navigation, auto-submit
       const navEntries = performance.getEntriesByType('navigation');
       if (navEntries[0] && (navEntries[0].type === 'reload' || navEntries[0].type === 'back_forward')) {
-        // Calculate and submit
         finalizeAndShowResult();
         return;
       }
