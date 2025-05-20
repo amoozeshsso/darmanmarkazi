@@ -46,6 +46,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     const examId = urlParams.get('exam_id') || sessionStorage.getItem('examId');
 
+    // جلوگیری از بازگشت با دکمه Back مرورگر
     history.pushState(null, null, location.href);
     window.addEventListener('popstate', () => finalizeAndShowResult());
 
@@ -68,6 +69,7 @@
     let timerInterval = null;
     let questions = [], userAnswers = {}, currentQuestion = 0;
 
+    // بارگذاری پاسخ‌های ذخیره‌شده
     userAnswers = JSON.parse(sessionStorage.getItem('userAnswers') || '{}');
 
     async function loadQuiz() {
@@ -83,9 +85,7 @@
           .eq('id', examId)
           .maybeSingle();
         if (examError) throw examError;
-        if (!examData) {
-          throw new Error('آزمون با این شناسه یافت نشد.');
-        }
+        if (!examData) throw new Error('آزمون با این شناسه یافت نشد.');
         examTitle.textContent = examData.title;
         MAX_ATTEMPTS = examData.max_attempts;
         examDuration = examData.duration_minutes;
@@ -103,7 +103,7 @@
         return;
       }
 
-      // بررسی تعداد دفعات شرکت
+      // بررسی دفعات شرکت
       try {
         const { data: attempts, error: attError } = await supabase
           .from('exam_results')
@@ -137,22 +137,73 @@
         return;
       }
 
-      // زمان پایان آزمون را ذخیره کن
+      // ذخیره زمان پایان آزمون
       if (!sessionStorage.getItem('examEndTime')) {
         sessionStorage.setItem('examEndTime', Date.now() + examDuration * 60000);
       }
       const remainSec = Math.floor((sessionStorage.getItem('examEndTime') - Date.now()) / 1000);
-      if (remainSec <= 0) {
-        finalizeAndShowResult();
-        return;
-      }
+      if (remainSec <= 0) { finalizeAndShowResult(); return; }
 
-      showQuestion();
-      showExamTimer(remainSec);
+      showQuestion(); showExamTimer(remainSec); updateProgressStatus();
+    }
+
+    function showQuestion() {
+      const q = questions[currentQuestion];
+      questionBox.innerHTML = `
+        <div class="question">
+          <div><b>${currentQuestion + 1}.</b> ${q.question_text}</div>
+          <div class="options">
+            <label><input type="radio" name="option" value="1" ${userAnswers[q.id]==1?'checked':''}/> ${q.option1}</label>
+            <label><input type="radio" name="option" value="2" ${userAnswers[q.id]==2?'checked':''}/> ${q.option2}</label>
+            <label><input type="radio" name="option" value="3" ${userAnswers[q.id]==3?'checked':''}/> ${q.option3}</label>
+            <label><input type="radio" name="option" value="4" ${userAnswers[q.id]==4?'checked':''}/> ${q.option4}</label>
+          </div>
+        </div>`;
+      prevBtn.style.display = currentQuestion > 0 ? 'inline-block' : 'none';
+      nextBtn.style.display = currentQuestion < questions.length - 1 ? 'inline-block' : 'none';
+      submitBtn.style.display = currentQuestion === questions.length - 1 ? 'inline-block' : 'none';
+      document.getElementsByName('option').forEach(r => r.onchange = saveAnswer);
+    }
+
+    function saveAnswer() {
+      const sel = document.querySelector('input[name="option"]:checked');
+      if (sel) {
+        userAnswers[questions[currentQuestion].id] = +sel.value;
+        sessionStorage.setItem('userAnswers', JSON.stringify(userAnswers));
+      }
       updateProgressStatus();
     }
 
-    // بقیه توابع بدون تغییر...
+    function updateProgressStatus() {
+      progressStatus.textContent = `شما ${Object.keys(userAnswers).length} از ${questions.length} پاسخ داده‌اید.`;
+    }
+
+    nextBtn.onclick = () => { saveAnswer(); currentQuestion++; showQuestion(); };
+    prevBtn.onclick = () => { saveAnswer(); currentQuestion--; showQuestion(); };
+    quizForm.onsubmit = e => { e.preventDefault(); saveAnswer(); finalizeAndShowResult(); };
+
+    async function finalizeAndShowResult() {
+      clearInterval(timerInterval);
+      quizForm.querySelectorAll('button').forEach(b => b.disabled = true);
+      const allQs = (await supabase.from('questions').select('*').eq('exam_id', examId)).data;
+      const correct = allQs.filter(q => userAnswers[q.id] === q.correct_option).length;
+      const score = Math.round((correct / allQs.length) * 100);
+      await supabase.from('exam_results').insert([{ user_id: userId, exam_id: examId, score }]);
+      resultDiv.innerHTML = `<b>آزمون پایان یافت.<br>نمره شما: ${score} از 100</b>`;
+      sessionStorage.removeItem('userAnswers'); sessionStorage.removeItem('examEndTime');
+    }
+
+    function showExamTimer(seconds) {
+      function tick() {
+        if (seconds < 0) return;
+        const m = Math.floor(seconds/60), s = seconds % 60;
+        timerDiv.textContent = `زمان باقی‌مانده: ${m}:${s<10?'0':''}${s}`;
+        if (seconds-- === 0) quizForm.dispatchEvent(new Event('submit'));
+      }
+      tick();
+      timerInterval = setInterval(tick, 1000);
+    }
+
     loadQuiz();
   </script>
 </body>
