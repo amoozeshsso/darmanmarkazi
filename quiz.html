@@ -1,42 +1,4 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <title>آزمون آنلاین</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Vazirmatn', Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); padding: 30px; }
-    h1 { text-align: center; color: #333; }
-    #progressStatus { text-align: center; margin-bottom: 18px; color: #4e54c8; font-size: 18px; }
-    .question { margin-bottom: 25px; }
-    .options label { display: block; margin-bottom: 8px; }
-    button { background: #4e54c8; color: #fff; border: none; padding: 12px 30px; border-radius: 6px; font-size: 16px; cursor: pointer; }
-    #timer { text-align:center; font-size:20px; margin:18px 0; color:#c0392b; }
-    #result { margin-top: 30px; padding: 18px; border-radius: 8px; background: #eafaf1; color: #222; text-align: center; font-size: 18px; }
-    #error { margin-top: 20px; color: #c0392b; text-align: center; }
-    .nav-btns { margin-top: 20px; text-align: center; }
-    .nav-btns button { margin: 0 6px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1 id="examTitle">آزمون آنلاین</h1>
-    <div id="timer"></div>
-    <div id="progressStatus"></div>
-    <form id="quizForm">
-      <div id="questionBox"></div>
-      <div class="nav-btns" style="display:none;">
-        <button type="button" id="prevBtn">قبلی</button>
-        <button type="button" id="nextBtn">بعدی</button>
-        <button type="submit" id="submitBtn" style="display:none;">ثبت آزمون</button>
-      </div>
-    </form>
-    <div id="result"></div>
-    <div id="error"></div>
-  </div>
+<!-- ... (تا قبل از <script> تغییری ندارد) -->
   <script>
     // اطلاعات اتصال به Supabase
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
@@ -60,6 +22,9 @@
     const submitBtn = document.getElementById('submitBtn');
     const progressStatus = document.getElementById('progressStatus');
 
+    // کلید ذخیره وضعیت آزمون
+    const LS_KEY = `exam_status_${examId}_${userId}`;
+
     if (!userId) {
       alert('لطفاً ابتدا وارد شوید.');
       window.location.href = 'login.html';
@@ -82,7 +47,20 @@
     let currentQuestion = 0;
     let examFinished = false;
 
-    // بارگذاری آزمون و سوالات
+    // اگر آزمون قبلاً پایان یافته، نمره را نمایش بده
+    if (localStorage.getItem(LS_KEY + '_finished') === '1') {
+      showFinalScore();
+    } else {
+      // اگر آزمون ناتمام در localStorage است، پایان بده
+      let saved = localStorage.getItem(LS_KEY);
+      if (saved) {
+        finishExamOnReload();
+      } else {
+        loadQuiz();
+      }
+    }
+
+    // بارگذاری آزمون و سوالات (بدون تغییر)
     async function loadQuiz() {
       errorDiv.textContent = '';
       resultDiv.textContent = '';
@@ -191,6 +169,7 @@
         radio.onchange = () => {
           saveCurrentAnswer();
           updateProgressStatus();
+          saveExamStatus();
         };
       });
     }
@@ -207,10 +186,18 @@
       progressStatus.textContent = `شما تا الان ${answered} سوال از ${total} سوال را پاسخ داده اید.`;
     }
 
+    function saveExamStatus() {
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        userAnswers,
+        currentQuestion
+      }));
+    }
+
     nextBtn.onclick = function() {
       saveCurrentAnswer();
       if (currentQuestion < questions.length - 1) {
         currentQuestion++;
+        saveExamStatus();
         showQuestion();
       }
     };
@@ -219,6 +206,7 @@
       saveCurrentAnswer();
       if (currentQuestion > 0) {
         currentQuestion--;
+        saveExamStatus();
         showQuestion();
       }
     };
@@ -226,6 +214,7 @@
     quizForm.onsubmit = async function(e) {
       e.preventDefault();
       saveCurrentAnswer();
+      saveExamStatus();
       await finishExam();
     };
 
@@ -246,9 +235,13 @@
         return;
       }
 
+      // بازیابی پاسخ‌ها از localStorage (برای حالت رفرش/Back)
+      let saved = localStorage.getItem(LS_KEY);
+      let answers = saved ? (JSON.parse(saved).userAnswers || {}) : userAnswers;
+
       let correct = 0;
       qs.forEach(q => {
-        if (userAnswers[q.id] && userAnswers[q.id] === q.correct_option) correct++;
+        if (answers[q.id] && answers[q.id] === q.correct_option) correct++;
       });
 
       const finalScore = Math.round((correct / qs.length) * 100);
@@ -273,35 +266,85 @@
       resultDiv.innerHTML = `<b>آزمون پایان یافت.<br>نمره شما: ${finalScore} از 100</b>`;
       quizForm.innerHTML = '';
       timerDiv.textContent = '';
+      localStorage.setItem(LS_KEY + '_finished', '1');
+      localStorage.removeItem(LS_KEY);
     }
 
     // پایان آزمون در صورت رفرش یا Back
     window.addEventListener('beforeunload', function (e) {
       if (!examFinished && !timerStopped && questions.length > 0) {
         saveCurrentAnswer();
-        // ارسال نمره به بانک (sync XHR برای اطمینان از اجرا قبل از unload)
-        navigator.sendBeacon && sendExamResultBeacon();
-        // اگر sendBeacon نبود، فقط تابع finishExam را صدا بزن (در بیشتر مرورگرها کافی است)
-        finishExam();
+        saveExamStatus();
       }
     });
 
-    // برای اطمینان بیشتر در موبایل و SPAها
-    window.addEventListener('pagehide', function (e) {
-      if (!examFinished && !timerStopped && questions.length > 0) {
-        saveCurrentAnswer();
-        navigator.sendBeacon && sendExamResultBeacon();
-        finishExam();
-      }
-    });
+    // اگر آزمون ناتمام بود و کاربر برگشت، پایان آزمون و ثبت نمره را انجام بده
+    async function finishExamOnReload() {
+      // سوالات را باید دوباره دریافت کنیم
+      const { data: qs, error: qErr } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('exam_id', examId);
 
-    // ارسال نمره به بانک با sendBeacon (فقط برای اطمینان بیشتر)
-    function sendExamResultBeacon() {
-      // این تابع فقط برای تضمین ارسال سریع است، اما Supabase REST مستقیماً از sendBeacon پشتیبانی نمی‌کند.
-      // پس finishExam اصلی همچنان اجرا می‌شود.
+      if (qErr || !qs.length) {
+        errorDiv.textContent = 'خطا در دریافت سوالات!';
+        return;
+      }
+
+      let saved = localStorage.getItem(LS_KEY);
+      let answers = saved ? (JSON.parse(saved).userAnswers || {}) : {};
+
+      let correct = 0;
+      qs.forEach(q => {
+        if (answers[q.id] && answers[q.id] === q.correct_option) correct++;
+      });
+
+      const finalScore = Math.round((correct / qs.length) * 100);
+
+      // فقط اگر قبلاً ثبت نشده باشد
+      const { data: prev, error: prevErr } = await supabase
+        .from('exam_results')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('exam_id', examId);
+
+      if (!prevErr && prev.length === 0) {
+        const { error: insErr } = await supabase
+          .from('exam_results')
+          .insert([{ user_id: userId, exam_id: examId, score: finalScore }]);
+        if (insErr) {
+          errorDiv.textContent = 'خطا در ثبت نتیجه آزمون!';
+          return;
+        }
+      }
+
+      resultDiv.innerHTML = `<b>آزمون پایان یافت.<br>نمره شما: ${finalScore} از 100</b>`;
+      quizForm.innerHTML = '';
+      timerDiv.textContent = '';
+      localStorage.setItem(LS_KEY + '_finished', '1');
+      localStorage.removeItem(LS_KEY);
     }
 
-    // تایمر معکوس و سابمیت خودکار
+    // نمایش نمره اگر آزمون قبلاً پایان یافته باشد
+    async function showFinalScore() {
+      const { data: prev, error: prevErr } = await supabase
+        .from('exam_results')
+        .select('score')
+        .eq('user_id', userId)
+        .eq('exam_id', examId)
+        .maybeSingle();
+      if (prev) {
+        resultDiv.innerHTML = `<b>آزمون پایان یافته است.<br>نمره شما: ${prev.score} از 100</b>`;
+        quizForm.innerHTML = '';
+        timerDiv.textContent = '';
+      } else {
+        resultDiv.innerHTML = `<b>آزمون پایان یافته است.</b>`;
+        quizForm.innerHTML = '';
+        timerDiv.textContent = '';
+      }
+    }
+
+    // تایمر معکوس و سابمیت خودکار (بدون تغییر)
     function showExamTimer(minutes) {
       let totalSeconds = minutes * 60;
       timerStopped = false;
@@ -326,8 +369,6 @@
       updateTimer();
       timerInterval = setInterval(updateTimer, 1000);
     }
-
-    loadQuiz();
   </script>
 </body>
 </html>
