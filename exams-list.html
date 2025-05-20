@@ -33,7 +33,7 @@
   <script>
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = window.Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const examsList = document.getElementById('examsList');
     const errorDiv = document.getElementById('error');
