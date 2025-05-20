@@ -10,19 +10,30 @@
     body { font-family: 'Vazirmatn', Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 20px; }
     .container { max-width: 600px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); padding: 30px; }
     h1 { text-align: center; color: #333; }
+    #progressStatus { text-align: center; margin-bottom: 18px; color: #4e54c8; font-size: 18px; }
     .question { margin-bottom: 25px; }
     .options label { display: block; margin-bottom: 8px; }
     button { background: #4e54c8; color: #fff; border: none; padding: 12px 30px; border-radius: 6px; font-size: 16px; cursor: pointer; }
     #timer { text-align:center; font-size:20px; margin:18px 0; color:#c0392b; }
     #result { margin-top: 30px; padding: 18px; border-radius: 8px; background: #eafaf1; color: #222; text-align: center; font-size: 18px; }
     #error { margin-top: 20px; color: #c0392b; text-align: center; }
+    .nav-btns { margin-top: 20px; text-align: center; }
+    .nav-btns button { margin: 0 6px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1 id="examTitle">آزمون آنلاین</h1>
     <div id="timer"></div>
-    <form id="quizForm"></form>
+    <div id="progressStatus"></div>
+    <form id="quizForm">
+      <div id="questionBox"></div>
+      <div class="nav-btns" style="display:none;">
+        <button type="button" id="prevBtn">قبلی</button>
+        <button type="button" id="nextBtn">بعدی</button>
+        <button type="submit" id="submitBtn" style="display:none;">ثبت آزمون</button>
+      </div>
+    </form>
     <div id="result"></div>
     <div id="error"></div>
   </div>
@@ -38,13 +49,16 @@
     const examId = urlParams.get('exam_id') || sessionStorage.getItem('examId');
 
     const quizForm = document.getElementById('quizForm');
+    const questionBox = document.getElementById('questionBox');
     const resultDiv = document.getElementById('result');
     const errorDiv = document.getElementById('error');
     const examTitle = document.getElementById('examTitle');
     const timerDiv = document.getElementById('timer');
-
-    // کلید localStorage برای ذخیره وضعیت آزمون
-    const LS_KEY = `exam_status_${examId}_${userId}`;
+    const navBtns = document.querySelector('.nav-btns');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const progressStatus = document.getElementById('progressStatus');
 
     if (!userId) {
       alert('لطفاً ابتدا وارد شوید.');
@@ -61,21 +75,21 @@
     let examEndAt = null;
     let timerInterval = null;
     let timerStopped = false;
-    let questions = [];
 
-    // اگر آزمون قبلاً پایان یافته است، نمره را نمایش بده
-    if (localStorage.getItem(LS_KEY + '_finished') === '1') {
-      showFinalScore();
-    } else {
-      loadQuiz();
-    }
+    // متغیرهای مدیریت سوالات
+    let questions = [];
+    let userAnswers = {};
+    let currentQuestion = 0;
 
     // بارگذاری آزمون و سوالات
     async function loadQuiz() {
       errorDiv.textContent = '';
       resultDiv.textContent = '';
-      quizForm.innerHTML = 'در حال بارگذاری سوالات...';
+      quizForm.reset();
+      questionBox.innerHTML = 'در حال بارگذاری سوالات...';
       timerDiv.textContent = '';
+      navBtns.style.display = 'none';
+      progressStatus.textContent = '';
 
       // دریافت اطلاعات آزمون
       const { data: examData, error: examErr } = await supabase
@@ -85,7 +99,7 @@
         .maybeSingle();
 
       if (examErr || !examData) {
-        quizForm.innerHTML = '';
+        questionBox.innerHTML = '';
         errorDiv.textContent = 'آزمون یافت نشد!';
         return;
       }
@@ -98,12 +112,12 @@
       // بررسی زمان شروع و پایان آزمون
       const now = new Date();
       if (examStartAt && now < examStartAt) {
-        quizForm.innerHTML = '';
+        questionBox.innerHTML = '';
         errorDiv.innerHTML = `<b>آزمون هنوز شروع نشده است.<br>زمان شروع: ${examStartAt.toLocaleString('fa-IR')}</b>`;
         return;
       }
       if (examEndAt && now > examEndAt) {
-        quizForm.innerHTML = '';
+        questionBox.innerHTML = '';
         errorDiv.innerHTML = `<b>مهلت شرکت در این آزمون به پایان رسیده است.</b>`;
         return;
       }
@@ -117,12 +131,12 @@
 
       if (attErr) {
         errorDiv.textContent = 'خطا در بررسی دفعات شرکت!';
-        quizForm.innerHTML = '';
+        questionBox.innerHTML = '';
         return;
       }
 
       if (attempts.length >= MAX_ATTEMPTS) {
-        quizForm.innerHTML = '';
+        questionBox.innerHTML = '';
         resultDiv.innerHTML = `<b>شما بیش از ${MAX_ATTEMPTS} بار در این آزمون شرکت کرده‌اید و مجاز به شرکت مجدد نیستید.</b>`;
         return;
       }
@@ -134,46 +148,118 @@
         .eq('exam_id', examId);
 
       if (qErr || !qs.length) {
-        quizForm.innerHTML = '';
+        questionBox.innerHTML = '';
         errorDiv.textContent = 'سوالی برای این آزمون ثبت نشده است.';
         return;
       }
+
       questions = qs;
+      userAnswers = {};
+      currentQuestion = 0;
+      navBtns.style.display = 'block';
+      showQuestion();
+      showExamTimer(examDuration);
+      updateProgressStatus();
+    }
 
-      // اگر پاسخ‌های ذخیره شده داری، بازیابی کن
-      let saved = localStorage.getItem(LS_KEY);
-      let userAnswers = {};
-      if (saved) {
-        userAnswers = JSON.parse(saved);
-      }
-
-      // ساخت فرم سوالات
-      quizForm.innerHTML = questions.map((q, idx) => `
+    function showQuestion() {
+      const q = questions[currentQuestion];
+      if (!q) return;
+      let html = `
         <div class="question">
-          <div><b>${idx + 1}.</b> ${q.question_text}</div>
+          <div><b>${currentQuestion + 1}.</b> ${q.question_text}</div>
           <div class="options">
-            <label><input type="radio" name="q${q.id}" value="1" ${userAnswers[q.id]==1?'checked':''}> ${q.option1}</label>
-            <label><input type="radio" name="q${q.id}" value="2" ${userAnswers[q.id]==2?'checked':''}> ${q.option2}</label>
-            <label><input type="radio" name="q${q.id}" value="3" ${userAnswers[q.id]==3?'checked':''}> ${q.option3}</label>
-            <label><input type="radio" name="q${q.id}" value="4" ${userAnswers[q.id]==4?'checked':''}> ${q.option4}</label>
+            <label><input type="radio" name="option" value="1" ${userAnswers[q.id]==1?'checked':''}> ${q.option1}</label>
+            <label><input type="radio" name="option" value="2" ${userAnswers[q.id]==2?'checked':''}> ${q.option2}</label>
+            <label><input type="radio" name="option" value="3" ${userAnswers[q.id]==3?'checked':''}> ${q.option3}</label>
+            <label><input type="radio" name="option" value="4" ${userAnswers[q.id]==4?'checked':''}> ${q.option4}</label>
           </div>
         </div>
-      `).join('') + '<button type="submit">ثبت آزمون</button>';
+      `;
+      questionBox.innerHTML = html;
+      prevBtn.style.display = currentQuestion > 0 ? 'inline-block' : 'none';
+      nextBtn.style.display = currentQuestion < questions.length - 1 ? 'inline-block' : 'none';
+      submitBtn.style.display = currentQuestion === questions.length - 1 ? 'inline-block' : 'none';
 
-      // ذخیره پاسخ‌ها در هر انتخاب
-      questions.forEach(q => {
-        const radios = quizForm.querySelectorAll(`input[name="q${q.id}"]`);
-        radios.forEach(radio => {
-          radio.addEventListener('change', () => {
-            userAnswers[q.id] = parseInt(radio.value);
-            localStorage.setItem(LS_KEY, JSON.stringify(userAnswers));
-          });
-        });
+      // هر بار نمایش سوال، وضعیت پاسخ‌ها را آپدیت کن
+      updateProgressStatus();
+
+      // رویداد برای انتخاب گزینه
+      const radios = document.getElementsByName('option');
+      radios.forEach(radio => {
+        radio.onchange = () => {
+          saveCurrentAnswer();
+          updateProgressStatus();
+        };
+      });
+    }
+
+    function saveCurrentAnswer() {
+      const q = questions[currentQuestion];
+      const selected = document.querySelector('input[name="option"]:checked');
+      if (selected) userAnswers[q.id] = parseInt(selected.value);
+    }
+
+    function updateProgressStatus() {
+      // تعداد سوالات پاسخ داده شده
+      let answered = Object.keys(userAnswers).length;
+      let total = questions.length;
+      progressStatus.textContent = `شما تا الان ${answered} سوال از ${total} سوال را پاسخ داده اید.`;
+    }
+
+    nextBtn.onclick = function() {
+      saveCurrentAnswer();
+      if (currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        showQuestion();
+      }
+    };
+
+    prevBtn.onclick = function() {
+      saveCurrentAnswer();
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        showQuestion();
+      }
+    };
+
+    quizForm.onsubmit = async function(e) {
+      e.preventDefault();
+      saveCurrentAnswer();
+
+      // دریافت آخرین سوالات برای تصحیح
+      const { data: qs, error: qErr } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('exam_id', examId);
+
+      if (qErr || !qs.length) {
+        errorDiv.textContent = 'خطا در دریافت سوالات!';
+        return;
+      }
+
+      let correct = 0;
+      qs.forEach(q => {
+        if (userAnswers[q.id] && userAnswers[q.id] === q.correct_option) correct++;
       });
 
-      // نمایش تایمر و شروع شمارش معکوس
-      showExamTimer(examDuration);
-    }
+      const finalScore = Math.round((correct / qs.length) * 100);
+
+      const { error: insErr } = await supabase
+        .from('exam_results')
+        .insert([{ user_id: userId, exam_id: examId, score: finalScore }]);
+
+      if (insErr) {
+        errorDiv.textContent = 'خطا در ثبت نتیجه آزمون!';
+        return;
+      }
+
+      resultDiv.innerHTML = `<b>آزمون با موفقیت ثبت شد.<br>نمره شما: ${finalScore} از 100</b>`;
+      quizForm.innerHTML = '';
+      timerDiv.textContent = '';
+      timerStopped = true;
+      clearInterval(timerInterval);
+    };
 
     // تایمر معکوس و سابمیت خودکار
     function showExamTimer(minutes) {
@@ -201,128 +287,7 @@
       timerInterval = setInterval(updateTimer, 1000);
     }
 
-    // ثبت پاسخ‌ها و نمره
-    quizForm.onsubmit = async function(e) {
-      e.preventDefault();
-      errorDiv.textContent = '';
-      resultDiv.textContent = '';
-
-      // اگر تایمر تمام شده بود، اجازه ثبت مجدد نده
-      if (timerStopped) {
-        timerDiv.textContent = 'زمان آزمون به پایان رسید!';
-      }
-
-      // دریافت آخرین سوالات برای تصحیح
-      const { data: qs, error: qErr } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('exam_id', examId);
-
-      if (qErr || !qs.length) {
-        errorDiv.textContent = 'خطا در دریافت سوالات!';
-        return;
-      }
-
-      let correct = 0;
-      let userAnswers = {};
-      qs.forEach(q => {
-        const ansInput = quizForm[`q${q.id}`];
-        if (ansInput && ansInput.value && parseInt(ansInput.value) === q.correct_option) correct++;
-        if (ansInput && ansInput.value) userAnswers[q.id] = parseInt(ansInput.value);
-      });
-
-      // محاسبه نمره نهایی (مثلاً از 100)
-      const finalScore = Math.round((correct / qs.length) * 100);
-
-      // ثبت نتیجه در exam_results
-      const { data: prev, error: prevErr } = await supabase
-        .from('exam_results')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('exam_id', examId);
-
-      if (!prevErr && prev.length === 0) {
-        const { error: insErr } = await supabase
-          .from('exam_results')
-          .insert([{ user_id: userId, exam_id: examId, score: finalScore }]);
-        if (insErr) {
-          errorDiv.textContent = 'خطا در ثبت نتیجه آزمون!';
-          return;
-        }
-      }
-
-      localStorage.setItem(LS_KEY + '_finished', '1');
-      localStorage.removeItem(LS_KEY);
-      resultDiv.innerHTML = `<b>آزمون پایان یافت.<br>نمره شما: ${finalScore} از 100</b>`;
-      quizForm.innerHTML = '';
-      timerDiv.textContent = '';
-      timerStopped = true;
-      clearInterval(timerInterval);
-    };
-
-    // ثبت نمره در صورت رفرش/خروج
-    window.addEventListener('beforeunload', async function (e) {
-      if (!timerStopped && !localStorage.getItem(LS_KEY + '_finished')) {
-        // دریافت آخرین سوالات
-        const { data: qs } = await supabase
-          .from('questions')
-          .select('*')
-          .eq('exam_id', examId);
-
-        let userAnswers = {};
-        qs.forEach(q => {
-          const radios = document.getElementsByName(`q${q.id}`);
-          radios.forEach(radio => {
-            if (radio.checked) userAnswers[q.id] = parseInt(radio.value);
-          });
-        });
-        localStorage.setItem(LS_KEY, JSON.stringify(userAnswers));
-      }
-    });
-
-    // اگر آزمون قبلاً پایان یافته، نمره را نمایش بده
-    async function showFinalScore() {
-      const { data: prev, error: prevErr } = await supabase
-        .from('exam_results')
-        .select('score')
-        .eq('user_id', userId)
-        .eq('exam_id', examId)
-        .maybeSingle();
-      if (prev) {
-        resultDiv.innerHTML = `<b>آزمون پایان یافته است.<br>نمره شما: ${prev.score} از 100</b>`;
-        quizForm.innerHTML = '';
-        timerDiv.textContent = '';
-      } else {
-        // اگر نمره نبود، محاسبه و ثبت کن
-        // بازیابی پاسخ‌ها
-        let userAnswers = {};
-        let saved = localStorage.getItem(LS_KEY);
-        if (saved) userAnswers = JSON.parse(saved);
-
-        // دریافت سوالات
-        const { data: qs } = await supabase
-          .from('questions')
-          .select('*')
-          .eq('exam_id', examId);
-
-        let correct = 0;
-        qs.forEach(q => {
-          if (userAnswers[q.id] && userAnswers[q.id] === q.correct_option) correct++;
-        });
-
-        const finalScore = Math.round((correct / qs.length) * 100);
-
-        await supabase
-          .from('exam_results')
-          .insert([{ user_id: userId, exam_id: examId, score: finalScore }]);
-
-        resultDiv.innerHTML = `<b>آزمون پایان یافته است.<br>نمره شما: ${finalScore} از 100</b>`;
-        quizForm.innerHTML = '';
-        timerDiv.textContent = '';
-        localStorage.setItem(LS_KEY + '_finished', '1');
-        localStorage.removeItem(LS_KEY);
-      }
-    }
+    loadQuiz();
   </script>
 </body>
 </html>
