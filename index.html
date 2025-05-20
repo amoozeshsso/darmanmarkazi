@@ -52,16 +52,17 @@
     <a href="login.html" class="login-link">ورود به سامانه</a>
   </div>
 
-  <!-- Supabase JS UMD v2 -->
+  <!-- بارگذاری UMD bundle -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <script>
-    // جایگزین با URL و ANON KEY شما
-    const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+    // URL و ANON KEY شما
+    const SUPABASE_URL     = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // ایجاد کلاینت از گلوبال Supabase
+    const supabaseClient = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function loadSiteContent() {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('site_content')
         .select('welcome_text, image_url')
         .eq('id', 1)
