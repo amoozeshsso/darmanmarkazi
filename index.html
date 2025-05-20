@@ -5,9 +5,12 @@
   <title>صفحه اصلی سامانه آزمون</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
+    
+
     body {
-      font-family: 'Vazirmatn', Tahoma, sans-serif;
+      font-family: Tahoma, sans-serif;
       background: #f3f3f3;
       display: flex;
       justify-content: center;
@@ -24,7 +27,10 @@
       max-width: 360px;
       text-align: center;
     }
-    h1 { color: #333; margin-bottom: 20px; }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
     a.login-link {
       display: inline-block;
       padding: 15px 30px;
@@ -35,53 +41,82 @@
       font-size: 18px;
       transition: background-color 0.3s ease;
     }
-    a.login-link:hover { background-color: #3b3f9b; }
+    a.login-link:hover {
+      background-color: #3b3f9b;
+    }
     #mainImg {
       max-width: 100%;
       border-radius: 10px;
       display: none;
       margin-bottom: 12px;
     }
-    #welcomeText { font-size: 18px; }
+    #linksBox {
+      margin-top: 18px;
+    }
+    #linksBox a {
+      color: #4e54c8;
+      font-size: 17px;
+      text-decoration: underline;
+      margin: 8px 0;
+      display: block;
+    }
+    #welcomeText {
+  font-size: 18px;
+}
+body {
+  font-family: 'Vazirmatn', Tahoma, sans-serif;
+}
+
   </style>
 </head>
 <body>
   <div class="container">
     <img id="mainImg" alt="تصویر صفحه اصلی" />
-    <h1 id="welcomeText">در حال بارگذاری …</h1>
+    <h1 id="welcomeText">خوش آمدید به سامانه آزمون</h1>
+   
+     <div id="linksBox"></div>
     <a href="login.html" class="login-link">ورود به سامانه</a>
+   
   </div>
-
-  <!-- بارگذاری UMD bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <script>
-    // URL و ANON KEY شما
-    const SUPABASE_URL     = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-    // ایجاد کلاینت از گلوبال Supabase
-    const supabaseClient = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_URL = "https://qdccjbakfuywvdqfcoyg.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     async function loadSiteContent() {
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('site_content')
-        .select('welcome_text, image_url')
+        .select('*')
         .eq('id', 1)
         .single();
 
-      if (error) {
-        console.error('خطا در دریافت اطلاعات سایت:', error);
-        document.getElementById('welcomeText').textContent = 'خطا در بارگذاری داده‌ها';
+      if (error || !data) {
+        document.getElementById('linksBox').innerHTML = "<div style='color:red'>خطا در دریافت اطلاعات سایت</div>";
         return;
       }
 
-      if (data.welcome_text) {
+      // پیام خوش آمدگویی
+      if (data.welcome_text)
         document.getElementById('welcomeText').textContent = data.welcome_text;
-      }
+
+      // عکس اصلی
       if (data.image_url) {
         const img = document.getElementById('mainImg');
         img.src = data.image_url;
         img.style.display = 'block';
       }
+
+      // نمایش ۵ لینک
+      let linksHtml = '';
+      for (let i = 1; i <= 5; i++) {
+        const url = data[`link${i}_url`];
+        const text = data[`link${i}_text`];
+        if (url && text) {
+          linksHtml += `<a href="${url}" target="_blank">${text}</a>`;
+        }
+      }
+      document.getElementById('linksBox').innerHTML = linksHtml;
     }
 
     loadSiteContent();
