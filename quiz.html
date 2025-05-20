@@ -46,6 +46,13 @@
     const urlParams = new URLSearchParams(window.location.search);
     const examId = urlParams.get('exam_id') || sessionStorage.getItem('examId');
 
+    // جلوگیری از بازگشت با دکمه Back مرورگر
+    history.pushState(null, null, location.href);
+    window.addEventListener('popstate', function(event) {
+      // در صورت فشردن دکمه Back، آزمون پایان یابد
+      finalizeAndShowResult();
+    });
+
     const quizForm = document.getElementById('quizForm');
     const questionBox = document.getElementById('questionBox');
     const resultDiv = document.getElementById('result');
@@ -132,7 +139,7 @@
       navBtns.style.display = 'block';
 
       const navEntries = performance.getEntriesByType('navigation');
-      if (navEntries[0] && (navEntries[0].type === 'reload' || navEntries[0].type === 'back_forward')) {
+      if (navEntries[0] && (navEntries[0].type === 'reload')) {
         finalizeAndShowResult();
         return;
       }
@@ -146,62 +153,4 @@
       const q = questions[currentQuestion];
       questionBox.innerHTML = `
         <div class="question">
-          <div><b>${currentQuestion + 1}.</b> ${q.question_text}</div>
-          <div class="options">
-            <label><input type="radio" name="option" value="1" ${userAnswers[q.id]==1?'checked':''}> ${q.option1}</label>
-            <label><input type="radio" name="option" value="2" ${userAnswers[q.id]==2?'checked':''}> ${q.option2}</label>
-            <label><input type="radio" name="option" value="3" ${userAnswers[q.id]==3?'checked':''}> ${q.option3}</label>
-            <label><input type="radio" name="option" value="4" ${userAnswers[q.id]==4?'checked':''}> ${q.option4}</label>
-          </div>
-        </div>
-      `;
-      prevBtn.style.display = currentQuestion > 0 ? 'inline-block' : 'none';
-      nextBtn.style.display = currentQuestion < questions.length - 1 ? 'inline-block' : 'none';
-      submitBtn.style.display = currentQuestion === questions.length - 1 ? 'inline-block' : 'none';
-
-      updateProgressStatus();
-      document.getElementsByName('option').forEach(r => r.onchange = () => { saveCurrentAnswer(); showQuestion(); });
-    }
-
-    function saveCurrentAnswer() {
-      const sel = document.querySelector('input[name="option"]:checked');
-      if (sel) userAnswers[questions[currentQuestion].id] = +sel.value;
-      sessionStorage.setItem('userAnswers', JSON.stringify(userAnswers));
-    }
-
-    function updateProgressStatus() {
-      progressStatus.textContent = `شما تا الان ${Object.keys(userAnswers).length} از ${questions.length} پاسخ داده‌اید.`;
-    }
-
-    nextBtn.onclick = () => { saveCurrentAnswer(); currentQuestion++; showQuestion(); };
-    prevBtn.onclick = () => { saveCurrentAnswer(); currentQuestion--; showQuestion(); };
-
-    quizForm.onsubmit = async e => { e.preventDefault(); saveCurrentAnswer(); finalizeAndShowResult(); };
-
-    async function finalizeAndShowResult() {
-      clearInterval(timerInterval);
-      quizForm.querySelectorAll('button').forEach(b => b.disabled = true);
-      const { data: allQs } = await supabase.from('questions').select('*').eq('exam_id', examId);
-      let correct = allQs.filter(q => userAnswers[q.id] === q.correct_option).length;
-      let finalScore = Math.round((correct / allQs.length) * 100);
-      await supabase.from('exam_results').insert([{ user_id: userId, exam_id: examId, score: finalScore }]);
-      resultDiv.innerHTML = `<b>آزمون پایان یافت.<br>نمره شما: ${finalScore} از 100</b>`;
-      sessionStorage.removeItem('userAnswers');
-    }
-
-    function showExamTimer(minutes) {
-      let total = minutes * 60;
-      function tick() {
-        if (total < 0) return;
-        let m = Math.floor(total/60), s = total%60;
-        timerDiv.textContent = `زمان باقی‌مانده: ${m}:${s<10?'0':''}${s}`;
-        if (total-- === 0) quizForm.dispatchEvent(new Event('submit'));
-      }
-      tick();
-      timerInterval = setInterval(tick,1000);
-    }
-
-    loadQuiz();
-  </script>
-</body>
-</html>
+          <div><b>${currentQuestion + 1}.</b> ${q.question_text}</div>\```
