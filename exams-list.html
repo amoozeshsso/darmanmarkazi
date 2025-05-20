@@ -7,34 +7,38 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Tahoma; background: #f8f8f8; margin: 0; padding: 20px; }
+    body { font-family: 'Vazirmatn', Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 20px; }
     .container { max-width: 600px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); padding: 30px; }
     h1 { text-align: center; color: #333; }
     .exam-item { background: #f3f7fa; margin: 15px 0; padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
     .exam-title { font-size: 18px; font-weight: bold; color: #222; }
     .exam-meta { font-size: 13px; color: #888; margin-right: 10px; }
     .enter-btn { background: #4e54c8; color: #fff; border: none; padding: 8px 22px; border-radius: 6px; font-size: 15px; cursor: pointer; }
+    #customLinksBox div { margin-top: 8px; }
+    #customLinksBox a { color: #4e54c8; text-decoration: underline; font-size: 17px; }
     #error { margin-top: 20px; color: #c0392b; text-align: center; }
-    body {
-  font-family: 'Vazirmatn', Tahoma, sans-serif;
-}
-
   </style>
 </head>
 <body>
   <div class="container">
     <h1>لیست آزمون‌های فعال</h1>
+
     <div id="examsList"></div>
     <div id="error"></div>
+
+    <!-- اینجا لینک‌های ویرایش‌شده نمایش داده می‌شوند -->
+    <div id="customLinksBox"></div>
   </div>
+
   <script>
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const examsList = document.getElementById('examsList');
     const errorDiv = document.getElementById('error');
     const userId = sessionStorage.getItem('userId');
+
     if (!userId) {
       alert('لطفاً ابتدا وارد شوید.');
       window.location.href = 'login.html';
@@ -44,7 +48,6 @@
       examsList.innerHTML = 'در حال بارگذاری...';
       errorDiv.textContent = '';
 
-      // دریافت همه آزمون‌های فعال به همراه max_attempts
       const { data: exams, error: examsError } = await supabase
         .from('exams')
         .select('id, title, max_attempts, active')
@@ -61,7 +64,6 @@
         return;
       }
 
-      // دریافت تعداد دفعات شرکت کاربر در هر آزمون
       const { data: results, error: resultsError } = await supabase
         .from('exam_results')
         .select('exam_id, id')
@@ -73,13 +75,11 @@
         return;
       }
 
-      // شمارش تعداد شرکت در هر آزمون
       const attemptsMap = {};
       results.forEach(r => {
         attemptsMap[r.exam_id] = (attemptsMap[r.exam_id] || 0) + 1;
       });
 
-      // فقط آزمون‌هایی را نمایش بده که کاربر هنوز به سقف مجاز نرسیده است
       const availableExams = exams.filter(exam => {
         const max = exam.max_attempts || 1;
         const count = attemptsMap[exam.id] || 0;
@@ -87,7 +87,7 @@
       });
 
       if (!availableExams.length) {
-        examsList.innerHTML = '<div>شما در همه آزمون‌های فعال به سقف مجاز شرکت رسیده‌اید.</div>';
+        examsList.innerHTML = '<div>شما در همه آزمون‌های فعال سقف مجاز را گذرانده‌اید.</div>';
         return;
       }
 
@@ -96,7 +96,8 @@
         const count = attemptsMap[exam.id] || 0;
         return `
           <div class="exam-item">
-            <span class="exam-title">${exam.title}
+            <span class="exam-title">
+              ${exam.title}
               <span class="exam-meta">(تعداد مجاز: ${max} - شرکت کرده: ${count})</span>
             </span>
             <button class="enter-btn" onclick="enterExam(${exam.id})">شروع آزمون</button>
@@ -110,7 +111,19 @@
       window.location.href = 'quiz.html?exam_id=' + examId;
     }
 
-    loadExams();
-  </script>
-</body>
-</html>
+    // بارگذاری لینک‌های ویرایشی
+    async function loadCustomLinks() {
+      const { data, error } = await supabase
+        .from('site_content')
+        .select('*')
+        .eq('id', 1)
+        .single();
+
+      if (error || !data) return;
+
+      let linksHtml = '';
+      for (let i = 1; i <= 5; i++) {
+        const url = data[`link${i}_url`];
+        const text = data[`link${i}_text`];
+        if (url && text) {
+          linksHtml += `<div><a href="${url}" target="_blank">${text_
