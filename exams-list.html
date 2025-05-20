@@ -22,22 +22,20 @@
 <body>
   <div class="container">
     <h1>لیست آزمون‌های فعال</h1>
-
     <div id="examsList"></div>
     <div id="error"></div>
-
-    <!-- اینجا لینک‌های ویرایش‌شده نمایش داده می‌شوند -->
+    <!-- لینک‌های ویرایش‌شده -->
     <div id="customLinksBox"></div>
   </div>
 
   <script>
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
-    const supabase = window.Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const examsList = document.getElementById('examsList');
-    const errorDiv = document.getElementById('error');
-    const userId = sessionStorage.getItem('userId');
+    const errorDiv  = document.getElementById('error');
+    const userId    = sessionStorage.getItem('userId');
 
     if (!userId) {
       alert('لطفاً ابتدا وارد شوید.');
@@ -66,7 +64,7 @@
 
       const { data: results, error: resultsError } = await supabase
         .from('exam_results')
-        .select('exam_id, id')
+        .select('exam_id')
         .eq('user_id', userId);
 
       if (resultsError) {
@@ -76,54 +74,57 @@
       }
 
       const attemptsMap = {};
-      results.forEach(r => {
-        attemptsMap[r.exam_id] = (attemptsMap[r.exam_id] || 0) + 1;
-      });
+      results.forEach(r => { attemptsMap[r.exam_id] = (attemptsMap[r.exam_id]||0) + 1; });
 
-      const availableExams = exams.filter(exam => {
-        const max = exam.max_attempts || 1;
+      const available = exams.filter(exam => {
+        const max   = exam.max_attempts || 1;
         const count = attemptsMap[exam.id] || 0;
         return count < max;
       });
 
-      if (!availableExams.length) {
-        examsList.innerHTML = '<div>شما در همه آزمون‌های فعال سقف مجاز را گذرانده‌اید.</div>';
+      if (!available.length) {
+        examsList.innerHTML = '<div>شما در همه آزمون‌ها سقف مجاز را گذرانده‌اید.</div>';
         return;
       }
 
-      examsList.innerHTML = availableExams.map(exam => {
-        const max = exam.max_attempts || 1;
+      examsList.innerHTML = available.map(exam => {
+        const max   = exam.max_attempts || 1;
         const count = attemptsMap[exam.id] || 0;
         return `
           <div class="exam-item">
             <span class="exam-title">
               ${exam.title}
-              <span class="exam-meta">(تعداد مجاز: ${max} - شرکت کرده: ${count})</span>
+              <span class="exam-meta">(مجاز: ${max} – شرکت: ${count})</span>
             </span>
             <button class="enter-btn" onclick="enterExam(${exam.id})">شروع آزمون</button>
-          </div>
-        `;
+          </div>`;
       }).join('');
     }
 
-    window.enterExam = function(examId) {
+    window.enterExam = examId => {
       sessionStorage.setItem('examId', examId);
       window.location.href = 'quiz.html?exam_id=' + examId;
-    }
+    };
 
-    // بارگذاری لینک‌های ویرایشی
     async function loadCustomLinks() {
       const { data, error } = await supabase
         .from('site_content')
-        .select('*')
+        .select('link1_url,link1_text,link2_url,link2_text,link3_url,link3_text,link4_url,link4_text,link5_url,link5_text')
         .eq('id', 1)
         .single();
 
       if (error || !data) return;
-
-      let linksHtml = '';
+      let html = '';
       for (let i = 1; i <= 5; i++) {
-        const url = data[`link${i}_url`];
+        const url  = data[`link${i}_url`];
         const text = data[`link${i}_text`];
-        if (url && text) {
-          linksHtml += `<div><a href="${url}" target="_blank">${text_
+        if (url && text) html += `<div><a href="${url}" target="_blank">${text}</a></div>`;
+      }
+      document.getElementById('customLinksBox').innerHTML = html;
+    }
+
+    loadExams();
+    loadCustomLinks();
+  </script>
+</body>
+</html>
