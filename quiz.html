@@ -39,7 +39,7 @@
   </div>
   <script>
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-    const SUPABASE_KEY = 'YOUR_ANON_KEY';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const userId = sessionStorage.getItem('userId');
@@ -153,9 +153,6 @@
     }
 
     // بقیه توابع بدون تغییر...
-    // showQuestion, saveAnswer, updateProgressStatus,
-    // finalizeAndShowResult, showExamTimer
-
     loadQuiz();
   </script>
 </body>
