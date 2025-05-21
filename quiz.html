@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    /* استایل‌های قبلی بدون تغییر */
     body { font-family: 'Vazirmatn', Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 20px; }
     .container { max-width: 600px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); padding: 30px; }
     h1 { text-align: center; color: #333; }
@@ -39,36 +40,27 @@
     <div id="error"></div>
   </div>
   
-  <!-- اسکریپت supabase-js -->
-  <<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // --- تنظیمات Supabase با کلید API صحیح ---
       const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-      
-      // ایجاد کلاینت Supabase
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      // --- بررسی لاگین بودن کاربر ---
+      // متغیرهای جدید برای کنترل وضعیت آزمون
+      let examStarted = false;
+      let examSubmitted = false;
+
+      // متغیرهای قبلی
       const userId = sessionStorage.getItem('userId');
       const urlParams = new URLSearchParams(window.location.search);
       const examId = urlParams.get('exam_id') || sessionStorage.getItem('examId');
-      if (!userId) {
-        window.location.href = 'login.html';
-        return;
-      }
-      if (!examId) {
-        window.location.href = 'exam-list.html';
-        return;
-      }
-
-      // --- متغیرها ---
+      
       let MAX_ATTEMPTS = 1, examDuration = 20, examStartAt = null, examEndAt = null, randomQuestionCount = 10;
       let timerInterval = null, questions = [], userAnswers = {}, currentQuestion = 0;
       let quizFinished = false;
 
-      // --- المان‌ها ---
+      // المان‌ها
       const quizForm = document.getElementById('quizForm');
       const questionBox = document.getElementById('questionBox');
       const resultDiv = document.getElementById('result');
@@ -82,7 +74,27 @@
       const progressStatus = document.getElementById('progressStatus');
       const examTimeInfo = document.getElementById('examTimeInfo');
 
-      // بازیابی پاسخ‌های قبلی از sessionStorage
+      // جلوگیری از برگشت با دکمه back مرورگر
+      window.history.pushState({ page: 1 }, "", "");
+
+      window.onpopstate = function(event) {
+        if (examStarted && !examSubmitted) {
+          window.history.pushState({ page: 1 }, "", "");
+          if (confirm('با خروج از صفحه، آزمون پایان می‌یابد. آیا مطمئن هستید؟')) {
+            finalizeAndShowResult();
+          }
+        }
+      };
+
+      // هشدار هنگام بستن صفحه یا رفرش
+      window.onbeforeunload = function(e) {
+        if (examStarted && !examSubmitted) {
+          const message = 'با خروج از صفحه، آزمون پایان می‌یابد. آیا مطمئن هستید؟';
+          e.returnValue = message;
+          return message;
+        }
+      };
+
       try {
         userAnswers = JSON.parse(sessionStorage.getItem('userAnswers') || '{}');
       } catch (e) {
@@ -91,12 +103,22 @@
 
       function formatDateTime(date) {
         return new Intl.DateTimeFormat('fa-IR', {
-          year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+          year: 'numeric', month: 'long', day: 'numeric',
+          hour: '2-digit', minute: '2-digit'
         }).format(date);
       }
 
       async function loadQuiz() {
         try {
+          if (!userId) {
+            window.location.href = 'login.html';
+            return;
+          }
+          if (!examId) {
+            window.location.href = 'exam-list.html';
+            return;
+          }
+
           errorDiv.textContent = '';
           resultDiv.textContent = '';
           quizForm.reset();
@@ -105,7 +127,6 @@
           progressStatus.textContent = '';
           examTimeInfo.innerHTML = '';
 
-          // دریافت اطلاعات آزمون
           const { data: examData, error: examError } = await supabase
             .from('exams')
             .select('title, max_attempts, duration_minutes, start_at, end_at, random_question_count')
@@ -139,7 +160,6 @@
             return;
           }
 
-          // بررسی تعداد دفعات شرکت
           const { data: attempts, error: attError } = await supabase
             .from('exam_results')
             .select('id')
@@ -152,7 +172,6 @@
             return;
           }
 
-          // دریافت سوالات
           const { data: allQs, error: qError } = await supabase
             .from('questions')
             .select('*')
@@ -161,12 +180,10 @@
           if (qError) throw qError;
           if (!allQs || allQs.length === 0) throw new Error('سوالی پیدا نشد.');
           
-          // انتخاب تصادفی سوالات
           questions = shuffleArray(allQs).slice(0, randomQuestionCount);
           currentQuestion = 0;
           navBtns.style.display = 'block';
 
-          // تنظیم تایمر
           if (!sessionStorage.getItem('examEndTime')) {
             sessionStorage.setItem('examEndTime', Date.now() + examDuration * 60000);
           }
@@ -176,6 +193,7 @@
             return;
           }
 
+          examStarted = true;
           showQuestion();
           showExamTimer(remainSec);
           updateProgressStatus();
@@ -239,15 +257,16 @@
       async function finalizeAndShowResult() {
         if (quizFinished) return;
         quizFinished = true;
+        examSubmitted = true;
         clearInterval(timerInterval);
+        
+        // غیرفعال کردن همه دکمه‌ها
         quizForm.querySelectorAll('button').forEach(b => b.disabled = true);
 
         try {
-          // محاسبه نمره
           const correct = questions.filter(q => userAnswers[q.id] === q.correct_option).length;
           const score = Math.round((correct / questions.length) * 100);
 
-          // ذخیره نتیجه
           const { error } = await supabase
             .from('exam_results')
             .insert([{ user_id: userId, exam_id: examId, score }]);
@@ -257,17 +276,20 @@
           resultDiv.innerHTML = `<b>آزمون پایان یافت.<br>نمره شما: ${score} از 100</b>`;
           sessionStorage.removeItem('userAnswers');
           sessionStorage.removeItem('examEndTime');
+
+          // حذف event listeners مربوط به خروج از صفحه
+          window.onbeforeunload = null;
+          window.onpopstate = null;
+          
         } catch (err) {
           errorDiv.innerHTML = `<b>خطا در ثبت نتیجه:</b> ${err.message}`;
         }
       }
 
-      // تنظیم رویدادها
       nextBtn.onclick = () => { saveAnswer(); currentQuestion++; showQuestion(); };
       prevBtn.onclick = () => { saveAnswer(); currentQuestion--; showQuestion(); };
       quizForm.onsubmit = e => { e.preventDefault(); saveAnswer(); finalizeAndShowResult(); };
 
-      // شروع آزمون
       loadQuiz();
     });
   </script>
