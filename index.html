@@ -72,9 +72,11 @@
         .single();
 
       if (!error && data) {
-        if (data.welcome_text) {
+        // پیام خوش آمدگویی
+        if (data.welcome_text)
           document.getElementById('welcomeText').textContent = data.welcome_text;
-        }
+
+        // عکس اصلی
         if (data.image_url) {
           const img = document.getElementById('mainImg');
           img.src = data.image_url;
