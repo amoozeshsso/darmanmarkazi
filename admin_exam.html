@@ -59,6 +59,8 @@
         <input type="text" id="title" required />
         <label for="maxAttempts">تعداد دفعات مجاز شرکت در آزمون:</label>
         <input type="number" id="maxAttempts" min="1" max="20" value="1" required />
+        <label for="randomQuestionCount">تعداد سوال تصادفی برای هر کاربر:</label>
+        <input type="number" id="randomQuestionCount" min="1" max="100" value="2" required />
         <label for="durationMinutes">مدت زمان آزمون (دقیقه):</label>
         <input type="number" id="durationMinutes" min="1" max="300" value="20" required />
         <label for="startAt">تاریخ و ساعت شروع آزمون:</label>
@@ -254,6 +256,7 @@
                   data-duration="${exam.duration_minutes || 20}"
                   data-start="${exam.start_at ? new Date(exam.start_at).toISOString().slice(0,16) : ''}"
                   data-end="${exam.end_at ? new Date(exam.end_at).toISOString().slice(0,16) : ''}"
+                  data-random_question_count="${exam.random_question_count || 2}"
                 >ویرایش</button>
                 <button class="delete-btn" data-id="${exam.id}">حذف</button>
                 <button class="result-btn" data-id="${exam.id}" data-title="${exam.title}">مشاهده نتایج</button>
@@ -290,14 +293,17 @@
           return;
         }
 
-        const examData = {
-          title,
-          max_attempts: maxAttempts,
-          duration_minutes: duration,
-          start_at: startAt,
-          end_at: endAt || null,
-          active: true
-        };
+        const randomQuestionCount = parseInt(document.getElementById('randomQuestionCount').value) || 10;
+const examData = {
+  title,
+  max_attempts: maxAttempts,
+  duration_minutes: duration,
+  start_at: startAt,
+  end_at: endAt || null,
+  active: true,
+  random_question_count: randomQuestionCount
+};
+
 
         if (id) {
           const { error } = await supabase.from('exams').update(examData).eq('id', id);
@@ -330,6 +336,7 @@
           durationInput.value = btn.dataset.duration || 20;
           startAtInput.value = btn.dataset.start || '';
           endAtInput.value = btn.dataset.end || '';
+          document.getElementById('randomQuestionCount').value = btn.dataset.random_question_count || 2;
           formTitle.textContent = 'ویرایش آزمون';
           submitBtn.textContent = 'به‌روزرسانی';
           window.scrollTo({ top: 0, behavior: 'smooth' });
