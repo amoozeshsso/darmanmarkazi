@@ -59,6 +59,8 @@
         <input type="text" id="title" required />
         <label for="maxAttempts">تعداد دفعات مجاز شرکت در آزمون:</label>
         <input type="number" id="maxAttempts" min="1" max="20" value="1" required />
+        <label for="passScore">نمره قبولی:</label>
+        <input type="number" id="passScore" min="0" max="100" value="60" required />
         <label for="randomQuestionCount">تعداد سوال تصادفی برای هر کاربر:</label>
         <input type="number" id="randomQuestionCount" min="1" max="100" value="2" required />
         <label for="durationMinutes">مدت زمان آزمون (دقیقه):</label>
@@ -275,6 +277,8 @@
         const title = document.getElementById('title').value.trim();
         const maxAttempts = parseInt(maxAttemptsInput.value) || 1;
         const duration = parseInt(durationInput.value) || 20;
+        const passScore = parseInt(document.getElementById('passScore').value) || 60;
+
         const startAt = startAtInput.value ? new Date(startAtInput.value).toISOString() : null;
         const endAt = endAtInput.value ? new Date(endAtInput.value).toISOString() : null;
 
@@ -301,6 +305,7 @@ const examData = {
   start_at: startAt,
   end_at: endAt || null,
   active: true,
+  pass_score: passScore,
   random_question_count: randomQuestionCount
 };
 
@@ -337,7 +342,8 @@ const examData = {
           startAtInput.value = btn.dataset.start || '';
           endAtInput.value = btn.dataset.end || '';
           document.getElementById('randomQuestionCount').value = btn.dataset.random_question_count || 2;
-          formTitle.textContent = 'ویرایش آزمون';
+           document.getElementById('passScore').value = exam.pass_score || 60;
+           formTitle.textContent = 'ویرایش آزمون';
           submitBtn.textContent = 'به‌روزرسانی';
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
