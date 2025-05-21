@@ -40,14 +40,14 @@
   </div>
   
   <!-- اسکریپت supabase-js -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
+  <<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // --- تنظیمات Supabase ---
+      // --- تنظیمات Supabase با کلید API صحیح ---
       const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF[...]';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
       
-      // تغییر در نحوه ایجاد کلاینت Supabase
+      // ایجاد کلاینت Supabase
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       // --- بررسی لاگین بودن کاربر ---
