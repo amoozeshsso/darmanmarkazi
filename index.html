@@ -67,7 +67,7 @@
     async function loadSiteContent() {
       const { data, error } = await supabase
         .from('site_content')
-        .select('welcome_text, image_url') // فقط فیلدهای مورد نیاز
+        .select('welcome_text, image_url')
         .eq('id', 1)
         .single();
 
@@ -83,9 +83,6 @@
       }
     }
 
-    // حذف همه لینک‌ها از صفحه برای اطمینان
-    document.querySelectorAll('a').forEach(link => link.remove());
-    
     loadSiteContent();
   </script>
 </body>
