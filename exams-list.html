@@ -15,31 +15,79 @@
     .exam-meta { font-size: 13px; color: #888; margin-right: 10px; }
     .enter-btn { background: #4e54c8; color: #fff; border: none; padding: 8px 22px; border-radius: 6px; font-size: 15px; cursor: pointer; }
     #error { margin-top: 20px; color: #c0392b; text-align: center; }
+    .links-list {
+      margin: 25px 0 18px 0;
+      padding: 15px 10px 10px 10px;
+      background: #f7fcff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      text-align: right;
+    }
+    .links-list a {
+      display: block;
+      margin: 7px 0;
+      color: #2255aa;
+      text-decoration: underline;
+      font-size: 15px;
+    }
+    .links-list a::before {
+      content: "🔗 ";
+      font-size: 13px;
+    }
     body {
-  font-family: 'Vazirmatn', Tahoma, sans-serif;
-}
-
+      font-family: 'Vazirmatn', Tahoma, sans-serif;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>لیست آزمون‌های فعال</h1>
+    <div id="customLinks"></div>
     <div id="examsList"></div>
     <div id="error"></div>
   </div>
   <script>
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Q[...]'
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const examsList = document.getElementById('examsList');
     const errorDiv = document.getElementById('error');
+    const customLinksDiv = document.getElementById('customLinks');
     const userId = sessionStorage.getItem('userId');
     if (!userId) {
       alert('لطفاً ابتدا وارد شوید.');
       window.location.href = 'login.html';
     }
 
+    // --- نمایش لینک‌های دلخواه (از جدول site_content) ---
+    async function loadCustomLinks() {
+      const { data, error } = await supabase
+        .from('site_content')
+        .select('link1_url,link1_text,link2_url,link2_text,link3_url,link3_text,link4_url,link4_text,link5_url,link5_text')
+        .eq('id', 1)
+        .single();
+
+      if (error) {
+        customLinksDiv.innerHTML = '';
+        return;
+      }
+      const links = [];
+      for (let i = 1; i <= 5; i++) {
+        const url = data[`link${i}_url`];
+        const text = data[`link${i}_text`];
+        if (url && url.trim() && text && text.trim()) {
+          links.push(`<a href="${url}" target="_blank" rel="noopener">${text}</a>`);
+        }
+      }
+      if (links.length) {
+        customLinksDiv.innerHTML = `<div class="links-list"><b>لینک‌های مهم:</b>${links.join('')}</div>`;
+      } else {
+        customLinksDiv.innerHTML = '';
+      }
+    }
+
+    // --- بارگذاری آزمون‌ها (کد قبلی بدون تغییر) ---
     async function loadExams() {
       examsList.innerHTML = 'در حال بارگذاری...';
       errorDiv.textContent = '';
@@ -110,6 +158,7 @@
       window.location.href = 'quiz.html?exam_id=' + examId;
     }
 
+    loadCustomLinks();
     loadExams();
   </script>
 </body>
