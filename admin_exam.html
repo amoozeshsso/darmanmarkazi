@@ -550,10 +550,15 @@ const examData = {
       // مدیریت سوالات هر آزمون
       let currentExamId = null;
       async function openQuestionsSection(examId, examTitle) {
-        async function openQuestionsSection(examId, examTitle) {
+  currentExamId = examId;
+  questionsExamTitle.textContent = examTitle;
+  questionsSection.style.display = 'block';
+  await loadQuestionsList();
+  window.scrollTo({ top: questionsSection.offsetTop - 20, behavior: 'smooth' });
+}
   currentExamId = examId;
   // ... بقیه کد تابع
-}
+
 
         currentExamId = examId;
         questionsExamTitle.textContent = examTitle;
@@ -707,7 +712,7 @@ document.getElementById('excelInput').addEventListener('change', async (e) => {
       alert('خطا در وارد کردن سوالات: ' + error.message);
     } else {
       alert('سوالات با موفقیت وارد شدند!');
-      await loadQuestions(currentExamId);
+      await loadQuestionsList();
     }
     e.target.value = ''; // ریست input
   };
