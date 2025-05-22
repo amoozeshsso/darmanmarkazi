@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>تعریف و مدیریت آزمون</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- بارگذاری جلالی و xlsx -->
   <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.1.0/dist/jalaali.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -125,10 +126,10 @@
     </table>
   </div>
   <script>
-    // تبدیل تاریخ میلادی به شمسی با ساعت (حتی اگر فرمت ISO باشد)
+    // تبدیل تاریخ میلادی به شمسی با ساعت
     function toJalaliStr(iso) {
       if (!iso) return '';
-      let d = (typeof iso === 'string' && iso.includes('T')) ? new Date(iso) : new Date(iso);
+      let d = new Date(iso);
       if (!window.jalaali || !window.jalaali.toJalaali) return iso;
       const j = window.jalaali.toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate());
       const pad = n => n < 10 ? '0' + n : n;
