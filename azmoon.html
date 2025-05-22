@@ -4,12 +4,11 @@
   <meta charset="UTF-8" />
   <title>تعریف و مدیریت آزمون</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- استفاده از CDN جدید Supabase -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.6/dist/jalaali.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.1.0/dist/jalaali.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    /* استایل‌ها بدون تغییر */
     body { font-family: 'Vazirmatn', Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 20px; }
     h1 { text-align: center; color: #333; }
     .container { max-width: 1100px; margin: auto; }
@@ -39,13 +38,13 @@
     #loading { display: none; text-align: center; margin: 20px 0; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .import-box { margin: 15px 0 0 0; padding: 12px; background: #f6fafd; border-radius: 6px; border: 1px solid #e0e0e0; }
     @media (max-width: 900px) {
       #formGrid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <!-- HTML بدون تغییر -->
   <div class="container">
     <div class="back">
       <a href="admin_exam.html">بازگشت به منوی مدیریت</a>
@@ -98,6 +97,12 @@
         </div>
         <button type="submit" id="submitBtn" class="add-btn">ذخیره</button>
       </form>
+      <div class="import-box">
+        <label for="importExcel">وارد کردن کاربران مجاز از فایل اکسل (ستون username):</label>
+        <input type="file" id="importExcel" accept=".xlsx,.xls" />
+        <button type="button" id="importExcelBtn" class="add-btn" style="background:#2980b9;">وارد کردن کاربران مجاز</button>
+        <div style="font-size:13px;color:#888;margin-top:4px;">فایل اکسل باید فقط یک ستون با عنوان <b>username</b> داشته باشد.</div>
+      </div>
       <div id="error"></div>
       <div id="success"></div>
     </div>
@@ -125,14 +130,20 @@
       </tbody>
     </table>
   </div>
-
   <script>
+    // تبدیل تاریخ میلادی به شمسی فقط برای جدول نمایش
+    function toJalaliStr(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (!window.jalaali || !window.jalaali.toJalaali) return iso;
+      const j = window.jalaali.toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate());
+      const pad = n => n < 10 ? '0' + n : n;
+      return `${j.jy}/${pad(j.jm)}/${pad(j.jd)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
-      // تنظیمات Supabase با مقادیر واقعی
       const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-      
-      // ایجاد کلاینت Supabase
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const examForm = document.getElementById('examForm');
@@ -144,101 +155,46 @@
       const editIdInput = document.getElementById('editId');
       const submitBtn = document.getElementById('submitBtn');
       const allowedUsersSelect = document.getElementById('allowed_users');
+      const importExcel = document.getElementById('importExcel');
+      const importExcelBtn = document.getElementById('importExcelBtn');
 
-      // تبدیل تاریخ میلادی به شمسی
-      function toJalaliStr(iso) {
-        if (!iso) return '';
-        try {
-          const d = new Date(iso);
-          if (isNaN(d.getTime())) return ''; // تاریخ نامعتبر
-          
-          const j = jalaali.toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate());
-          const pad = n => n < 10 ? '0' + n : n;
-          return `${j.jy}/${pad(j.jm)}/${pad(j.jd)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        } catch (e) {
-          console.error('Error converting date:', e);
-          return iso; // نمایش تاریخ اصلی در صورت خطا
-        }
-      }
-
-      // نمایش/مخفی کردن لودینگ
-      const showLoading = show => loading.style.display = show ? 'block' : 'none';
-      
-      // نمایش خطا
-      const showError = msg => {
-        errEl.textContent = msg;
-        errEl.style.display = 'block';
-        okEl.style.display = 'none';
-        console.error('Error:', msg); // لاگ خطا برای دیباگ
-      };
-      
-      // نمایش پیام موفقیت
-      const showSuccess = msg => {
-        okEl.textContent = msg;
-        okEl.style.display = 'block';
-        errEl.style.display = 'none';
-      };
-      
-      // مخفی کردن پیام‌ها
-      const hideMessages = () => {
-        errEl.style.display = 'none';
-        okEl.style.display = 'none';
-      };
-
-      // بارگذاری کاربران
+      // بارگذاری کاربران برای انتخاب مجازها
       async function loadUsers() {
-        try {
-          const { data, error } = await supabase
-            .from('users')
-            .select('id,username,role')
-            .order('username');
-          
-          if (error) throw error;
-          
-          allowedUsersSelect.innerHTML = data
-            .filter(u => u.role !== 'admin')
-            .map(u => `<option value="${u.id}">${u.username}</option>`)
-            .join('');
-        } catch (error) {
-          console.error('Error loading users:', error);
+        const { data, error } = await supabase.from('users').select('id,username,role').order('username');
+        if (error) {
           allowedUsersSelect.innerHTML = '<option disabled>خطا در دریافت کاربران</option>';
+        } else {
+          allowedUsersSelect.innerHTML = data.filter(u => u.role !== 'admin').map(
+            u => `<option value="${u.id}">${u.username}</option>`
+          ).join('');
         }
       }
 
       // بارگذاری کاربران مجاز برای آزمون
       async function loadAllowedUsersForExam(exam_id) {
-        try {
-          const { data, error } = await supabase
-            .from('exam_allowed_users')
-            .select('user_id')
-            .eq('exam_id', exam_id);
-          
-          if (error) throw error;
-          
-          if (data) {
-            const userIds = data.map(r => r.user_id);
-            Array.from(allowedUsersSelect.options).forEach(opt => {
-              opt.selected = userIds.includes(Number(opt.value));
-            });
+        const { data, error } = await supabase
+          .from('exam_allowed_users')
+          .select('user_id')
+          .eq('exam_id', exam_id);
+        if (!error && data) {
+          const userIds = data.map(r => r.user_id);
+          for (const opt of allowedUsersSelect.options) {
+            opt.selected = userIds.includes(Number(opt.value));
           }
-        } catch (error) {
-          console.error('Error loading allowed users:', error);
         }
       }
 
-      // بارگذاری آزمون‌ها
+      const showLoading = show => loading.style.display = show ? 'block' : 'none';
+      const showError = msg => { errEl.textContent = msg; errEl.style.display = 'block'; okEl.style.display = 'none'; };
+      const showSuccess = msg => { okEl.textContent = msg; okEl.style.display = 'block'; errEl.style.display = 'none'; };
+      const hideMessages = () => { errEl.style.display = okEl.style.display = 'none'; };
+
       async function loadExams() {
-        try {
-          showLoading(true);
-          hideMessages();
-
-          const { data, error } = await supabase
-            .from('exams')
-            .select('*')
-            .order('id', { ascending: false });
-
-          if (error) throw error;
-
+        showLoading(true); hideMessages();
+        const { data, error } = await supabase.from('exams').select('*').order('id', { ascending: false });
+        if (error) {
+          examList.innerHTML = '<tr><td colspan="10">خطا در دریافت آزمون‌ها</td></tr>';
+        } else {
           examList.innerHTML = data.length ? data.map(exam => `
             <tr>
               <td>${exam.id}</td>
@@ -255,175 +211,177 @@
                 <button class="delete-btn" data-id="${exam.id}">حذف</button>
               </td>
             </tr>`).join('') : '<tr><td colspan="10">آزمونی ثبت نشده است</td></tr>';
-        } catch (error) {
-          console.error('Error loading exams:', error);
-          examList.innerHTML = `<tr><td colspan="10">خطا در دریافت آزمون‌ها: ${error.message}</td></tr>`;
-        } finally {
-          showLoading(false);
         }
+        showLoading(false);
       }
 
-      // ثبت/ویرایش آزمون
+      // درج/ویرایش آزمون و کاربران مجاز
       examForm.addEventListener('submit', async e => {
         e.preventDefault();
         hideMessages();
+        const id = editIdInput.value;
+        const title = document.getElementById('title').value.trim();
+        const max_attempts = parseInt(document.getElementById('max_attempts').value);
+        const random_question_count = parseInt(document.getElementById('random_question_count').value);
+        const duration_minutes = parseInt(document.getElementById('duration_minutes').value);
+        const start_at = document.getElementById('start_at').value;
+        const end_at = document.getElementById('end_at').value;
+        const pass_mark = parseInt(document.getElementById('pass_mark').value);
+        const active = document.getElementById('active').value === 'true';
+        const allowed_user_ids = Array.from(allowedUsersSelect.selectedOptions).map(opt => Number(opt.value));
 
-        try {
-          const id = editIdInput.value;
-          const formData = {
-            title: document.getElementById('title').value.trim(),
-            max_attempts: parseInt(document.getElementById('max_attempts').value),
-            random_question_count: parseInt(document.getElementById('random_question_count').value),
-            duration_minutes: parseInt(document.getElementById('duration_minutes').value),
-            start_at: document.getElementById('start_at').value,
-            end_at: document.getElementById('end_at').value || null,
-            pass_mark: parseInt(document.getElementById('pass_mark').value),
-            active: document.getElementById('active').value === 'true'
-          };
-
-          if (!formData.title || !formData.max_attempts || !formData.random_question_count || 
-              !formData.duration_minutes || !formData.start_at || !formData.pass_mark) {
-            throw new Error('همه فیلدهای ضروری را پر کنید');
-          }
-
-          showLoading(true);
-          
-          const allowed_user_ids = Array.from(allowedUsersSelect.selectedOptions)
-            .map(opt => Number(opt.value));
-
-          if (id) {
-            // ویرایش آزمون
-            const { error } = await supabase
-              .from('exams')
-              .update(formData)
-              .eq('id', id);
-
-            if (error) throw error;
-
-            // بروزرسانی کاربران مجاز
-            await supabase
-              .from('exam_allowed_users')
-              .delete()
-              .eq('exam_id', id);
-
-            if (allowed_user_ids.length) {
-              const allowedRows = allowed_user_ids.map(uid => ({
-                exam_id: id,
-                user_id: uid
-              }));
-              await supabase.from('exam_allowed_users').insert(allowedRows);
-            }
-
-            showSuccess('آزمون و کاربران مجاز با موفقیت ویرایش شد');
-          } else {
-            // درج آزمون جدید
-            const { data, error } = await supabase
-              .from('exams')
-              .insert([formData])
-              .select('id');
-
-            if (error) throw error;
-            if (!data || !data[0]) throw new Error('خطا در دریافت شناسه آزمون جدید');
-
-            const newExamId = data[0].id;
-
-            if (allowed_user_ids.length) {
-              const allowedRows = allowed_user_ids.map(uid => ({
-                exam_id: newExamId,
-                user_id: uid
-              }));
-              await supabase.from('exam_allowed_users').insert(allowedRows);
-            }
-
-            showSuccess('آزمون جدید و کاربران مجاز با موفقیت ثبت شد');
-          }
-
-          examForm.reset();
-          editIdInput.value = '';
-          formTitle.textContent = 'افزودن آزمون جدید';
-          submitBtn.textContent = 'ذخیره';
-          await loadExams();
-        } catch (error) {
-          console.error('Error saving exam:', error);
-          showError(error.message || 'خطا در ذخیره آزمون');
-        } finally {
-          showLoading(false);
+        if (!title || !max_attempts || !random_question_count || !duration_minutes || !start_at || !pass_mark) {
+          showError('همه فیلدهای ضروری را پر کنید');
+          return;
         }
+        showLoading(true);
+
+        if (id) {
+          // ویرایش آزمون
+          const { error } = await supabase.from('exams').update({
+            title, max_attempts, random_question_count, duration_minutes,
+            start_at, end_at: end_at || null, pass_mark, active
+          }).eq('id', id);
+          if (error) {
+            showError('خطا در ویرایش آزمون: ' + error.message);
+            showLoading(false);
+            return;
+          }
+          // ویرایش کاربران مجاز
+          await supabase.from('exam_allowed_users').delete().eq('exam_id', id);
+          if (allowed_user_ids.length) {
+            const allowedRows = allowed_user_ids.map(uid => ({ exam_id: id, user_id: uid }));
+            await supabase.from('exam_allowed_users').insert(allowedRows);
+          }
+          showSuccess('آزمون و کاربران مجاز با موفقیت ویرایش شد');
+        } else {
+          // درج آزمون جدید
+          const { data, error } = await supabase.from('exams').insert([{
+            title, max_attempts, random_question_count, duration_minutes,
+            start_at, end_at: end_at || null, pass_mark, active
+          }]).select('id');
+          if (error || !data || !data[0]) {
+            showError('خطا در ثبت آزمون: ' + (error ? error.message : ''));
+            showLoading(false);
+            return;
+          }
+          const newExamId = data[0].id;
+          if (allowed_user_ids.length) {
+            const allowedRows = allowed_user_ids.map(uid => ({ exam_id: newExamId, user_id: uid }));
+            await supabase.from('exam_allowed_users').insert(allowedRows);
+          }
+          showSuccess('آزمون جدید و کاربران مجاز با موفقیت ثبت شد');
+        }
+        examForm.reset();
+        editIdInput.value = '';
+        formTitle.textContent = 'افزودن آزمون جدید';
+        submitBtn.textContent = 'ذخیره';
+        await loadExams();
+        showLoading(false);
       });
 
-      // رویداد‌های دکمه‌های ویرایش و حذف
+      // ویرایش آزمون
       examList.addEventListener('click', async e => {
         const btn = e.target;
         if (btn.classList.contains('edit-btn')) {
-          try {
-            const id = btn.dataset.id;
-            showLoading(true);
-            
-            const { data, error } = await supabase
-              .from('exams')
-              .select('*')
-              .eq('id', id)
-              .single();
-
-            if (error) throw error;
-            if (!data) throw new Error('آزمون یافت نشد');
-
-            editIdInput.value = data.id;
-            document.getElementById('title').value = data.title;
-            document.getElementById('max_attempts').value = data.max_attempts;
-            document.getElementById('random_question_count').value = data.random_question_count;
-            document.getElementById('duration_minutes').value = data.duration_minutes;
-            document.getElementById('start_at').value = data.start_at.substring(0, 16);
-            document.getElementById('end_at').value = data.end_at ? data.end_at.substring(0, 16) : '';
-            document.getElementById('pass_mark').value = data.pass_mark;
-            document.getElementById('active').value = data.active ? 'true' : 'false';
-
-            formTitle.textContent = 'ویرایش آزمون';
-            submitBtn.textContent = 'ثبت ویرایش';
-
-            await loadAllowedUsersForExam(id);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          } catch (error) {
-            console.error('Error loading exam for edit:', error);
-            showError(error.message || 'خطا در بارگذاری اطلاعات آزمون');
-          } finally {
+          const id = btn.dataset.id;
+          showLoading(true);
+          const { data, error } = await supabase.from('exams').select('*').eq('id', id).single();
+          if (error || !data) {
+            showError('خطا در دریافت اطلاعات آزمون');
             showLoading(false);
+            return;
           }
+          editIdInput.value = data.id;
+          document.getElementById('title').value = data.title;
+          document.getElementById('max_attempts').value = data.max_attempts;
+          document.getElementById('random_question_count').value = data.random_question_count;
+          document.getElementById('duration_minutes').value = data.duration_minutes;
+          document.getElementById('start_at').value = data.start_at ? data.start_at.substring(0,16) : '';
+          document.getElementById('end_at').value = data.end_at ? data.end_at.substring(0,16) : '';
+          document.getElementById('pass_mark').value = data.pass_mark;
+          document.getElementById('active').value = data.active ? 'true' : 'false';
+          formTitle.textContent = 'ویرایش آزمون';
+          submitBtn.textContent = 'ثبت ویرایش';
+          await loadAllowedUsersForExam(id);
+          showLoading(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        
         if (btn.classList.contains('delete-btn')) {
           if (confirm('آیا از حذف این آزمون مطمئن هستید؟')) {
-            try {
-              showLoading(true);
-              const id = btn.dataset.id;
-
-              // حذف کاربران مجاز
-              await supabase
-                .from('exam_allowed_users')
-                .delete()
-                .eq('exam_id', id);
-
-              // حذف آزمون
-              const { error } = await supabase
-                .from('exams')
-                .delete()
-                .eq('id', id);
-
-              if (error) throw error;
-
-              showSuccess('آزمون با موفقیت حذف شد');
-              await loadExams();
-            } catch (error) {
-              console.error('Error deleting exam:', error);
-              showError(error.message || 'خطا در حذف آزمون');
-            } finally {
-              showLoading(false);
-            }
+            showLoading(true);
+            const id = btn.dataset.id;
+            await supabase.from('exam_allowed_users').delete().eq('exam_id', id);
+            const { error } = await supabase.from('exams').delete().eq('id', id);
+            if (error) showError('خطا در حذف آزمون: ' + error.message);
+            else showSuccess('آزمون حذف شد');
+            await loadExams();
+            showLoading(false);
           }
         }
       });
 
-      // بارگذاری اولیه
+      // وارد کردن کاربران مجاز از اکسل
+      importExcelBtn.addEventListener('click', async () => {
+        hideMessages();
+        const file = importExcel.files[0];
+        const examId = editIdInput.value || null;
+        if (!examId) {
+          showError('ابتدا آزمون را برای ویرایش انتخاب کنید.');
+          return;
+        }
+        if (!file) {
+          showError('لطفا فایل اکسل را انتخاب کنید');
+          return;
+        }
+        showLoading(true);
+        try {
+          const data = await file.arrayBuffer();
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          const header = rows[0].map(h => h.toLowerCase());
+          const usernameIdx = header.indexOf('username');
+          if (usernameIdx === -1) {
+            showError('ستون username در فایل اکسل یافت نشد');
+            showLoading(false);
+            return;
+          }
+          const usernames = [];
+          for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (row[usernameIdx]) usernames.push(row[usernameIdx].toString().trim());
+          }
+          if (!usernames.length) {
+            showError('هیچ نام کاربری در فایل اکسل یافت نشد');
+            showLoading(false);
+            return;
+          }
+          // دریافت user_id ها بر اساس username
+          const { data: users, error: userErr } = await supabase
+            .from('users')
+            .select('id,username')
+            .in('username', usernames);
+          if (userErr || !users.length) {
+            showError('هیچ کاربری با این usernameها در سامانه یافت نشد');
+            showLoading(false);
+            return;
+          }
+          // حذف کاربران قبلی و درج جدید
+          await supabase.from('exam_allowed_users').delete().eq('exam_id', examId);
+          const allowedRows = users.map(u => ({ exam_id: examId, user_id: u.id }));
+          await supabase.from('exam_allowed_users').insert(allowedRows);
+          // انتخاب کاربران در لیست چندانتخابی
+          for (const opt of allowedUsersSelect.options) {
+            opt.selected = users.some(u => u.id == opt.value);
+          }
+          showSuccess('کاربران مجاز با موفقیت از فایل اکسل وارد شدند');
+        } catch (err) {
+          showError('خطا در خواندن فایل اکسل');
+        }
+        showLoading(false);
+      });
+
       await loadUsers();
       await loadExams();
     });
