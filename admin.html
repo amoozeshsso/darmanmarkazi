@@ -8,12 +8,10 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Tahoma; background: #f8f8f8; margin: 0; padding: 20px; }
+    body { font-family: 'Vazirmatn', Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 20px; }
     h1 { text-align: center; color: #333; }
     .container { max-width: 1000px; margin: auto; }
     table { width: 100%; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -36,9 +34,6 @@
     #error, #success { display: none; padding: 10px; margin-top: 15px; border-radius: 4px; text-align: center; }
     #error { background: rgba(231,76,60,0.8); color: #fff; }
     #success { background: rgba(46,204,113,0.8); color: #fff; }
-    body {
-  font-family: 'Vazirmatn', Tahoma, sans-serif;
-}
   </style>
 </head>
 <body>
@@ -46,11 +41,15 @@
     <h1>مدیریت کاربران</h1>
     <div id="formBox">
       <label for="excelFile">بارگذاری فایل اکسل کاربران (فقط کاربر):</label>
-<input type="file" id="excelFile" accept=".xlsx,.xls" />
-<button type="button" id="importBtn" class="add-btn">وارد کردن کاربران</button>
-<button type="button" id="deleteAllUsersBtn" class="delete-btn" style="width:100%;font-size:16px;background:#c0392b;margin-bottom:20px;">
-  حذف همه کاربران غیرادمین
-</button>
+      <!-- دکمه دانلود نمونه فایل اکسل کاربران -->
+      <button type="button" id="downloadSampleUserExcel" class="add-btn" style="background:#27ae60;margin-bottom:10px;width:100%;font-size:15px;">
+        دانلود نمونه فایل اکسل کاربران
+      </button>
+      <input type="file" id="excelFile" accept=".xlsx,.xls" />
+      <button type="button" id="importBtn" class="add-btn">وارد کردن کاربران</button>
+      <button type="button" id="deleteAllUsersBtn" class="delete-btn" style="width:100%;font-size:16px;background:#c0392b;margin-bottom:20px;">
+        حذف همه کاربران غیرادمین
+      </button>
 
       <h3 id="formTitle">افزودن کاربر جدید</h3>
       <form id="userForm">
@@ -71,10 +70,6 @@
       <div id="success"></div>
     </div>
     <div id="loading">
-      <button type="button" id="deleteAllUsersBtn" class="delete-btn" style="width:100%;font-size:16px;background:#c0392b;margin-bottom:20px;">
-        حذف همه کاربران غیرادمین
-      </button>
-      
       <div class="spinner"></div>
       <p>در حال بارگذاری...</p>
     </div>
@@ -108,12 +103,23 @@
       const editIdInput = document.getElementById('editId');
       const submitBtn = document.getElementById('submitBtn');
 
+      // دکمه دانلود نمونه فایل اکسل کاربران
+      document.getElementById('downloadSampleUserExcel').onclick = function() {
+        const ws_data = [
+          ['username', 'password'],
+          ['sampleuser', '12345']
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Users');
+        XLSX.writeFile(wb, 'sample_users.xlsx');
+      };
+
       const showLoading = show => loading.style.display = show ? 'block' : 'none';
       const showError = msg => { errEl.textContent = msg; errEl.style.display = 'block'; okEl.style.display = 'none'; };
       const showSuccess = msg => { okEl.textContent = msg; okEl.style.display = 'block'; errEl.style.display = 'none'; };
       const hideMessages = () => { errEl.style.display = okEl.style.display = 'none'; };
 
-      // فقط یک بار این تابع را تعریف کن!
       const loadUsers = async () => {
         showLoading(true); hideMessages();
         const { data, error } = await supabase.from('users').select('id,username,role').order('id');
@@ -134,70 +140,71 @@
         }
         showLoading(false);
       };
+
       document.getElementById('importBtn').addEventListener('click', async () => {
-  hideMessages();
-  const fileInput = document.getElementById('excelFile');
-  const file = fileInput.files[0];
-  if (!file) {
-    showError('لطفاً یک فایل اکسل انتخاب کنید');
-    return;
-  }
-  showLoading(true);
+        hideMessages();
+        const fileInput = document.getElementById('excelFile');
+        const file = fileInput.files[0];
+        if (!file) {
+          showError('لطفاً یک فایل اکسل انتخاب کنید');
+          return;
+        }
+        showLoading(true);
 
-  try {
-    // خواندن داده‌های اکسل
-    const data = await file.arrayBuffer();
-    const workbook = XLSX.read(data, { type: 'array' });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        try {
+          // خواندن داده‌های اکسل
+          const data = await file.arrayBuffer();
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-    // استخراج کاربران از اکسل
-    const users = [];
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      const username = row[0]?.toString().trim();
-      const password = row[1]?.toString();
-      if (username && password) {
-        users.push({ username, password, role: 'user' });
-      }
-    }
-    if (!users.length) {
-      showError('هیچ کاربری برای وارد کردن یافت نشد');
-      showLoading(false);
-      return;
-    }
+          // استخراج کاربران از اکسل
+          const users = [];
+          for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            const username = row[0]?.toString().trim();
+            const password = row[1]?.toString();
+            if (username && password) {
+              users.push({ username, password, role: 'user' });
+            }
+          }
+          if (!users.length) {
+            showError('هیچ کاربری برای وارد کردن یافت نشد');
+            showLoading(false);
+            return;
+          }
 
-    // گرفتن لیست نام کاربری‌های موجود
-    const { data: existing, error: fetchError } = await supabase
-      .from('users')
-      .select('username');
+          // گرفتن لیست نام کاربری‌های موجود
+          const { data: existing, error: fetchError } = await supabase
+            .from('users')
+            .select('username');
 
-    if (fetchError) {
-      showError('خطا در دریافت کاربران موجود: ' + fetchError.message);
-      showLoading(false);
-      return;
-    }
+          if (fetchError) {
+            showError('خطا در دریافت کاربران موجود: ' + fetchError.message);
+            showLoading(false);
+            return;
+          }
 
-    const existingUsernames = new Set(existing.map(u => u.username));
-    // فیلتر کردن کاربران غیرتکراری
-    const newUsers = users.filter(u => !existingUsernames.has(u.username));
+          const existingUsernames = new Set(existing.map(u => u.username));
+          // فیلتر کردن کاربران غیرتکراری
+          const newUsers = users.filter(u => !existingUsernames.has(u.username));
 
-    if (!newUsers.length) {
-      showError('همه کاربران فایل اکسل تکراری هستند و هیچ کاربری جدیدی اضافه نشد.');
-      showLoading(false);
-      return;
-    }
+          if (!newUsers.length) {
+            showError('همه کاربران فایل اکسل تکراری هستند و هیچ کاربری جدیدی اضافه نشد.');
+            showLoading(false);
+            return;
+          }
 
-    // درج کاربران غیرتکراری
-    const { error } = await supabase.from('users').insert(newUsers);
-    if (error) showError('خطا در وارد کردن کاربران: ' + error.message);
-    else showSuccess(`${newUsers.length} کاربر جدید با موفقیت وارد شد`);
-    await loadUsers();
-  } catch (err) {
-    showError('خطا در خواندن فایل اکسل');
-  }
-  showLoading(false);
-});
+          // درج کاربران غیرتکراری
+          const { error } = await supabase.from('users').insert(newUsers);
+          if (error) showError('خطا در وارد کردن کاربران: ' + error.message);
+          else showSuccess(`${newUsers.length} کاربر جدید با موفقیت وارد شد`);
+          await loadUsers();
+        } catch (err) {
+          showError('خطا در خواندن فایل اکسل');
+        }
+        showLoading(false);
+      });
 
       form.addEventListener('submit', async e => {
         e.preventDefault();
@@ -249,24 +256,22 @@
             const { error } = await supabase.from('users').delete().eq('id', id);
             if (error) showError(error.message);
             else showSuccess('کاربر حذف شد');
-            // --- شروع کد ایمپورت اکسل ---
-
-
             await loadUsers();
             showLoading(false);
           }
         }
       });
+
       document.getElementById('deleteAllUsersBtn').addEventListener('click', async () => {
-  hideMessages();
-  if (!confirm('آیا مطمئن هستید که می‌خواهید همه کاربران غیرادمین را حذف کنید؟')) return;
-  showLoading(true);
-  const { error } = await supabase.from('users').delete().eq('role', 'user');
-  if (error) showError('خطا در حذف کاربران: ' + error.message);
-  else showSuccess('همه کاربران غیرادمین با موفقیت حذف شدند');
-  await loadUsers();
-  showLoading(false);
-});
+        hideMessages();
+        if (!confirm('آیا مطمئن هستید که می‌خواهید همه کاربران غیرادمین را حذف کنید؟')) return;
+        showLoading(true);
+        const { error } = await supabase.from('users').delete().eq('role', 'user');
+        if (error) showError('خطا در حذف کاربران: ' + error.message);
+        else showSuccess('همه کاربران غیرادمین با موفقیت حذف شدند');
+        await loadUsers();
+        showLoading(false);
+      });
 
       await loadUsers();
     });
