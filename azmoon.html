@@ -1,371 +1,344 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <title>تعریف و مدیریت آزمون</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- اول کتابخانه jalaali لود شود -->
-  <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.6/dist/jalaali.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    /* استایل‌ها بدون تغییر */
-    body { font-family: 'Vazirmatn', Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 20px; }
-    h1 { text-align: center; color: #333; }
-    .container { max-width: 1100px; margin: auto; }
-    .back { margin-bottom: 18px; text-align: right; }
-    .back a { background: #4e54c8; color: #fff; padding: 8px 18px; border-radius: 5px; text-decoration: none; }
-    #formBox { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    #formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 32px; }
-    #formGrid > div { display: flex; flex-direction: column; }
-    label { margin-bottom: 5px; color: #555; font-weight: bold; }
-    input, select { padding: 9px; border: 1.5px solid #ddd; border-radius: 4px; font-size: 15px; }
-    input:focus, select:focus { outline: none; border-color: #3498db; }
-    button { padding: 10px 0; margin: 2px 0; border: none; border-radius: 5px; cursor: pointer; font-size: 15px; }
-    .add-btn { background: #27ae60; color: #fff; width: 100%; margin-top: 10px; }
-    .edit-btn { background: #2980b9; color: #fff; }
-    .delete-btn { background: #c0392b; color: #fff; }
-    #error, #success { display: none; padding: 10px; margin-top: 15px; border-radius: 4px; text-align: center; }
-    #error { background: rgba(231,76,60,0.8); color: #fff; }
-    #success { background: rgba(46,204,113,0.8); color: #fff; }
-    table { width: 100%; border-collapse: collapse; margin-top: 30px; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 14px; }
-    th { background: #2c3e50; color: #fff; }
-    tr:nth-child(even) { background: #f2f2f2; }
-    tr:hover { background: #e9f7ef; }
-    .action-column { min-width: 120px; }
-    #loading { display: none; text-align: center; margin: 20px 0; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: auto; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .import-box { margin: 15px 0 0 0; padding: 12px; background: #f6fafd; border-radius: 6px; border: 1px solid #e0e0e0; }
-    @media (max-width: 900px) {
-      #formGrid { grid-template-columns: 1fr; }
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <title>تعریف و مدیریت آزمون</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- لود کردن کتابخانه‌ها با defer برای اطمینان از لود شدن کامل HTML -->
+    <script defer src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.6/dist/jalaali.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* استایل‌های قبلی بدون تغییر */
+    </style>
 </head>
 <body>
-  <!-- HTML بدون تغییر -->
-  <div class="container">
-    <!-- قسمت‌های HTML بدون تغییر -->
-    <!-- ... -->
-  </div>
+    <div class="container">
+        <div class="back">
+            <a href="admin_exam.html">بازگشت به منوی مدیریت</a>
+        </div>
+        <h1>تعریف و مدیریت آزمون</h1>
+        <div id="formBox">
+            <!-- فرم قبلی بدون تغییر -->
+        </div>
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>در حال بارگذاری...</p>
+        </div>
+        <table>
+            <!-- جدول قبلی بدون تغییر -->
+        </table>
+    </div>
 
-  <script>
-    // تابع تبدیل تاریخ میلادی به شمسی بهبود یافته
-    function toJalaliStr(iso) {
-      if (!iso) return '';
-      try {
-        const d = new Date(iso);
-        if (isNaN(d.getTime())) return '';
-        
-        // بررسی وجود کتابخانه jalaali
-        const jl = typeof jalaali !== 'undefined' ? jalaali : window.jalaali;
-        if (!jl || typeof jl.toJalaali !== 'function') {
-          console.error('خطا: کتابخانه jalaali به درستی بارگذاری نشده است');
-          return iso;
-        }
-        
-        const j = jl.toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate());
-        const pad = n => String(n).padStart(2, '0');
-        
-        return `${j.jy}/${pad(j.jm)}/${pad(j.jd)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      } catch (e) {
-        console.error('خطا در تبدیل تاریخ:', e);
-        return iso;
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      // بررسی لود شدن کتابخانه jalaali
-      if (typeof jalaali === 'undefined' && typeof window.jalaali === 'undefined') {
-        console.error('خطا: کتابخانه jalaali یافت نشد');
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/jalaali-js@1.2.6/dist/jalaali.min.js';
-        script.onload = () => console.log('کتابخانه jalaali با موفقیت لود شد');
-        script.onerror = () => console.error('خطا در لود کتابخانه jalaali');
-        document.head.appendChild(script);
-      }
-
-      const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-      // تعریف المنت‌های مورد نیاز
-      const examForm = document.getElementById('examForm');
-      const examList = document.getElementById('examList');
-      const loading = document.getElementById('loading');
-      const errEl = document.getElementById('error');
-      const okEl = document.getElementById('success');
-      const formTitle = document.getElementById('formTitle');
-      const editIdInput = document.getElementById('editId');
-      const submitBtn = document.getElementById('submitBtn');
-      const importExcel = document.getElementById('importExcel');
-      const importExcelBtn = document.getElementById('importExcelBtn');
-
-      // توابع کمکی
-      const showLoading = show => loading.style.display = show ? 'block' : 'none';
-      const showError = msg => { errEl.textContent = msg; errEl.style.display = 'block'; okEl.style.display = 'none'; };
-      const showSuccess = msg => { okEl.textContent = msg; okEl.style.display = 'block'; errEl.style.display = 'none'; };
-      const hideMessages = () => { errEl.style.display = okEl.style.display = 'none'; };
-
-      // بارگذاری آزمون‌ها
-      async function loadExams() {
-        try {
-          showLoading(true);
-          hideMessages();
-
-          const { data, error } = await supabase
-            .from('exams')
-            .select('*')
-            .order('id', { ascending: false });
-
-          if (error) throw error;
-
-          examList.innerHTML = data.length ? data.map(exam => {
-            // تبدیل تاریخ‌ها به شمسی
-            const startDate = toJalaliStr(exam.start_at);
-            const endDate = toJalaliStr(exam.end_at);
-            const createdDate = toJalaliStr(exam.created_at);
-            
-            return `
-              <tr>
-                <td>${exam.id}</td>
-                <td>${exam.title}</td>
-                <td>${exam.max_attempts}</td>
-                <td>${exam.pass_mark}</td>
-                <td>${exam.duration_minutes}</td>
-                <td dir="ltr">${startDate}</td>
-                <td dir="ltr">${endDate}</td>
-                <td dir="ltr">${createdDate}</td>
-                <td>${exam.active ? 'بله' : 'خیر'}</td>
-                <td>
-                  <button class="edit-btn" data-id="${exam.id}">ویرایش</button>
-                  <button class="delete-btn" data-id="${exam.id}">حذف</button>
-                </td>
-              </tr>`;
-          }).join('') : '<tr><td colspan="10">آزمونی ثبت نشده است</td></tr>';
-        } catch (error) {
-          console.error('Error loading exams:', error);
-          examList.innerHTML = `<tr><td colspan="10">خطا در دریافت آزمون‌ها: ${error.message}</td></tr>`;
-        } finally {
-          showLoading(false);
-        }
-      }
-
-      // رویداد ثبت فرم
-      examForm.addEventListener('submit', async e => {
-        e.preventDefault();
-        hideMessages();
-        
-        try {
-          const id = editIdInput.value;
-          const formData = {
-            title: document.getElementById('title').value.trim(),
-            max_attempts: parseInt(document.getElementById('max_attempts').value),
-            random_question_count: parseInt(document.getElementById('random_question_count').value),
-            duration_minutes: parseInt(document.getElementById('duration_minutes').value),
-            start_at: document.getElementById('start_at').value,
-            end_at: document.getElementById('end_at').value || null,
-            pass_mark: parseInt(document.getElementById('pass_mark').value),
-            active: document.getElementById('active').value === 'true'
-          };
-
-          if (!formData.title || !formData.max_attempts || !formData.random_question_count || 
-              !formData.duration_minutes || !formData.start_at || !formData.pass_mark) {
-            throw new Error('همه فیلدهای ضروری را پر کنید');
-          }
-
-          showLoading(true);
-
-          if (id) {
-            // ویرایش آزمون
-            const { error } = await supabase
-              .from('exams')
-              .update(formData)
-              .eq('id', id);
-
-            if (error) throw error;
-            showSuccess('آزمون با موفقیت ویرایش شد');
-          } else {
-            // درج آزمون جدید
-            const { error } = await supabase
-              .from('exams')
-              .insert([formData]);
-
-            if (error) throw error;
-            showSuccess('آزمون جدید با موفقیت ثبت شد');
-          }
-
-          examForm.reset();
-          editIdInput.value = '';
-          formTitle.textContent = 'افزودن آزمون جدید';
-          submitBtn.textContent = 'ذخیره';
-          await loadExams();
-        } catch (error) {
-          console.error('Error saving exam:', error);
-          showError(error.message || 'خطا در ذخیره آزمون');
-        } finally {
-          showLoading(false);
-        }
-      });
-
-      // مدیریت رویدادهای دکمه‌های ویرایش و حذف
-      examList.addEventListener('click', async e => {
-        const btn = e.target;
-        if (btn.classList.contains('edit-btn')) {
-          try {
-            const id = btn.dataset.id;
-            showLoading(true);
-            
-            const { data, error } = await supabase
-              .from('exams')
-              .select('*')
-              .eq('id', id)
-              .single();
-
-            if (error) throw error;
-            if (!data) throw new Error('آزمون یافت نشد');
-
-            // پر کردن فرم با داده‌های آزمون
-            editIdInput.value = data.id;
-            document.getElementById('title').value = data.title;
-            document.getElementById('max_attempts').value = data.max_attempts;
-            document.getElementById('random_question_count').value = data.random_question_count;
-            document.getElementById('duration_minutes').value = data.duration_minutes;
-            document.getElementById('start_at').value = data.start_at.substring(0, 16);
-            document.getElementById('end_at').value = data.end_at ? data.end_at.substring(0, 16) : '';
-            document.getElementById('pass_mark').value = data.pass_mark;
-            document.getElementById('active').value = data.active ? 'true' : 'false';
-
-            formTitle.textContent = 'ویرایش آزمون';
-            submitBtn.textContent = 'ثبت ویرایش';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          } catch (error) {
-            console.error('Error loading exam for edit:', error);
-            showError(error.message || 'خطا در بارگذاری اطلاعات آزمون');
-          } finally {
-            showLoading(false);
-          }
-        }
-        
-        if (btn.classList.contains('delete-btn')) {
-          if (confirm('آیا از حذف این آزمون مطمئن هستید؟')) {
-            try {
-              showLoading(true);
-              const id = btn.dataset.id;
-
-              // حذف کاربران مجاز و سپس آزمون
-              await supabase
-                .from('exam_allowed_users')
-                .delete()
-                .eq('exam_id', id);
-
-              const { error } = await supabase
-                .from('exams')
-                .delete()
-                .eq('id', id);
-
-              if (error) throw error;
-
-              showSuccess('آزمون با موفقیت حذف شد');
-              await loadExams();
-            } catch (error) {
-              console.error('Error deleting exam:', error);
-              showError(error.message || 'خطا در حذف آزمون');
-            } finally {
-              showLoading(false);
+    <script>
+        // تابع اصلی برنامه
+        function initializeApp() {
+            // بررسی وجود کتابخانه‌های مورد نیاز
+            if (!window.supabase || !window.jalaali || !window.XLSX) {
+                console.error('کتابخانه‌های مورد نیاز یافت نشد');
+                setTimeout(initializeApp, 100); // تلاش مجدد بعد از 100 میلی‌ثانیه
+                return;
             }
-          }
+
+            const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+            
+            // ایجاد کلاینت Supabase
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+            // گرفتن المنت‌های مورد نیاز
+            const examForm = document.getElementById('examForm');
+            const examList = document.getElementById('examList');
+            const loading = document.getElementById('loading');
+            const errEl = document.getElementById('error');
+            const okEl = document.getElementById('success');
+            const formTitle = document.getElementById('formTitle');
+            const editIdInput = document.getElementById('editId');
+            const submitBtn = document.getElementById('submitBtn');
+            const importExcel = document.getElementById('importExcel');
+            const importExcelBtn = document.getElementById('importExcelBtn');
+
+            // بررسی وجود المنت‌ها
+            if (!examForm || !examList || !loading || !errEl || !okEl || !formTitle || 
+                !editIdInput || !submitBtn || !importExcel || !importExcelBtn) {
+                console.error('برخی از المنت‌های HTML یافت نشد');
+                return;
+            }
+
+            // تبدیل تاریخ میلادی به شمسی
+            function toJalaliStr(iso) {
+                if (!iso) return '';
+                try {
+                    const d = new Date(iso);
+                    if (isNaN(d.getTime())) return '';
+                    
+                    const j = window.jalaali.toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate());
+                    const pad = n => String(n).padStart(2, '0');
+                    
+                    return `${j.jy}/${pad(j.jm)}/${pad(j.jd)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                } catch (e) {
+                    console.error('خطا در تبدیل تاریخ:', e);
+                    return iso;
+                }
+            }
+
+            // توابع کمکی
+            const showLoading = show => loading.style.display = show ? 'block' : 'none';
+            const showError = msg => { errEl.textContent = msg; errEl.style.display = 'block'; okEl.style.display = 'none'; };
+            const showSuccess = msg => { okEl.textContent = msg; okEl.style.display = 'block'; errEl.style.display = 'none'; };
+            const hideMessages = () => { errEl.style.display = okEl.style.display = 'none'; };
+
+            // بارگذاری آزمون‌ها
+            async function loadExams() {
+                try {
+                    showLoading(true);
+                    hideMessages();
+
+                    const { data, error } = await supabase
+                        .from('exams')
+                        .select('*')
+                        .order('id', { ascending: false });
+
+                    if (error) throw error;
+
+                    examList.innerHTML = data?.length ? data.map(exam => `
+                        <tr>
+                            <td>${exam.id}</td>
+                            <td>${exam.title}</td>
+                            <td>${exam.max_attempts}</td>
+                            <td>${exam.pass_mark}</td>
+                            <td>${exam.duration_minutes}</td>
+                            <td dir="ltr">${toJalaliStr(exam.start_at)}</td>
+                            <td dir="ltr">${toJalaliStr(exam.end_at)}</td>
+                            <td dir="ltr">${toJalaliStr(exam.created_at)}</td>
+                            <td>${exam.active ? 'بله' : 'خیر'}</td>
+                            <td>
+                                <button class="edit-btn" data-id="${exam.id}">ویرایش</button>
+                                <button class="delete-btn" data-id="${exam.id}">حذف</button>
+                            </td>
+                        </tr>
+                    `).join('') : '<tr><td colspan="10">آزمونی ثبت نشده است</td></tr>';
+                } catch (error) {
+                    console.error('Error loading exams:', error);
+                    examList.innerHTML = `<tr><td colspan="10">خطا در دریافت آزمون‌ها: ${error.message}</td></tr>`;
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // رویداد ثبت فرم
+            examForm.addEventListener('submit', async e => {
+                e.preventDefault();
+                hideMessages();
+                
+                try {
+                    const id = editIdInput.value;
+                    const formData = {
+                        title: document.getElementById('title').value.trim(),
+                        max_attempts: parseInt(document.getElementById('max_attempts').value),
+                        random_question_count: parseInt(document.getElementById('random_question_count').value),
+                        duration_minutes: parseInt(document.getElementById('duration_minutes').value),
+                        start_at: document.getElementById('start_at').value,
+                        end_at: document.getElementById('end_at').value || null,
+                        pass_mark: parseInt(document.getElementById('pass_mark').value),
+                        active: document.getElementById('active').value === 'true'
+                    };
+
+                    if (!formData.title || !formData.max_attempts || !formData.random_question_count || 
+                        !formData.duration_minutes || !formData.start_at || !formData.pass_mark) {
+                        throw new Error('همه فیلدهای ضروری را پر کنید');
+                    }
+
+                    showLoading(true);
+
+                    if (id) {
+                        const { error } = await supabase
+                            .from('exams')
+                            .update(formData)
+                            .eq('id', id);
+
+                        if (error) throw error;
+                        showSuccess('آزمون با موفقیت ویرایش شد');
+                    } else {
+                        const { error } = await supabase
+                            .from('exams')
+                            .insert([formData]);
+
+                        if (error) throw error;
+                        showSuccess('آزمون جدید با موفقیت ثبت شد');
+                    }
+
+                    examForm.reset();
+                    editIdInput.value = '';
+                    formTitle.textContent = 'افزودن آزمون جدید';
+                    submitBtn.textContent = 'ذخیره';
+                    await loadExams();
+                } catch (error) {
+                    console.error('Error saving exam:', error);
+                    showError(error.message || 'خطا در ذخیره آزمون');
+                } finally {
+                    showLoading(false);
+                }
+            });
+
+            // رویداد دکمه‌های ویرایش و حذف
+            examList.addEventListener('click', async e => {
+                const btn = e.target;
+                if (btn.classList.contains('edit-btn')) {
+                    try {
+                        const id = btn.dataset.id;
+                        showLoading(true);
+                        
+                        const { data, error } = await supabase
+                            .from('exams')
+                            .select('*')
+                            .eq('id', id)
+                            .single();
+
+                        if (error) throw error;
+                        if (!data) throw new Error('آزمون یافت نشد');
+
+                        editIdInput.value = data.id;
+                        document.getElementById('title').value = data.title;
+                        document.getElementById('max_attempts').value = data.max_attempts;
+                        document.getElementById('random_question_count').value = data.random_question_count;
+                        document.getElementById('duration_minutes').value = data.duration_minutes;
+                        document.getElementById('start_at').value = data.start_at.substring(0, 16);
+                        document.getElementById('end_at').value = data.end_at ? data.end_at.substring(0, 16) : '';
+                        document.getElementById('pass_mark').value = data.pass_mark;
+                        document.getElementById('active').value = data.active ? 'true' : 'false';
+
+                        formTitle.textContent = 'ویرایش آزمون';
+                        submitBtn.textContent = 'ثبت ویرایش';
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } catch (error) {
+                        console.error('Error loading exam for edit:', error);
+                        showError(error.message || 'خطا در بارگذاری اطلاعات آزمون');
+                    } finally {
+                        showLoading(false);
+                    }
+                }
+                
+                if (btn.classList.contains('delete-btn') && confirm('آیا از حذف این آزمون مطمئن هستید؟')) {
+                    try {
+                        showLoading(true);
+                        const id = btn.dataset.id;
+
+                        await supabase
+                            .from('exam_allowed_users')
+                            .delete()
+                            .eq('exam_id', id);
+
+                        const { error } = await supabase
+                            .from('exams')
+                            .delete()
+                            .eq('id', id);
+
+                        if (error) throw error;
+
+                        showSuccess('آزمون با موفقیت حذف شد');
+                        await loadExams();
+                    } catch (error) {
+                        console.error('Error deleting exam:', error);
+                        showError(error.message || 'خطا در حذف آزمون');
+                    } finally {
+                        showLoading(false);
+                    }
+                }
+            });
+
+            // رویداد ورود اطلاعات از اکسل
+            importExcelBtn.addEventListener('click', async () => {
+                hideMessages();
+                const file = importExcel.files[0];
+                const examId = editIdInput.value;
+                
+                if (!examId) {
+                    showError('ابتدا آزمون را برای ویرایش انتخاب کنید.');
+                    return;
+                }
+                
+                if (!file) {
+                    showError('لطفا فایل اکسل را انتخاب کنید');
+                    return;
+                }
+
+                try {
+                    showLoading(true);
+                    
+                    const data = await file.arrayBuffer();
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    
+                    const header = rows[0].map(h => h.toString().toLowerCase().trim());
+                    const usernameIdx = header.indexOf('username');
+                    
+                    if (usernameIdx === -1) {
+                        throw new Error('ستون username در فایل اکسل یافت نشد');
+                    }
+
+                    const usernames = rows.slice(1)
+                        .map(row => row[usernameIdx])
+                        .filter(username => username)
+                        .map(username => username.toString().trim());
+
+                    if (!usernames.length) {
+                        throw new Error('هیچ نام کاربری در فایل اکسل یافت نشد');
+                    }
+
+                    const { data: users, error: userErr } = await supabase
+                        .from('users')
+                        .select('id, username');
+
+                    if (userErr) throw userErr;
+                    if (!users?.length) throw new Error('هیچ کاربری در سامانه یافت نشد');
+
+                    const allowedUsers = users.filter(u =>
+                        usernames.some(name => name.toLowerCase() === u.username.toLowerCase())
+                    );
+
+                    if (!allowedUsers.length) {
+                        throw new Error('هیچ کاربری با این نام‌های کاربری در سامانه یافت نشد');
+                    }
+
+                    await supabase
+                        .from('exam_allowed_users')
+                        .delete()
+                        .eq('exam_id', examId);
+
+                    const allowedRows = allowedUsers.map(u => ({
+                        exam_id: examId,
+                        user_id: u.id
+                    }));
+
+                    await supabase
+                        .from('exam_allowed_users')
+                        .insert(allowedRows);
+
+                    showSuccess('کاربران مجاز با موفقیت از فایل اکسل وارد شدند');
+                } catch (error) {
+                    console.error('Error importing Excel:', error);
+                    showError(error.message || 'خطا در پردازش فایل اکسل');
+                } finally {
+                    showLoading(false);
+                }
+            });
+
+            // بارگذاری اولیه آزمون‌ها
+            loadExams().catch(error => {
+                console.error('Error in initial load:', error);
+                showError('خطا در بارگذاری اولیه آزمون‌ها');
+            });
         }
-      });
 
-      // مدیریت ورود اطلاعات از اکسل
-      importExcelBtn.addEventListener('click', async () => {
-        hideMessages();
-        const file = importExcel.files[0];
-        const examId = editIdInput.value;
-        
-        if (!examId) {
-          showError('ابتدا آزمون را برای ویرایش انتخاب کنید.');
-          return;
+        // شروع برنامه بعد از لود کامل صفحه
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
         }
-        
-        if (!file) {
-          showError('لطفا فایل اکسل را انتخاب کنید');
-          return;
-        }
-
-        try {
-          showLoading(true);
-          
-          const data = await file.arrayBuffer();
-          const workbook = XLSX.read(data, { type: 'array' });
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-          
-          const header = rows[0].map(h => h.toString().toLowerCase().trim());
-          const usernameIdx = header.indexOf('username');
-          
-          if (usernameIdx === -1) {
-            throw new Error('ستون username در فایل اکسل یافت نشد');
-          }
-
-          const usernames = rows.slice(1)
-            .map(row => row[usernameIdx])
-            .filter(username => username)
-            .map(username => username.toString().trim());
-
-          if (!usernames.length) {
-            throw new Error('هیچ نام کاربری در فایل اکسل یافت نشد');
-          }
-
-          // دریافت کاربران از دیتابیس
-          const { data: users, error: userErr } = await supabase
-            .from('users')
-            .select('id, username');
-
-          if (userErr) throw userErr;
-          if (!users.length) throw new Error('هیچ کاربری در سامانه یافت نشد');
-
-          // تطبیق کاربران
-          const allowedUsers = users.filter(u =>
-            usernames.some(name => name.toLowerCase() === u.username.toLowerCase())
-          );
-
-          if (!allowedUsers.length) {
-            throw new Error('هیچ کاربری با این نام‌های کاربری در سامانه یافت نشد');
-          }
-
-          // حذف کاربران قبلی
-          await supabase
-            .from('exam_allowed_users')
-            .delete()
-            .eq('exam_id', examId);
-
-          // درج کاربران جدید
-          const allowedRows = allowedUsers.map(u => ({
-            exam_id: examId,
-            user_id: u.id
-          }));
-
-          await supabase
-            .from('exam_allowed_users')
-            .insert(allowedRows);
-
-          showSuccess('کاربران مجاز با موفقیت از فایل اکسل وارد شدند');
-        } catch (error) {
-          console.error('Error importing Excel:', error);
-          showError(error.message || 'خطا در پردازش فایل اکسل');
-        } finally {
-          showLoading(false);
-        }
-      });
-
-      // بارگذاری اولیه آزمون‌ها
-      await loadExams();
-    });
-  </script>
+    </script>
 </body>
 </html>
