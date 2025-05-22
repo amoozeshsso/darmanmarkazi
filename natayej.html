@@ -94,9 +94,9 @@
         const exam = exams.find(ex => ex.id == selectedExamId);
         passMark = exam ? exam.pass_mark : 10;
 
-        // گرفتن نتایج کاربران
+        // گرفتن نتایج کاربران از جدول exam_results
         const { data: results, error } = await supabase
-          .from('results')
+          .from('exam_results')
           .select('user_id, username, score, inserted_at')
           .eq('exam_id', selectedExamId);
 
@@ -175,7 +175,7 @@
         // دکمه حذف همه نتایج
         document.getElementById('deleteAllResultsBtn').onclick = async () => {
           if (confirm('آیا از حذف همه نتایج این آزمون مطمئن هستید؟')) {
-            const { error } = await supabase.from('results').delete().eq('exam_id', selectedExamId);
+            const { error } = await supabase.from('exam_results').delete().eq('exam_id', selectedExamId);
             if (error) showError(error.message);
             else {
               showSuccess('همه نتایج حذف شد');
@@ -189,7 +189,7 @@
           btn.onclick = async () => {
             const userId = btn.dataset.userid;
             if (confirm(`آیا از حذف همه نتایج کاربر "${userId}" در این آزمون مطمئن هستید؟`)) {
-              const { error } = await supabase.from('results').delete().eq('exam_id', selectedExamId).eq('user_id', userId);
+              const { error } = await supabase.from('exam_results').delete().eq('exam_id', selectedExamId).eq('user_id', userId);
               if (error) showError(error.message);
               else {
                 showSuccess('نتایج کاربر حذف شد');
