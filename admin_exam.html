@@ -353,7 +353,7 @@ const examData = {
         showLoading(false);
       });
 
-      list.addEventListener('click', async e => {
+      list.addEventListener('click', async e() => {
         const btn = e.target;
         const id = btn.dataset.id;
         if (btn.classList.contains('edit-btn')) {
@@ -388,7 +388,7 @@ const examData = {
       });
 
       // تغییر وضعیت فعال/غیرفعال
-      list.addEventListener('change', async e => {
+      list.addEventListener('change', async e() => {
         if (e.target.classList.contains('active-toggle')) {
           const examId = e.target.dataset.id;
           const isActive = e.target.checked;
@@ -655,7 +655,7 @@ const examData = {
         await loadQuestionsList();
       });
 
-      questionsList.addEventListener('click', async e => {
+      questionsList.addEventListener('click', async e() => {
         const btn = e.target;
         const id = btn.dataset.id;
         if (btn.classList.contains('edit-q-btn')) {
