@@ -465,6 +465,7 @@ const examData = {
           <th>بیشترین نمره</th>
           <th>تعداد دفعات شرکت</th>
           <th>عملیات</th>
+          <th>وضعیت</th>
         </tr>
       </thead>
       <tbody>
@@ -474,6 +475,7 @@ const examData = {
             <td>${r.username}</td>
             <td>${r.maxScore}</td>
             <td>${r.count}</td>
+            <td>${r.maxScore >= passMark ? 'قبول' : 'مردود'}</td>
             <td>
               <button class="delete-user-result-btn" data-userid="${r.user_id}" data-examid="${examId}">حذف</button>
             </td>
