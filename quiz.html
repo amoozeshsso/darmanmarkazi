@@ -128,7 +128,7 @@
             return;
           }
           if (!examId) {
-            window.location.href = 'exam-list.html';
+            window.location.href = 'exams-list.html';
             return;
           }
 
@@ -291,7 +291,7 @@
           
           resultDiv.innerHTML = `<b>آزمون پایان یافت.<br>نمره شما: ${score} از 100<br>وضعیت: <span style="color:${status === 'قبول' ? '#27ae60' : '#c0392b'}">${status}</span></b>
           <br>
-          <button class="exit-btn" onclick="window.location.href='exam-list.html'">خروج از آزمون</button>`;
+          <button class="exit-btn" onclick="window.location.href='exams-list.html'">خروج از آزمون</button>`;
           sessionStorage.removeItem('userAnswers');
           sessionStorage.removeItem('examEndTime');
 
