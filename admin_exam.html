@@ -552,8 +552,7 @@ const examData = {
       // مدیریت سوالات هر آزمون
       let currentExamId = null;
       async function openQuestionsSection(examId, examTitle) {
-  currentExamId = examId;
-  questionsExamTitle.textContent = examTitle;
+   questionsExamTitle.textContent = examTitle;
   questionsSection.style.display = 'block';
   await loadQuestionsList();
   window.scrollTo({ top: questionsSection.offsetTop - 20, behavior: 'smooth' });
@@ -723,9 +722,6 @@ document.getElementById('excelInput').addEventListener('change', async (e) => {
 
     });
     // نمایش نتایج آزمون و دکمه خروجی اکسل xlsx فقط با نام کاربری و نمره
-async function showExamResults(examId, examTitle) {
-  resultsBox.style.display = 'block';
-  resultsBox.innerHTML = '<p>در حال دریافت نتایج...</p>';
   // فرض: جدول نتایج شما دارای ستون‌های username و score است
   const { data, error } = await supabase
     .from('exam_results')
