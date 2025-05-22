@@ -241,34 +241,36 @@
           list.innerHTML = '<tr><td colspan="9">خطا در دریافت داده‌ها</td></tr>';
         } else {
           list.innerHTML = data.length ? data.map(exam => `
-            <tr>
-              <td>${exam.id}</td>
-              <td>${exam.title}</td>
-              <td>${exam.max_attempts || 1}</td>
-              <td>${exam.duration_minutes || 20}</td>
-              <td>${exam.pass_mark || '-'}</td>
-              <td>${exam.start_at ? new Date(exam.start_at).toLocaleString('fa-IR') : '-'}</td>
-              <td>${exam.end_at ? new Date(exam.end_at).toLocaleString('fa-IR') : '-'}</td>
-              <td>${exam.created_at ? new Date(exam.created_at).toLocaleString('fa-IR') : ''}</td>
-              <td>
-                <input type="checkbox" class="active-toggle" data-id="${exam.id}" ${exam.active ? 'checked' : ''} />
-                <span style="font-size:12px; color:${exam.active ? '#27ae60' : '#c0392b'}">${exam.active ? 'فعال' : 'غیرفعال'}</span>
-              </td>
-              <td>
-                <button class="edit-btn" data-id="${exam.id}" 
-                  data-title="${exam.title}" 
-                  data-max_attempts="${exam.max_attempts || 1}"
-                  data-duration="${exam.duration_minutes || 20}"
-                  data-start="${exam.start_at ? new Date(exam.start_at).toISOString().slice(0,16) : ''}"
-                  data-end="${exam.end_at ? new Date(exam.end_at).toISOString().slice(0,16) : ''}"
-                  data-random_question_count="${exam.random_question_count || 2}"
-                    data-pass_mark="${exam.pass_mark || 10}"
-                >ویرایش</button>
-                <button class="delete-btn" data-id="${exam.id}">حذف</button>
-                <button class="result-btn" data-id="${exam.id}" data-title="${exam.title}">مشاهده نتایج</button>
-                <button class="questions-btn" data-id="${exam.id}" data-title="${exam.title}">سوالات آزمون</button>
-              </td>
-            </tr>`).join('') : '<tr><td colspan="9">آزمونی یافت نشد</td></tr>';
+  <tr>
+    <td>${exam.id}</td>
+    <td>${exam.title}</td>
+    <td>${exam.max_attempts || 1}</td>
+    <td>${exam.pass_mark || '-'}</td>
+    <td>${exam.duration_minutes || 20}</td>
+    <td>${exam.start_at ? new Date(exam.start_at).toLocaleString('fa-IR') : '-'}</td>
+    <td>${exam.end_at ? new Date(exam.end_at).toLocaleString('fa-IR') : '-'}</td>
+    <td>${exam.created_at ? new Date(exam.created_at).toLocaleString('fa-IR') : ''}</td>
+    <td>
+      <input type="checkbox" class="active-toggle" data-id="${exam.id}" ${exam.active ? 'checked' : ''} />
+      <span style="font-size:12px; color:${exam.active ? '#27ae60' : '#c0392b'}">${exam.active ? 'فعال' : 'غیرفعال'}</span>
+    </td>
+    <td>
+      <button class="edit-btn" data-id="${exam.id}" 
+        data-title="${exam.title}" 
+        data-max_attempts="${exam.max_attempts || 1}"
+        data-duration="${exam.duration_minutes || 20}"
+        data-start="${exam.start_at ? new Date(exam.start_at).toISOString().slice(0,16) : ''}"
+        data-end="${exam.end_at ? new Date(exam.end_at).toISOString().slice(0,16) : ''}"
+        data-random_question_count="${exam.random_question_count || 2}"
+        data-pass_mark="${exam.pass_mark || 10}"
+      >ویرایش</button>
+      <button class="delete-btn" data-id="${exam.id}">حذف</button>
+      <button class="result-btn" data-id="${exam.id}" data-title="${exam.title}">مشاهده نتایج</button>
+      <button class="questions-btn" data-id="${exam.id}" data-title="${exam.title}">سوالات آزمون</button>
+    </td>
+  </tr>
+`).join('') : '<tr><td colspan="10">آزمونی یافت نشد</td></tr>';
+
         }
         showLoading(false);
       }
