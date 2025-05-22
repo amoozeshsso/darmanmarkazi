@@ -97,7 +97,7 @@
         // گرفتن نتایج کاربران از جدول exam_results
         const { data: results, error } = await supabase
           .from('exam_results')
-          .select('user_id, username, score, inserted_at')
+          .select('user_id, score, submitted_at')
           .eq('exam_id', selectedExamId);
 
         if (error) {
@@ -113,7 +113,7 @@
         const userMap = {};
         results.forEach(r => {
           if (!userMap[r.user_id]) {
-            userMap[r.user_id] = { username: r.username, maxScore: r.score, count: 1, user_id: r.user_id };
+            userMap[r.user_id] = { user_id: r.user_id, maxScore: r.score, count: 1 };
           } else {
             userMap[r.user_id].count += 1;
             if (r.score > userMap[r.user_id].maxScore) userMap[r.user_id].maxScore = r.score;
@@ -127,7 +127,7 @@
           <thead>
             <tr>
               <th>ردیف</th>
-              <th>نام کاربری</th>
+              <th>شناسه کاربر</th>
               <th>بیشترین نمره</th>
               <th>تعداد دفعات شرکت</th>
               <th>وضعیت</th>
@@ -138,7 +138,7 @@
             ${finalResults.map((r, i) => `
               <tr>
                 <td>${i + 1}</td>
-                <td>${r.username}</td>
+                <td>${r.user_id}</td>
                 <td>${r.maxScore}</td>
                 <td>${r.count}</td>
                 <td>${r.maxScore >= passMark ? 'قبول' : 'مردود'}</td>
@@ -157,10 +157,10 @@
         // دکمه خروجی اکسل
         document.getElementById('exportExcelBtn').onclick = () => {
           const ws_data = [
-            ['ردیف', 'نام کاربری', 'بیشترین نمره', 'تعداد دفعات شرکت', 'وضعیت'],
+            ['ردیف', 'شناسه کاربر', 'بیشترین نمره', 'تعداد دفعات شرکت', 'وضعیت'],
             ...finalResults.map((r, i) => [
               i + 1,
-              r.username,
+              r.user_id,
               r.maxScore,
               r.count,
               r.maxScore >= passMark ? 'قبول' : 'مردود'
