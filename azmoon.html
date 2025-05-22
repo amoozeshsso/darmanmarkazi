@@ -5,32 +5,127 @@
   <title>تعریف و مدیریت آزمون</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: 'Vazirmatn', Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 20px; }
-    h1 { text-align: center; color: #333; }
-    .container { max-width: 1100px; margin: auto; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-    th { background: #2c3e50; color: #fff; }
-    tr:nth-child(even) { background: #f2f2f2; }
-    tr:hover { background: #e9f7ef; }
-    button { padding: 6px 12px; margin: 2px; border: none; border-radius: 4px; cursor: pointer; }
-    .add-btn { background: #27ae60; color: #fff; width: 100%; font-size: 16px; }
-    .edit-btn { background: #2980b9; color: #fff; }
-    .delete-btn { background: #c0392b; color: #fff; }
-    #formBox { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    label { display: block; margin-top: 10px; color: #555; font-weight: bold; }
-    input[type="text"], input[type="number"], input[type="datetime-local"] { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-    input:focus { outline: none; border-color: #3498db; }
-    #loading { display: none; text-align: center; margin: 20px 0; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: auto; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    #error, #success { display: none; padding: 10px; margin-top: 15px; border-radius: 4px; text-align: center; }
-    #error { background: rgba(231,76,60,0.8); color: #fff; }
-    #success { background: rgba(46,204,113,0.8); color: #fff; }
-    .back { margin-bottom: 18px; text-align: right; }
-    .back a { background: #4e54c8; color: #fff; padding: 8px 18px; border-radius: 5px; text-decoration: none; }
+    body {
+      font-family: 'Vazirmatn', Tahoma, sans-serif;
+      background: #f8f8f8;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .container {
+      max-width: 1100px;
+      margin: auto;
+    }
+    /* فرم دو ستونه */
+    #formBox form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px 40px;
+    }
+    /* هر فیلد در یک ستون */
+    #formBox label, 
+    #formBox input, 
+    #formBox textarea {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 14px;
+      color: #555;
+    }
+    /* هر جفت label+input را در یک div جداگانه قرار می‌دهیم */
+    .form-group {
+      flex: 1 1 calc(50% - 40px); /* دو ستون با فاصله */
+      min-width: 280px;
+      display: flex;
+      flex-direction: column;
+    }
+    /* دکمه ذخیره تمام عرض */
+    #submitBtn {
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      font-size: 16px;
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #submitBtn:hover {
+      background-color: #219150;
+    }
+    /* جدول آزمون‌ها */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background: #2c3e50;
+      color: #fff;
+    }
+    tr:nth-child(even) {
+      background: #f2f2f2;
+    }
+    tr:hover {
+      background: #e9f7ef;
+    }
+    button {
+      padding: 6px 12px;
+      margin: 2px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .add-btn {
+      background: #27ae60;
+      color: #fff;
+    }
+    .edit-btn {
+      background: #2980b9;
+      color: #fff;
+    }
+    .delete-btn {
+      background: #c0392b;
+      color: #fff;
+    }
+    #formBox {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .back {
+      margin-bottom: 18px;
+      text-align: right;
+    }
+    .back a {
+      background: #4e54c8;
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    /* ریسپانسیو: در موبایل تک ستونه */
+    @media (max-width: 768px) {
+      .form-group {
+        flex: 1 1 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -43,27 +138,41 @@
       <h3 id="formTitle">افزودن آزمون جدید</h3>
       <form id="examForm">
         <input type="hidden" id="editId" />
-        <label for="title">عنوان آزمون:</label>
-        <input type="text" id="title" required />
-        <label for="maxAttempts">تعداد دفعات مجاز شرکت در آزمون:</label>
-        <input type="number" id="maxAttempts" min="1" max="20" value="1" required />
-        <label for="randomQuestionCount">تعداد سوال تصادفی برای هر کاربر:</label>
-        <input type="number" id="randomQuestionCount" min="1" max="100" value="2" required />
-        <label for="durationMinutes">مدت زمان آزمون (دقیقه):</label>
-        <input type="number" id="durationMinutes" min="1" max="300" value="20" required />
-        <label for="startAt">تاریخ و ساعت شروع آزمون:</label>
-        <input type="datetime-local" id="startAt" required />
-        <label for="endAt">تاریخ و ساعت پایان آزمون (اختیاری):</label>
-        <input type="datetime-local" id="endAt" />
-        <label for="passMark">نمره قبولی:</label>
-        <input type="number" id="passMark" min="1" max="100" value="10" required />
+        <div class="form-group">
+          <label for="title">عنوان آزمون:</label>
+          <input type="text" id="title" required />
+        </div>
+        <div class="form-group">
+          <label for="maxAttempts">تعداد دفعات مجاز شرکت در آزمون:</label>
+          <input type="number" id="maxAttempts" min="1" max="20" value="1" required />
+        </div>
+        <div class="form-group">
+          <label for="randomQuestionCount">تعداد سوال تصادفی برای هر کاربر:</label>
+          <input type="number" id="randomQuestionCount" min="1" max="100" value="2" required />
+        </div>
+        <div class="form-group">
+          <label for="durationMinutes">مدت زمان آزمون (دقیقه):</label>
+          <input type="number" id="durationMinutes" min="1" max="300" value="20" required />
+        </div>
+        <div class="form-group">
+          <label for="startAt">تاریخ و ساعت شروع آزمون:</label>
+          <input type="datetime-local" id="startAt" required />
+        </div>
+        <div class="form-group">
+          <label for="endAt">تاریخ و ساعت پایان آزمون (اختیاری):</label>
+          <input type="datetime-local" id="endAt" />
+        </div>
+        <div class="form-group">
+          <label for="passMark">نمره قبولی:</label>
+          <input type="number" id="passMark" min="1" max="100" value="10" required />
+        </div>
         <button type="submit" id="submitBtn" class="add-btn">ذخیره</button>
       </form>
       <div id="error"></div>
       <div id="success"></div>
     </div>
-    <div id="loading">
-      <div class="spinner"></div>
+    <div id="loading" style="display:none; text-align:center; margin:20px 0;">
+      <div style="border:4px solid #f3f3f3; border-top:4px solid #3498db; border-radius:50%; width:30px; height:30px; animation:spin 1s linear infinite; margin:auto;"></div>
       <p>در حال بارگذاری...</p>
     </div>
     <table>
@@ -118,7 +227,6 @@
       const showSuccess = msg => { okEl.textContent = msg; okEl.style.display = 'block'; errEl.style.display = 'none'; };
       const hideMessages = () => { errEl.style.display = okEl.style.display = 'none'; };
 
-      // بارگذاری لیست آزمون‌ها
       async function loadExams() {
         showLoading(true); hideMessages();
         const { data, error } = await supabase.from('exams').select('*').order('id');
@@ -157,7 +265,6 @@
         showLoading(false);
       }
 
-      // افزودن/ویرایش آزمون
       form.addEventListener('submit', async e => {
         e.preventDefault();
         hideMessages();
@@ -177,7 +284,6 @@
 
         showLoading(true);
 
-        // چک تکراری نبودن عنوان آزمون
         const { data: exists } = await supabase.from('exams').select('id').eq('title', title);
         if (exists && exists.length && (!id || exists[0].id != id)) {
           showError('آزمونی با این عنوان قبلاً ثبت شده است!');
@@ -219,7 +325,6 @@
         showLoading(false);
       });
 
-      // ویرایش و حذف
       list.addEventListener('click', async e => {
         const btn = e.target;
         if (btn.classList.contains('edit-btn')) {
@@ -254,3 +359,10 @@
   </script>
 </body>
 </html>
+
+<style>
+@keyframes spin {
+  0% { transform: rotate(0deg);}
+  100% { transform: rotate(360deg);}
+}
+</style>
