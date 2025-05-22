@@ -16,9 +16,23 @@
     #timer { text-align:center; font-size:20px; margin:18px 0; color:#c0392b; }
     #result { margin-top: 30px; padding: 18px; border-radius: 8px; background: #eafaf1; color: #222; text-align: center; font-size: 18px; }
     #error { margin-top: 20px; color: #c0392b; text-align: center; white-space: pre-wrap; }
-    .nav-btns { margin-top: 20px; text-align: center; }
-    .nav-btns button { margin: 0 6px; }
+    .nav-btns { margin-top: 20px; text-align: center; display: flex; justify-content: center; gap: 12px; }
+    .nav-btns button { min-width: 110px; }
     .exam-time-info { text-align: center; margin: 20px 0; padding: 15px; background: #e8f5ff; border-radius: 8px; color: #2c3e50; }
+    .exit-btn {
+      display: inline-block;
+      margin-top: 28px;
+      background: #c0392b;
+      color: #fff;
+      border: none;
+      padding: 13px 38px;
+      border-radius: 7px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+    .exit-btn:hover { background: #a93226; }
   </style>
 </head>
 <body>
@@ -30,8 +44,9 @@
     <form id="quizForm">
       <div id="questionBox"></div>
       <div class="nav-btns" style="display:none;">
-        <button type="button" id="prevBtn">قبلی</button>
+        <!-- دکمه بعدی سمت راست، قبلی سمت چپ -->
         <button type="button" id="nextBtn">بعدی</button>
+        <button type="button" id="prevBtn">قبلی</button>
         <button type="submit" id="submitBtn" style="display:none;">ثبت آزمون</button>
       </div>
     </form>
@@ -181,7 +196,7 @@
           
           questions = shuffleArray(allQs).slice(0, randomQuestionCount);
           currentQuestion = 0;
-          navBtns.style.display = 'block';
+          navBtns.style.display = 'flex';
 
           if (!sessionStorage.getItem('examEndTime')) {
             sessionStorage.setItem('examEndTime', Date.now() + examDuration * 60000);
@@ -223,8 +238,9 @@
               <label><input type="radio" name="option" value="4" ${userAnswers[q.id]==4?'checked':''}/> ${q.option4}</label>
             </div>
           </div>`;
-        prevBtn.style.display = currentQuestion > 0 ? 'inline-block' : 'none';
+        // دکمه بعدی سمت راست، قبلی سمت چپ
         nextBtn.style.display = currentQuestion < questions.length - 1 ? 'inline-block' : 'none';
+        prevBtn.style.display = currentQuestion > 0 ? 'inline-block' : 'none';
         submitBtn.style.display = currentQuestion === questions.length - 1 ? 'inline-block' : 'none';
         document.getElementsByName('option').forEach(r => r.onchange = saveAnswer);
       }
@@ -273,7 +289,9 @@
 
           if (error) throw error;
           
-          resultDiv.innerHTML = `<b>آزمون پایان یافت.<br>نمره شما: ${score} از 100<br>وضعیت: <span style="color:${status === 'قبول' ? '#27ae60' : '#c0392b'}">${status}</span></b>`;
+          resultDiv.innerHTML = `<b>آزمون پایان یافت.<br>نمره شما: ${score} از 100<br>وضعیت: <span style="color:${status === 'قبول' ? '#27ae60' : '#c0392b'}">${status}</span></b>
+          <br>
+          <button class="exit-btn" onclick="window.location.href='exam-list.html'">خروج از آزمون</button>`;
           sessionStorage.removeItem('userAnswers');
           sessionStorage.removeItem('examEndTime');
 
@@ -286,6 +304,7 @@
         }
       }
 
+      // دکمه بعدی سمت راست، قبلی سمت چپ
       nextBtn.onclick = () => { saveAnswer(); currentQuestion++; showQuestion(); };
       prevBtn.onclick = () => { saveAnswer(); currentQuestion--; showQuestion(); };
       quizForm.onsubmit = e => { e.preventDefault(); saveAnswer(); finalizeAndShowResult(); };
