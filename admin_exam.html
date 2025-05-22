@@ -275,14 +275,30 @@
 
       // جلوگیری از ثبت آزمون تکراری (در افزودن و ویرایش)
       form.addEventListener('submit', async e => {
-        e.preventDefault();
-        hideMessages();
-        const id = editIdInput.value;
-        const title = document.getElementById('title').value.trim();
-        const maxAttempts = parseInt(maxAttemptsInput.value) || 1;
-        const duration = parseInt(durationInput.value) || 20;
-        const startAt = startAtInput.value ? new Date(startAtInput.value).toISOString() : null;
-        const endAt = endAtInput.value ? new Date(endAtInput.value).toISOString() : null;
+  e.preventDefault();
+  hideMessages();
+  const id = editIdInput.value;
+  const title = document.getElementById('title').value.trim();
+  const maxAttempts = parseInt(maxAttemptsInput.value) || 1;
+  const duration = parseInt(durationInput.value) || 20;
+  const startAt = startAtInput.value ? new Date(startAtInput.value).toISOString() : null;
+  const endAt = endAtInput.value ? new Date(endAtInput.value).toISOString() : null;
+  const randomQuestionCount = parseInt(document.getElementById('randomQuestionCount').value) || 10;
+  const passMark = parseInt(passMarkInput.value) || 10;
+
+  const examData = {
+    title,
+    max_attempts: maxAttempts,
+    duration_minutes: duration,
+    start_at: startAt,
+    end_at: endAt || null,
+    active: true,
+    random_question_count: randomQuestionCount,
+    pass_mark: passMark
+  };
+  // ادامه کد...
+});
+
 
         if (!title) return showError('عنوان آزمون را وارد کنید.');
         if (maxAttempts < 1) return showError('تعداد دفعات مجاز باید حداقل ۱ باشد.');
