@@ -59,6 +59,8 @@
         <input type="text" id="title" required />
         <label for="maxAttempts">تعداد دفعات مجاز شرکت در آزمون:</label>
         <input type="number" id="maxAttempts" min="1" max="20" value="1" required />
+        <label for="passMark">نمره قبولی (حداقل نمره برای قبولی):</label>
+        <input type="number" id="passMark" min="1" max="100" value="10" required />
         <label for="randomQuestionCount">تعداد سوال تصادفی برای هر کاربر:</label>
         <input type="number" id="randomQuestionCount" min="1" max="100" value="2" required />
         <label for="durationMinutes">مدت زمان آزمون (دقیقه):</label>
@@ -82,6 +84,7 @@
           <th>شناسه</th>
           <th>عنوان آزمون</th>
           <th>تعداد دفعات مجاز</th>
+          <th>نمره قبولی</th>
           <th>مدت آزمون (دقیقه)</th>
           <th>شروع</th>
           <th>پایان</th>
@@ -201,6 +204,7 @@
       const startAtInput = document.getElementById('startAt');
       const endAtInput = document.getElementById('endAt');
       const resultsBox = document.getElementById('resultsBox');
+      const passMarkInput = document.getElementById('passMark');
 
       // سوالات
       const questionsSection = document.getElementById('questionsSection');
@@ -242,6 +246,7 @@
               <td>${exam.title}</td>
               <td>${exam.max_attempts || 1}</td>
               <td>${exam.duration_minutes || 20}</td>
+              <td>${exam.pass_mark || '-'}</td>
               <td>${exam.start_at ? new Date(exam.start_at).toLocaleString('fa-IR') : '-'}</td>
               <td>${exam.end_at ? new Date(exam.end_at).toLocaleString('fa-IR') : '-'}</td>
               <td>${exam.created_at ? new Date(exam.created_at).toLocaleString('fa-IR') : ''}</td>
@@ -257,6 +262,7 @@
                   data-start="${exam.start_at ? new Date(exam.start_at).toISOString().slice(0,16) : ''}"
                   data-end="${exam.end_at ? new Date(exam.end_at).toISOString().slice(0,16) : ''}"
                   data-random_question_count="${exam.random_question_count || 2}"
+                    data-pass_mark="${exam.pass_mark || 10}"
                 >ویرایش</button>
                 <button class="delete-btn" data-id="${exam.id}">حذف</button>
                 <button class="result-btn" data-id="${exam.id}" data-title="${exam.title}">مشاهده نتایج</button>
@@ -303,6 +309,18 @@ const examData = {
   active: true,
   random_question_count: randomQuestionCount
 };
+        const passMark = parseInt(passMarkInput.value) || 10;
+const examData = {
+  title,
+  max_attempts: maxAttempts,
+  duration_minutes: duration,
+  start_at: startAt,
+  end_at: endAt || null,
+  active: true,
+  random_question_count: randomQuestionCount,
+  pass_mark: passMark
+};
+
 
 
         if (id) {
@@ -337,8 +355,9 @@ const examData = {
           startAtInput.value = btn.dataset.start || '';
           endAtInput.value = btn.dataset.end || '';
           document.getElementById('randomQuestionCount').value = btn.dataset.random_question_count || 2;
+          document.getElementById('passMark').value = btn.dataset.pass_mark || 10;
           formTitle.textContent = 'ویرایش آزمون';
-          submitBtn.textContent = 'به‌روزرسانی';
+                    submitBtn.textContent = 'به‌روزرسانی';
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         if (btn.classList.contains('delete-btn')) {
