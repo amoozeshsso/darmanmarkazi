@@ -125,10 +125,10 @@
     </table>
   </div>
   <script>
-    // تبدیل تاریخ میلادی به شمسی فقط برای جدول نمایش
+    // تبدیل تاریخ میلادی به شمسی با ساعت (حتی اگر فرمت ISO باشد)
     function toJalaliStr(iso) {
       if (!iso) return '';
-      const d = new Date(iso);
+      let d = (typeof iso === 'string' && iso.includes('T')) ? new Date(iso) : new Date(iso);
       if (!window.jalaali || !window.jalaali.toJalaali) return iso;
       const j = window.jalaali.toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate());
       const pad = n => n < 10 ? '0' + n : n;
@@ -294,7 +294,7 @@
           const workbook = XLSX.read(data, { type: 'array' });
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
           const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-          const header = rows[0].map(h => h.toLowerCase());
+          const header = rows[0].map(h => h.toString().toLowerCase().trim());
           const usernameIdx = header.indexOf('username');
           if (usernameIdx === -1) {
             showError('ستون username در فایل اکسل یافت نشد');
@@ -311,19 +311,27 @@
             showLoading(false);
             return;
           }
-          // دریافت user_id ها بر اساس username
+          // دریافت user_id ها بر اساس username (بدون حساسیت به کوچکی/بزرگی)
           const { data: users, error: userErr } = await supabase
             .from('users')
-            .select('id,username')
-            .in('username', usernames);
+            .select('id,username');
           if (userErr || !users.length) {
+            showError('هیچ کاربری در سامانه یافت نشد');
+            showLoading(false);
+            return;
+          }
+          // تطبیق دستی (case-insensitive)
+          const allowedUsers = users.filter(u =>
+            usernames.some(name => name.toLowerCase() === u.username.toLowerCase())
+          );
+          if (!allowedUsers.length) {
             showError('هیچ کاربری با این usernameها در سامانه یافت نشد');
             showLoading(false);
             return;
           }
           // حذف کاربران قبلی و درج جدید
           await supabase.from('exam_allowed_users').delete().eq('exam_id', examId);
-          const allowedRows = users.map(u => ({ exam_id: examId, user_id: u.id }));
+          const allowedRows = allowedUsers.map(u => ({ exam_id: examId, user_id: u.id }));
           await supabase.from('exam_allowed_users').insert(allowedRows);
           showSuccess('کاربران مجاز با موفقیت از فایل اکسل وارد شدند');
         } catch (err) {
