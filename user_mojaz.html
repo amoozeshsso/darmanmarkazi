@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>مدیریت کاربران مجاز آزمون</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Vazirmatn', Tahoma;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #34495e;
+            font-weight: bold;
+        }
+        
+        select, input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        
+        button {
+            background: #2980b9;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #1c5980;
+        }
+        
+        .message {
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        .success {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .error {
+            background: #e74c3c;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>تعیین کاربران مجاز برای آزمون</h1>
+        
+        <div class="form-group">
+            <label for="examSelect">انتخاب آزمون:</label>
+            <select id="examSelect">
+                <option value="">لطفا یک آزمون انتخاب کنید</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="excelFile">بارگذاری فایل اکسل (فقط ستون username):</label>
+            <input type="file" id="excelFile" accept=".xlsx, .xls">
+        </div>
+        
+        <button onclick="processExcel()">ثبت کاربران مجاز</button>
+        
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // بارگیری آزمون‌ها هنگام لود صفحه
+        window.onload = async () => {
+            const { data, error } = await supabase
+                .from('exams')
+                .select('id, title')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                showMessage('خطا در دریافت آزمون‌ها: ' + error.message, false);
+                return;
+            }
+
+            const select = document.getElementById('examSelect');
+            data.forEach(exam => {
+                const option = document.createElement('option');
+                option.value = exam.id;
+                option.textContent = exam.title;
+                select.appendChild(option);
+            });
+        };
+
+        async function processExcel() {
+            const examId = document.getElementById('examSelect').value;
+            const file = document.getElementById('excelFile').files[0];
+            const messageDiv = document.getElementById('message');
+
+            // اعتبارسنجی اولیه
+            if (!examId) {
+                showMessage('لطفا یک آزمون انتخاب کنید', false);
+                return;
+            }
+            
+            if (!file) {
+                showMessage('لطفا فایل اکسل را انتخاب کنید', false);
+                return;
+            }
+
+            try {
+                // خواندن فایل اکسل
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                
+                // استخراج usernames
+                const usernames = rows
+                    .slice(1) // نادیده گرفتن هدر
+                    .map(row => row[0]?.toString().trim())
+                    .filter(username => username);
+
+                // دریافت ID کاربران
+                const { data: users, error: userError } = await supabase
+                    .from('users')
+                    .select('id, username')
+                    .in('username', usernames);
+
+                if (userError) throw userError;
+                
+                if (users.length === 0) {
+                    showMessage('هیچ کاربری با این نام‌های کاربری یافت نشد', false);
+                    return;
+                }
+
+                // حذف کاربران قبلی
+                const { error: deleteError } = await supabase
+                    .from('exam_users')
+                    .delete()
+                    .eq('exam_id', examId);
+
+                if (deleteError) throw deleteError;
+
+                // درج کاربران جدید
+                const userEntries = users.map(user => ({
+                    exam_id: examId,
+                    user_id: user.id
+                }));
+
+                const { error: insertError } = await supabase
+                    .from('exam_users')
+                    .insert(userEntries);
+
+                if (insertError) throw insertError;
+
+                showMessage(`✅ ${users.length} کاربر با موفقیت ثبت شدند`, true);
+                
+            } catch (error) {
+                console.error(error);
+                showMessage('خطا در پردازش فایل: ' + error.message, false);
+            }
+        }
+
+        function showMessage(text, isSuccess) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${isSuccess ? 'success' : 'error'}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
