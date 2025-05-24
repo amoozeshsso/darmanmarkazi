@@ -113,10 +113,30 @@
         examsList.innerHTML = 'در حال بارگذاری...';
         errorDiv.textContent = '';
 
-        // دریافت آزمون‌های فعال با pass_mark
+        // دریافت لیست آزمون‌هایی که کاربر مجاز است
+        const { data: allowed, error: allowedError } = await supabase
+          .from('exam_users')
+          .select('exam_id')
+          .eq('user_id', userId);
+
+        if (allowedError) {
+          errorDiv.textContent = 'خطا در دریافت لیست آزمون‌های مجاز!';
+          examsList.innerHTML = '';
+          return;
+        }
+
+        const allowedExamIds = allowed.map(e => e.exam_id);
+
+        if (!allowedExamIds.length) {
+          examsList.innerHTML = '<div>آزمونی برای شما فعال نشده است.</div>';
+          return;
+        }
+
+        // فقط آزمون‌های فعال که کاربر مجاز است
         const { data: exams, error: examsError } = await supabase
           .from('exams')
           .select('id, title, max_attempts, active, pass_mark')
+          .in('id', allowedExamIds)
           .eq('active', true)
           .order('id', { ascending: false });
 
@@ -127,7 +147,7 @@
         }
 
         if (!exams || exams.length === 0) {
-          examsList.innerHTML = '<div>آزمونی فعال وجود ندارد.</div>';
+          examsList.innerHTML = '<div>آزمونی برای شما فعال نیست.</div>';
           return;
         }
 
@@ -157,7 +177,7 @@
         });
 
         if (availableExams.length === 0) {
-          examsList.innerHTML = '<div>شما در همه آزمون‌های فعال به سقف مجاز شرکت رسیده‌اید.</div>';
+          examsList.innerHTML = '<div>شما در همه آزمون‌های مجاز به سقف شرکت رسیده‌اید.</div>';
           return;
         }
 
