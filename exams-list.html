@@ -1,200 +1,282 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <title>لیست آزمون‌ها</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: Tahoma; background: #f8f8f8; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); padding: 30px; }
-    h1 { text-align: center; color: #333; }
-    .exam-item { background: #f3f7fa; margin: 15px 0; padding: 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
-    .exam-title { font-size: 18px; font-weight: bold; color: #222; }
-    .exam-meta { font-size: 13px; color: #888; margin-right: 10px; }
-    .pass-mark { color: #27ae60; font-size: 15px; margin-right: 12px; font-weight: bold; }
-    .enter-btn { background: #4e54c8; color: #fff; border: none; padding: 8px 22px; border-radius: 6px; font-size: 15px; cursor: pointer; }
-    #error { margin-top: 20px; color: #c0392b; text-align: center; }
-    .links-list {
-      margin: 25px 0 18px 0;
-      padding: 15px 10px 10px 10px;
-      background: #f7fcff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-      text-align: right;
-    }
-    .links-list a {
-      display: block;
-      margin: 7px 0;
-      color: #2255aa;
-      text-decoration: underline;
-      font-size: 15px;
-    }
-    .links-list a::before {
-      content: "🔗 ";
-      font-size: 13px;
-    }
-    body {
-      font-family: 'Vazirmatn', Tahoma, sans-serif;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>لیست آزمون‌ها</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            background: #f8f8f8;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            padding: 30px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .exam-item {
+            background: #f3f7fa;
+            margin: 15px 0;
+            padding: 16px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .exam-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #222;
+        }
+        .exam-meta {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .pass-mark {
+            color: #27ae60;
+            font-size: 15px;
+            margin-right: 12px;
+            font-weight: bold;
+        }
+        .enter-btn {
+            background: #4e54c8;
+            color: #fff;
+            border: none;
+            padding: 8px 22px;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .enter-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #error {
+            margin-top: 20px;
+            color: #c0392b;
+            text-align: center;
+        }
+        .links-list {
+            margin: 25px 0 18px 0;
+            padding: 15px 10px 10px 10px;
+            background: #f7fcff;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+        .links-list a {
+            display: block;
+            margin: 7px 0;
+            color: #2255aa;
+            text-decoration: underline;
+            font-size: 15px;
+        }
+        .links-list a::before {
+            content: "🔗 ";
+            font-size: 13px;
+        }
+        .no-access {
+            text-align: center;
+            color: #e74c3c;
+            padding: 15px;
+            background: #fff3f3;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>لیست آزمون‌های فعال</h1>
-    <div id="customLinks"></div>
-    <div id="examsList"></div>
-    <div id="error"></div>
-  </div>
+    <div class="container">
+        <h1>لیست آزمون‌های فعال</h1>
+        <div id="customLinks"></div>
+        <div id="examsList"></div>
+        <div id="error"></div>
+    </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+    <script>
+        const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const examsList = document.getElementById('examsList');
+        const errorDiv = document.getElementById('error');
+              const customLinksDiv = document.getElementById('customLinks');
+        const userId = sessionStorage.getItem('userId');
 
-  <script>
-    // تنظیمات Supabase
-    const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true
-      },
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-      }
-    });
-
-    const examsList = document.getElementById('examsList');
-    const errorDiv = document.getElementById('error');
-    const customLinksDiv = document.getElementById('customLinks');
-    const userId = sessionStorage.getItem('userId');
-
-    if (!userId) {
-      alert('لطفاً ابتدا وارد شوید.');
-      window.location.href = 'login.html';
-    }
-
-    async function loadCustomLinks() {
-      try {
-        const { data, error } = await supabase
-          .from('site_content')
-          .select('link1_url,link1_text,link2_url,link2_text,link3_url,link3_text,link4_url,link4_text,link5_url,link5_text')
-          .eq('id', 1)
-          .single();
-
-        if (error) {
-          customLinksDiv.innerHTML = '';
-          return;
+        if (!userId) {
+            alert('لطفاً ابتدا وارد شوید.');
+            window.location.href = 'login.html';
         }
 
-        const links = [];
-        for (let i = 1; i <= 5; i++) {
-          const url = data[`link${i}_url`];
-          const text = data[`link${i}_text`];
-          if (url && url.trim() && text && text.trim()) {
-            links.push(`<a href="${url}" target="_blank" rel="noopener">${text}</a>`);
-          }
+        async function loadCustomLinks() {
+            try {
+                const { data, error } = await supabase
+                    .from('site_content')
+                    .select('link1_url,link1_text,link2_url,link2_text,link3_url,link3_text,link4_url,link4_text,link5_url,link5_text')
+                    .eq('id', 1)
+                    .single();
+
+                if (error) {
+                    customLinksDiv.innerHTML = '';
+                    return;
+                }
+
+                const links = [];
+                for (let i = 1; i <= 5; i++) {
+                    const url = data[`link${i}_url`];
+                    const text = data[`link${i}_text`];
+                    if (url && url.trim() && text && text.trim()) {
+                        links.push(`<a href="${url}" target="_blank" rel="noopener">${text}</a>`);
+                    }
+                }
+
+                if (links.length) {
+                    customLinksDiv.innerHTML = `<div class="links-list"><b>لینک‌های منابع درسی :</b>${links.join('')}</div>`;
+                } else {
+                    customLinksDiv.innerHTML = '';
+                }
+            } catch (err) {
+                customLinksDiv.innerHTML = '';
+            }
         }
 
-        if (links.length) {
-          customLinksDiv.innerHTML = `<div class="links-list"><b>لینک‌های منابع درسی :</b>${links.join('')}</div>`;
-        } else {
-          customLinksDiv.innerHTML = '';
+        async function loadExams() {
+            try {
+                examsList.innerHTML = '<div class="loading">در حال بارگذاری...</div>';
+                errorDiv.textContent = '';
+
+                // ابتدا دریافت آزمون‌هایی که کاربر به آنها دسترسی دارد
+                const { data: allowedExams, error: accessError } = await supabase
+                    .from('exam_users')
+                    .select('exam_id')
+                    .eq('user_id', userId);
+
+                if (accessError) {
+                    errorDiv.textContent = 'خطا در بررسی دسترسی‌ها!';
+                    examsList.innerHTML = '';
+                    return;
+                }
+
+                // اگر هیچ دسترسی نداشت
+                if (!allowedExams || allowedExams.length === 0) {
+                    examsList.innerHTML = '<div class="no-access">شما به هیچ آزمونی دسترسی ندارید.</div>';
+                    return;
+                }
+
+                // دریافت آزمون‌های فعال و مجاز
+                const { data: exams, error: examsError } = await supabase
+                    .from('exams')
+                    .select('id, title, max_attempts, active, pass_mark')
+                    .in('id', allowedExams.map(e => e.exam_id))
+                    .eq('active', true)
+                    .order('id', { ascending: false });
+
+                if (examsError) {
+                    errorDiv.textContent = 'خطا در دریافت لیست آزمون‌ها!';
+                    examsList.innerHTML = '';
+                    return;
+                }
+
+                if (!exams || exams.length === 0) {
+                    examsList.innerHTML = '<div class="no-access">هیچ آزمون فعالی برای شما در دسترس نیست.</div>';
+                    return;
+                }
+
+                // دریافت نتایج آزمون‌های کاربر
+                const { data: results, error: resultsError } = await supabase
+                    .from('exam_results')
+                    .select('exam_id, id')
+                    .eq('user_id', userId);
+
+                if (resultsError) {
+                    errorDiv.textContent = 'خطا در دریافت سوابق آزمون!';
+                    examsList.innerHTML = '';
+                    return;
+                }
+
+                const attemptsMap = {};
+                if (results) {
+                    results.forEach(r => {
+                        attemptsMap[r.exam_id] = (attemptsMap[r.exam_id] || 0) + 1;
+                    });
+                }
+
+                const availableExams = exams.filter(exam => {
+                    const max = exam.max_attempts || 1;
+                    const count = attemptsMap[exam.id] || 0;
+                    return count < max;
+                });
+
+                if (availableExams.length === 0) {
+                    examsList.innerHTML = '<div class="no-access">شما در همه آزمون‌های فعال به سقف مجاز شرکت رسیده‌اید.</div>';
+                    return;
+                }
+
+                examsList.innerHTML = availableExams.map(exam => {
+                    const max = exam.max_attempts || 1;
+                    const count = attemptsMap[exam.id] || 0;
+                    const remainingAttempts = max - count;
+                    
+                    return `
+                        <div class="exam-item">
+                            <div>
+                                <div class="exam-title">
+                                    ${exam.title}
+                                    <span class="pass-mark">(نمره قبولی: ${exam.pass_mark || 10})</span>
+                                </div>
+                                <div class="exam-meta">
+                                    تعداد مجاز: ${max} بار
+                                    <br>
+                                    دفعات باقیمانده: ${remainingAttempts} بار
+                                </div>
+                            </div>
+                            <button 
+                                class="enter-btn" 
+                                onclick="enterExam(${exam.id})"
+                                ${remainingAttempts <= 0 ? 'disabled' : ''}
+                            >
+                                ${remainingAttempts > 0 ? 'شروع آزمون' : 'اتمام فرصت'}
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                errorDiv.textContent = 'خطای غیرمنتظره در بارگیری آزمون‌ها!';
+                examsList.innerHTML = '';
+            }
         }
-      } catch (err) {
-        customLinksDiv.innerHTML = '';
-      }
-    }
 
-    async function loadExams() {
-      try {
-        examsList.innerHTML = 'در حال بارگذاری...';
-        errorDiv.textContent = '';
+        window.enterExam = function(examId) {
+            sessionStorage.setItem('examId', examId);
+            window.location.href = 'quiz.html?exam_id=' + examId;
+        };
 
-        // دریافت آزمون‌های فعال با pass_mark
-        const { data: exams, error: examsError } = await supabase
-          .from('exams')
-          .select('id, title, max_attempts, active, pass_mark')
-          .eq('active', true)
-          .order('id', { ascending: false });
-
-        if (examsError) {
-          errorDiv.textContent = 'خطا در دریافت لیست آزمون‌ها!';
-          examsList.innerHTML = '';
-          return;
-        }
-
-        if (!exams || exams.length === 0) {
-          examsList.innerHTML = '<div>آزمونی فعال وجود ندارد.</div>';
-          return;
-        }
-
-        // دریافت نتایج آزمون‌های کاربر
-        const { data: results, error: resultsError } = await supabase
-          .from('exam_results')
-          .select('exam_id, id')
-          .eq('user_id', userId);
-
-        if (resultsError) {
-          errorDiv.textContent = 'خطا در دریافت سوابق آزمون!';
-          examsList.innerHTML = '';
-          return;
-        }
-
-        const attemptsMap = {};
-        if (results) {
-          results.forEach(r => {
-            attemptsMap[r.exam_id] = (attemptsMap[r.exam_id] || 0) + 1;
-          });
-        }
-
-        const availableExams = exams.filter(exam => {
-          const max = exam.max_attempts || 1;
-          const count = attemptsMap[exam.id] || 0;
-          return count < max;
+        window.addEventListener('load', () => {
+            if (!window.supabase) {
+                errorDiv.textContent = 'خطا در بارگیری کتابخانه Supabase';
+                return;
+            }
+            loadCustomLinks();
+            loadExams();
         });
-
-        if (availableExams.length === 0) {
-          examsList.innerHTML = '<div>شما در همه آزمون‌های فعال به سقف مجاز شرکت رسیده‌اید.</div>';
-          return;
-        }
-
-        examsList.innerHTML = availableExams.map(exam => {
-          const max = exam.max_attempts || 1;
-          const count = attemptsMap[exam.id] || 0;
-          return `
-            <div class="exam-item">
-              <span class="exam-title">
-                ${exam.title}
-                <span class="pass-mark">(نمره قبولی: ${exam.pass_mark || 10})</span>
-                <span class="exam-meta">(تعداد مجاز: ${max} - شرکت کرده: ${count})</span>
-              </span>
-              <button class="enter-btn" onclick="enterExam(${exam.id})">شروع آزمون</button>
-            </div>
-          `;
-        }).join('');
-
-      } catch (err) {
-        errorDiv.textContent = 'خطای غیرمنتظره در بارگیری آزمون‌ها!';
-        examsList.innerHTML = '';
-      }
-    }
-
-    window.enterExam = function(examId) {
-      sessionStorage.setItem('examId', examId);
-      window.location.href = 'quiz.html?exam_id=' + examId;
-    };
-
-    window.addEventListener('load', () => {
-      if (!window.supabase) {
-        errorDiv.textContent = 'خطا در بارگیری کتابخانه Supabase';
-        return;
-      }
-      loadCustomLinks();
-      loadExams();
-    });
-  </script>
+    </script>
 </body>
 </html>
