@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
     <meta charset="UTF-8">
     <title>مدیریت آزمون</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
@@ -8,6 +9,30 @@
     <link href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        .excel-import-box {
+    margin: 15px 0;
+    padding: 15px;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    background: #f9f9f9;
+}
+.excel-import-box p {
+    margin: 5px 0;
+    color: #666;
+}
+.user-access-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+.user-access-table th, .user-access-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: right;
+}
+.user-access-table th {
+    background: #f5f5f5;
+}
         /* استایل‌های موجود شما بدون تغییر */
         /* اضافه کردن استایل‌های جدید برای بخش مدیریت دسترسی */
         .excel-import-box {
