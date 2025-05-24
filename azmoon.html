@@ -3,101 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <title>مدیریت آزمون</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-font-face.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* استایل‌های موجود شما بدون تغییر */
-        /* اضافه کردن استایل‌های جدید برای بخش مدیریت دسترسی */
+        /* استایل‌های موجود */
+        body {
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8f8f8;
+            direction: rtl;
+        }
+        * { box-sizing: border-box; }
+        .container { max-width: 1000px; margin: auto; }
+        .form-row { margin-bottom: 15px; }
+        .form-row label { display: block; margin-bottom: 5px; }
+        .form-row input[type="text"],
+        .form-row input[type="number"],
+        .form-row input[type="datetime-local"],
+        .form-row select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn-row { margin-top: 20px; }
+        .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; margin: 0 5px; }
+        .primary { background: #4CAF50; color: white; }
+        .warning { background: #ff9800; color: white; }
+        .danger { background: #f44336; color: white; }
+        .questions-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .questions-table th, .questions-table td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+        .questions-table th { background: #f5f5f5; }
+        #loading { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        
+        /* استایل‌های جدید برای بخش مدیریت دسترسی */
         .excel-import-box {
             margin: 15px 0;
             padding: 15px;
             border: 2px dashed #ccc;
             border-radius: 8px;
             background: #f9f9f9;
+            text-align: center;
         }
-        .excel-import-box p {
-            margin: 5px 0;
-            color: #666;
-        }
-        .user-access-table {
-            width: 100%;
-            border-collapse: collapse;
+        .preview-box {
             margin-top: 15px;
-        }
-        .user-access-table th, .user-access-table td {
+            max-height: 200px;
+            overflow-y: auto;
             border: 1px solid #ddd;
-            padding: 8px;
-            text-align: right;
+            padding: 10px;
+            border-radius: 4px;
+            background: white;
         }
-        .user-access-table th {
-            background: #f5f5f5;
-        }
-        #messageBox {
+        .message {
             padding: 10px;
             margin: 10px 0;
             border-radius: 4px;
             display: none;
         }
-        #messageBox.error {
+        .message.error {
             background: #ffebee;
             color: #c62828;
         }
-        #messageBox.success {
+        .message.success {
             background: #e8f5e9;
             color: #2e7d32;
+        }
+        .menu-bar {
+            background: #fff;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .menu-bar a {
+            color: #333;
+            text-decoration: none;
+            margin-left: 15px;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .menu-bar a:hover {
+            background: #f0f0f0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- بخش منوی بالای صفحه شما بدون تغییر -->
-        
-        <div id="formBox">
-            <!-- فرم اصلی آزمون شما بدون تغییر -->
+        <!-- منوی بالای صفحه -->
+        <div class="menu-bar">
+            <a href="exams-list.html">لیست آزمون‌ها</a>
+            <a href="users-list.html">لیست کاربران</a>
+            <a href="results.html">نتایج آزمون‌ها</a>
+            <a href="#" onclick="logout()">خروج</a>
+        </div>
 
-            <!-- اضافه کردن بخش مدیریت دسترسی -->
+        <!-- پیام‌های خطا و موفقیت -->
+        <div id="messageBox" class="message"></div>
+
+        <!-- فرم اصلی -->
+        <div id="formBox">
+            <div class="form-row">
+                <label for="title">عنوان آزمون:</label>
+                <input type="text" id="title" required>
+            </div>
+
+            <div class="form-row">
+                <label for="startTime">زمان شروع آزمون:</label>
+                <input type="datetime-local" id="startTime" required>
+            </div>
+
+            <div class="form-row">
+                <label for="endTime">زمان پایان آزمون:</label>
+                <input type="datetime-local" id="endTime" required>
+            </div>
+
+            <div class="form-row">
+                <label for="duration">مدت زمان آزمون (دقیقه):</label>
+                <input type="number" id="duration" required>
+            </div>
+
+            <div class="form-row">
+                <label for="passMark">نمره قبولی:</label>
+                <input type="number" id="passMark" required>
+            </div>
+
+            <div class="form-row">
+                <label for="maxAttempts">حداکثر دفعات شرکت:</label>
+                <input type="number" id="maxAttempts" required>
+            </div>
+
+            <div class="form-row">
+                <label for="active">وضعیت آزمون:</label>
+                <select id="active">
+                    <option value="true">فعال</option>
+                    <option value="false">غیرفعال</option>
+                </select>
+            </div>
+
+            <div class="btn-row">
+                <button onclick="saveExam()" class="btn primary">ذخیره آزمون</button>
+                <button onclick="window.location.reload()" class="btn warning">آزمون جدید</button>
+            </div>
+
+            <!-- بخش مدیریت دسترسی -->
             <div id="userAccessBox" style="display: none; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px;">
                 <h3>مدیریت دسترسی کاربران به آزمون</h3>
                 <div class="excel-import-box">
                     <p>فایل اکسل حاوی نام‌کاربری افراد مجاز را انتخاب کنید</p>
-                    <p style="font-size: 12px;">ستون اول فایل اکسل باید شامل نام‌کاربری افراد مجاز باشد</p>
+                    <p style="font-size: 12px;">فرمت: ستون اول شامل نام‌کاربری افراد مجاز</p>
                     <input type="file" id="excelFile" accept=".xlsx, .xls" style="display: none;">
                     <button onclick="document.getElementById('excelFile').click()" class="btn primary">انتخاب فایل اکسل</button>
-                    <button id="importUsersBtn" onclick="importUsersFromExcel()" class="btn success" style="display: none;">ثبت دسترسی‌ها</button>
-                    <div id="previewBox" style="margin-top: 10px; display: none;">
-                        <h4>پیش‌نمایش کاربران:</h4>
-                        <div id="previewContent"></div>
-                    </div>
-                </div>
-                
-                <div>
-                    <h4>لیست کاربران مجاز به شرکت در آزمون</h4>
-                    <table class="user-access-table">
-                        <thead>
-                            <tr>
-                                <th>نام کاربری</th>
-                                <th>عملیات</th>
-                            </tr>
-                        </thead>
-                        <tbody id="examUsersTable"></tbody>
-                    </table>
+                    <button onclick="downloadSampleExcel()" class="btn">دانلود نمونه فایل</button>
+                    <button id="importUsersBtn" onclick="importUsersFromExcel()" class="btn primary" style="display: none;">ثبت دسترسی‌ها</button>
+                    <div id="previewBox" style="display: none;" class="preview-box"></div>
                 </div>
             </div>
+
+            <!-- جدول سوالات -->
+            <div style="margin-top: 30px;">
+                <h3>سوالات آزمون</h3>
+                <div class="form-row">
+                    <label for="questionText">متن سوال:</label>
+                    <input type="text" id="questionText">
+                </div>
+                <div class="form-row">
+                    <label>گزینه‌ها:</label>
+                    <input type="text" id="option1" placeholder="گزینه 1">
+                    <input type="text" id="option2" placeholder="گزینه 2">
+                    <input type="text" id="option3" placeholder="گزینه 3">
+                    <input type="text" id="option4" placeholder="گزینه 4">
+                </div>
+                <div class="form-row">
+                    <label for="correctAnswer">پاسخ صحیح:</label>
+                    <select id="correctAnswer">
+                        <option value="1">گزینه 1</option>
+                        <option value="2">گزینه 2</option>
+                        <option value="3">گزینه 3</option>
+                        <option value="4">گزینه 4</option>
+                    </select>
+                </div>
+                <button onclick="addQuestion()" class="btn primary">افزودن سوال</button>
+            </div>
+
+            <table class="questions-table">
+                <thead>
+                    <tr>
+                        <th>سوال</th>
+                        <th>گزینه‌ها</th>
+                        <th>پاسخ صحیح</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody id="questionsTable"></tbody>
+            </table>
         </div>
 
         <!-- لیست آزمون‌ها -->
         <div id="examsList"></div>
     </div>
 
-    <script>
-        // کد اصلی شما بدون تغییر
+    <div id="loading">در حال بارگذاری...</div>
 
-        // اضافه کردن متغیرها و توابع جدید
+    <script>
+        const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         let currentExamId = null;
+        let questions = [];
         let excelUsers = [];
 
+        // بررسی لاگین
+        const userId = sessionStorage.getItem('userId');
+        const userRole = sessionStorage.getItem('userRole');
+
+        if (!userId || userRole !== 'admin') {
+            alert('دسترسی مجاز نیست');
+            window.location.href = 'login.html';
+        }
+
+        // نمایش/مخفی کردن loading
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        // نمایش پیام
+        function showMessage(message, type = 'success') {
+            const msgBox = document.getElementById('messageBox');
+            msgBox.textContent = message;
+            msgBox.className = `message ${type}`;
+            msgBox.style.display = 'block';
+            setTimeout(() => msgBox.style.display = 'none', 5000);
+        }
+
+        // خروج از حساب کاربری
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        // دانلود نمونه فایل اکسل
+        function downloadSampleExcel() {
+            const ws_data = [
+                ['username'],
+                ['user1'],
+                ['user2']
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Users');
+            XLSX.writeFile(wb, 'sample_users.xlsx');
+        }
+
+        // خواندن فایل اکسل
         document.getElementById('excelFile').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -108,35 +268,31 @@
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                 
-                // استخراج نام‌های کاربری از اولین ستون
-                excelUsers = rows.slice(1) // حذف سطر هدر
+                excelUsers = rows.slice(1)
                     .map(row => row[0]?.toString().trim())
-                    .filter(username => username); // حذف مقادیر خالی
+                    .filter(username => username);
 
-                // نمایش پیش‌نمایش
                 const previewBox = document.getElementById('previewBox');
-                const previewContent = document.getElementById('previewContent');
-                const importBtn = document.getElementById('importUsersBtn');
-
                 if (excelUsers.length) {
-                    previewContent.innerHTML = `
-                        <div style="max-height: 200px; overflow-y: auto;">
+                    previewBox.innerHTML = `
+                        <h4>لیست کاربران (${excelUsers.length} نفر):</h4>
+                        <div style="max-height: 150px; overflow-y: auto;">
                             ${excelUsers.map(username => `<div>${username}</div>`).join('')}
                         </div>
-                        <p style="margin-top: 10px;">تعداد کاربران: ${excelUsers.length}</p>
                     `;
                     previewBox.style.display = 'block';
-                    importBtn.style.display = 'inline-block';
+                    document.getElementById('importUsersBtn').style.display = 'inline-block';
                 } else {
-                    previewContent.innerHTML = '<p style="color: red;">هیچ نام کاربری در فایل یافت نشد!</p>';
+                    previewBox.innerHTML = '<p style="color: red;">هیچ نام کاربری در فایل یافت نشد!</p>';
                     previewBox.style.display = 'block';
-                    importBtn.style.display = 'none';
+                    document.getElementById('importUsersBtn').style.display = 'none';
                 }
             } catch (error) {
                 showMessage('خطا در خواندن فایل اکسل', 'error');
             }
         });
 
+        // وارد کردن کاربران از اکسل
         async function importUsersFromExcel() {
             if (!currentExamId || !excelUsers.length) {
                 showMessage('لطفاً ابتدا یک فایل اکسل معتبر انتخاب کنید', 'error');
@@ -144,6 +300,8 @@
             }
 
             try {
+                showLoading(true);
+
                 // دریافت کاربران با نام‌های کاربری مشخص شده
                 const { data: users, error: usersError } = await supabase
                     .from('users')
@@ -157,153 +315,253 @@
                     return;
                 }
 
-                // افزودن دسترسی‌ها
+                // حذف دسترسی‌های قبلی
+                await supabase
+                    .from('exam_users')
+                    .delete()
+                    .eq('exam_id', currentExamId);
+
+                // افزودن دسترسی‌های جدید
                 const { error: insertError } = await supabase
                     .from('exam_users')
                     .insert(users.map(user => ({
                         exam_id: currentExamId,
                         user_id: user.id
-                    })))
-                    .not('user_id', 'in', (await supabase
-                        .from('exam_users')
-                        .select('user_id')
-                        .eq('exam_id', currentExamId))
-                        .data?.map(eu => eu.user_id) || []);
+                    })));
 
-                if (insertError && insertError.code !== '23505') throw insertError;
+                if (insertError) throw insertError;
 
-                showMessage(`دسترسی ${users.length} کاربر با موفقیت ثبت شد`, 'success');
-                await loadExamUsers(currentExamId);
+                showMessage(`دسترسی ${users.length} کاربر با موفقیت تنظیم شد`, 'success');
                 
                 // پاک کردن فرم
                 document.getElementById('excelFile').value = '';
                 document.getElementById('previewBox').style.display = 'none';
                 document.getElementById('importUsersBtn').style.display = 'none';
                 excelUsers = [];
+
             } catch (error) {
                 showMessage(error.message || 'خطا در ثبت دسترسی‌ها', 'error');
+            } finally {
+                showLoading(false);
             }
         }
 
-        async function loadExamUsers(examId) {
-            const { data, error } = await supabase
-                .from('exam_users')
-                .select(`
-                    user_id,
-                    users (id, username)
-                `)
-                .eq('exam_id', examId);
+        // افزودن سوال
+        function addQuestion() {
+            const questionText = document.getElementById('questionText').value;
+            const option1 = document.getElementById('option1').value;
+            const option2 = document.getElementById('option2').value;
+            const option3 = document.getElementById('option3').value;
+            const option4 = document.getElementById('option4').value;
+            const correctAnswer = document.getElementById('correctAnswer').value;
 
-            if (error) {
-                showMessage('خطا در بارگذاری لیست کاربران مجاز', 'error');
+            if (!questionText || !option1 || !option2 || !option3 || !option4) {
+                showMessage('لطفاً تمام فیلدها را پر کنید', 'error');
                 return;
             }
 
-            const tbody = document.getElementById('examUsersTable');
-            tbody.innerHTML = data && data.length ? data.map(row => `
+            const question = {
+                text: questionText,
+                options: [option1, option2, option3, option4],
+                correct_answer: parseInt(correctAnswer)
+            };
+
+            questions.push(question);
+            updateQuestionsTable();
+            clearQuestionForm();
+        }
+
+        // به‌روزرسانی جدول سوالات
+        function updateQuestionsTable() {
+            const tbody = document.getElementById('questionsTable');
+            tbody.innerHTML = questions.map((q, index) => `
                 <tr>
-                    <td>${row.users.username}</td>
+                    <td>${q.text}</td>
+                    <td>${q.options.join(' | ')}</td>
+                    <td>گزینه ${q.correct_answer}</td>
                     <td>
-                        <button class="btn delete" onclick="removeUserFromExam(${examId}, ${row.user_id})">
-                            حذف دسترسی
-                        </button>
+                        <button onclick="removeQuestion(${index})" class="btn danger">حذف</button>
                     </td>
                 </tr>
-            `).join('') : '<tr><td colspan="2">هیچ کاربری به این آزمون دسترسی ندارد</td></tr>';
+            `).join('');
         }
 
-        async function removeUserFromExam(examId, userId) {
-            if (!confirm('آیا از حذف دسترسی این کاربر مطمئن هستید؟')) return;
-
-            const { error } = await supabase
-                .from('exam_users')
-                .delete()
-                .eq('exam_id', examId)
-                .eq('user_id', userId);
-
-            if (error) {
-                showMessage('خطا در حذف دسترسی کاربر', 'error');
-                return;
-            }
-
-            await loadExamUsers(examId);
-            showMessage('دسترسی کاربر با موفقیت حذف شد', 'success');
+        // پاک کردن فرم سوال
+        function clearQuestionForm() {
+            document.getElementById('questionText').value = '';
+            document.getElementById('option1').value = '';
+            document.getElementById('option2').value = '';
+            document.getElementById('option3').value = '';
+            document.getElementById('option4').value = '';
+            document.getElementById('correctAnswer').value = '1';
         }
 
-        // تغییر در تابع loadExams موجود برای اعمال محدودیت دسترسی
-        async function loadExams() {
-            showLoading(true);
-            const userRole = sessionStorage.getItem('userRole');
-            const userId = sessionStorage.getItem('userId');
-            
-            let query = supabase.from('exams').select('*');
-            
-            // اگر کاربر admin نیست، فقط آزمون‌های مجاز را نمایش بده
-            if (userRole !== 'admin') {
-                const { data: allowedExams } = await supabase
-                    .from('exam_users')
-                    .select('exam_id')
-                    .eq('user_id', userId);
-                    
-                if (allowedExams) {
-                    query = query.in('id', allowedExams.map(e => e.exam_id));
+        // حذف سوال
+        function removeQuestion(index) {
+            questions.splice(index, 1);
+            updateQuestionsTable();
+        }
+
+        // ذخیره آزمون
+        async function saveExam() {
+            try {
+                showLoading(true);
+
+                const examData = {
+                    title: document.getElementById('title').value,
+                    start_time: document.getElementById('startTime').value,
+                    end_time: document.getElementById('endTime').value,
+                    duration: parseInt(document.getElementById('duration').value),
+                    pass_mark: parseInt(document.getElementById('passMark').value),
+                    max_attempts: parseInt(document.getElementById('maxAttempts').value),
+                    active: document.getElementById('active').value === 'true',
+                    questions: questions
+                };
+
+                if (!examData.title || !examData.start_time || !examData.end_time || 
+                    !examData.duration || !examData.pass_mark || !examData.max_attempts || 
+                    !examData.questions.length) {
+                    showMessage('لطفاً تمام فیلدها را پر کنید', 'error');
+                    return;
                 }
+
+                if (currentExamId) {
+                    // ویرایش آزمون موجود
+                    const { error } = await supabase
+                        .from('exams')
+                        .update(examData)
+                        .eq('id', currentExamId);
+
+                    if (error) throw error;
+                    showMessage('آزمون با موفقیت به‌روزرسانی شد', 'success');
+                } else {
+                    // ایجاد آزمون جدید
+                    const { data, error } = await supabase
+                        .from('exams')
+                        .insert([examData])
+                        .select();
+
+                    if (error) throw error;
+                    currentExamId = data[0].id;
+                    document.getElementById('userAccessBox').style.display = 'block';
+                    showMessage('آزمون با موفقیت ایجاد شد', 'success');
+                }
+
+                loadExams();
+            } catch (error) {
+                showMessage(error.message || 'خطا در ذخیره آزمون', 'error');
+            } finally {
+                showLoading(false);
             }
-
-            const { data: exams, error } = await query.order('created_at', { ascending: false });
-            
-            // ادامه کد موجود شما برای نمایش آزمون‌ها
         }
 
-        // اضافه کردن به event listener موجود برای نمایش بخش دسترسی در زمان ویرایش
-        if (btn.classList.contains('edit-btn')) {
-            // کد موجود شما
-            
-            // اضافه کردن این بخش‌ها
-            currentExamId = btn.dataset.id;
-            document.getElementById('userAccessBox').style.display = 'block';
-            loadExamUsers(currentExamId);
-        }
+        // بارگذاری آزمون‌ها
+        async function loadExams() {
+            try {
+                showLoading(true);
 
-        function showMessage(message, type = 'success') {
-            const msgBox = document.getElementById('messageBox');
-            msgBox.textContent = message;
-            msgBox.className = type;
-            msgBox.style.display = 'block';
-            setTimeout(() => msgBox.style.display = 'none', 5000);
-        }
+                const { data: exams, error } = await supabase
+                    .from('exams')
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
-        // بررسی دسترسی کاربر به آزمون
-        async function checkUserExamAccess(examId) {
-            const userId = sessionStorage.getItem('userId');
-            const userRole = sessionStorage.getItem('userRole');
-            
-            if (userRole === 'admin') return true;
-            if (!userId) return false;
+                if (error) throw error;
 
-            const { data, error } = await supabase
-                .from('exam_users')
-                .select('*')
-                .eq('exam_id', examId)
-                .eq('user_id', userId);
-
-            if (error) {
-                console.error('خطا در بررسی دسترسی:', error);
-                return false;
+                const examsList = document.getElementById('examsList');
+                examsList.innerHTML = `
+                    <h3>لیست آزمون‌ها</h3>
+                    <table class="questions-table">
+                        <thead>
+                            <tr>
+                                <th>عنوان</th>
+                                <th>زمان شروع</th>
+                                <th>زمان پایان</th>
+                                <th>وضعیت</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${exams.map(exam => `
+                                <tr>
+                                    <td>${exam.title}</td>
+                                    <td>${new Date(exam.start_time).toLocaleString('fa-IR')}</td>
+                                    <td>${new Date(exam.end_time).toLocaleString('fa-IR')}</td>
+                                    <td>${exam.active ? 'فعال' : 'غیرفعال'}</td>
+                                    <td>
+                                        <button onclick="editExam(${exam.id})" class="btn warning">ویرایش</button>
+                                        <button onclick="deleteExam(${exam.id})" class="btn danger">حذف</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                showMessage(error.message || 'خطا در بارگذاری آزمون‌ها', 'error');
+            } finally {
+                showLoading(false);
             }
-
-            return data && data.length > 0;
         }
 
-        // اضافه کردن بررسی دسترسی به تابع showExam موجود
-        async function showExam(examId) {
-            if (!await checkUserExamAccess(examId)) {
-                alert('شما مجوز دسترسی به این آزمون را ندارید');
-                return;
+        // ویرایش آزمون
+        async function editExam(examId) {
+            try {
+                showLoading(true);
+
+                const { data: exam, error } = await supabase
+                    .from('exams')
+                    .select('*')
+                    .eq('id', examId)
+                    .single();
+
+                if (error) throw error;
+
+                currentExamId = examId;
+                document.getElementById('title').value = exam.title;
+                document.getElementById('startTime').value = exam.start_time.slice(0, 16);
+                document.getElementById('endTime').value = exam.end_time.slice(0, 16);
+                document.getElementById('duration').value = exam.duration;
+                document.getElementById('passMark').value = exam.pass_mark;
+                document.getElementById('maxAttempts').value = exam.max_attempts;
+                document.getElementById('active').value = exam.active.toString();
+                
+                questions = exam.questions;
+                updateQuestionsTable();
+
+                document.getElementById('userAccessBox').style.display = 'block';
+                window.scrollTo(0, 0);
+            } catch (error) {
+                showMessage(error.message || 'خطا در بارگذاری اطلاعات آزمون', 'error');
+            } finally {
+                showLoading(false);
             }
-
-            // ادامه کد موجود شما برای نمایش آزمون
         }
+
+        // حذف آزمون
+        async function deleteExam(examId) {
+            if (!confirm('آیا از حذف این آزمون اطمینان دارید؟')) return;
+
+            try {
+                showLoading(true);
+
+                const { error } = await supabase
+                    .from('exams')
+                    .delete()
+                    .eq('id', examId);
+
+                if (error) throw error;
+
+                showMessage('آزمون با موفقیت حذف شد', 'success');
+                loadExams();
+            } catch (error) {
+                showMessage(error.message || 'خطا در حذف آزمون', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // اجرای اولیه
+        document.addEventListener('DOMContentLoaded', loadExams);
     </script>
 </body>
 </html>
