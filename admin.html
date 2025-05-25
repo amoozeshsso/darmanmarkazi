@@ -11,358 +11,192 @@
             font-family: 'Vazirmatn', Tahoma, sans-serif;
             background: #f5f7fa;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             direction: rtl;
         }
         .container {
             max-width: 850px;
-            margin: 36px auto 0 auto;
+            margin: 0 auto;
             background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 6px 24px #e3e3e3;
-            padding: 32px 40px 40px 40px;
-        }
-        .header-info {
-            background: #f0f4fa;
-            padding: 10px;
             border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        h2, h3 {
-            color: #1976d2;
-            margin-top: 0;
-        }
-        .section {
-            margin-bottom: 32px;
-        }
-        label {
-            display: inline-block;
-            width: 100px;
-            color: #444;
-            font-size: 15px;
-            margin-bottom: 6px;
-        }
-        input[type="text"], input[type="password"] {
-            padding: 7px 10px;
-            border: 1px solid #bbb;
-            border-radius: 4px;
-            font-size: 15px;
-            margin-bottom: 12px;
-            width: 180px;
-        }
-        button {
-            background: #1976d2;
-            color: #fff;
-            border: none;
-            padding: 7px 20px;
-            border-radius: 4px;
-            font-size: 15px;
-            cursor: pointer;
-            margin-right: 8px;
-            margin-top: 8px;
-        }
-        button:disabled {
-            background: #aaa;
-        }
+        h2 { color: #1976d2; }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 16px;
+            margin-top: 20px;
         }
         th, td {
-            border: 1px solid #e0e0e0;
-            padding: 10px 6px;
+            border: 1px solid #ddd;
+            padding: 8px;
             text-align: center;
-            font-size: 15px;
         }
-        th {
-            background: #f0f4fa;
-            color: #1976d2;
-        }
-        tr:nth-child(even) {
-            background: #fafbfc;
-        }
-        .op-btn {
-            padding: 4px 12px;
-            font-size: 14px;
-            margin: 0 2px;
-            border-radius: 3px;
+        th { background: #f5f5f5; }
+        button {
+            background: #1976d2;
+            color: white;
             border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
             cursor: pointer;
+            margin: 5px;
         }
-        .edit-btn {
-            background: #4caf50;
-            color: #fff;
-        }
-        .delete-btn {
-            background: #f44336;
-            color: #fff;
-        }
-        @media (max-width: 700px) {
-            .container { padding: 12px; }
-            table, th, td { font-size: 13px; }
-            label, input, button { font-size: 13px; }
-        }
-        a {
-            color: #1976d2;
-            text-decoration: underline;
-            margin-right: 10px;
+        .delete-btn { background: #f44336; }
+        .edit-btn { background: #4caf50; }
+        input[type="text"], input[type="password"] {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header-info">
-            <div>تاریخ و زمان: <span id="current-time">2025-05-25 15:35:36</span></div>
-            <div>کاربر: <span id="current-user">amoozeshsso</span></div>
-        </div>
-
         <h2>مدیریت کاربران</h2>
-        <div class="section">
-            <label>بارگذاری فایل اکسل کاربران:</label>
-            <input type="file" id="excel-upload" accept=".xlsx, .xls">
-            <a href="#" id="download-sample">دانلود نمونه فایل اکسل کاربران</a>
-            <button id="import-users">وارد کردن کاربران</button>
+        
+        <div>
             <button id="delete-all-users">حذف همه کاربران</button>
         </div>
-        <div class="section">
+
+        <div>
             <h3>افزودن کاربر جدید</h3>
-            <form id="add-user-form" autocomplete="off">
-                <label>نام کاربری:</label>
-                <input type="text" id="username" required>
-                <label>رمز عبور:</label>
-                <input type="password" id="password" required>
+            <form id="add-user-form">
+                <input type="text" id="username" placeholder="نام کاربری" required>
+                <input type="password" id="password" placeholder="رمز عبور" required>
                 <button type="submit">ذخیره</button>
             </form>
         </div>
-        <div class="section">
-            <h3>لیست کاربران</h3>
-            <table id="users-table">
-                <thead>
-                    <tr>
-                        <th>شناسه</th>
-                        <th>نام کاربری</th>
-                        <th>عملیات</th>
-                    </tr>
-                </thead>
-                <tbody id="users-tbody">
-                    <tr><td colspan="3">در حال بارگذاری کاربران...</td></tr>
-                </tbody>
-            </table>
-        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>شناسه</th>
+                    <th>نام کاربری</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+        </table>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // تنظیمات Supabase
-            const supabaseUrl = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-            const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        const supabase = window.supabase.createClient(
+            'https://qdccjbakfuywvdqfcoyg.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU'
+        );
 
-            let users = [];
+        async function loadUsers() {
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('role', 'user');
 
-            // بارگذاری کاربران
-            async function loadUsers() {
-                try {
-                    const { data, error } = await supabase
-                        .from('users')
-                        .select('*')
-                        .eq('role', 'user');
+                if (error) throw error;
 
-                    if (error) throw error;
-
-                    users = data || [];
-                    renderUsers();
-                } catch (error) {
-                    console.error('Error loading users:', error);
-                    alert('خطا در بارگذاری کاربران');
-                }
-            }
-
-            // نمایش کاربران
-            function renderUsers() {
                 const tbody = document.getElementById('users-tbody');
                 tbody.innerHTML = '';
 
-                if (users.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="3">هیچ کاربری ثبت نشده است.</td></tr>';
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3">هیچ کاربری ثبت نشده است</td></tr>';
                     return;
                 }
 
-                users.forEach(user => {
+                data.forEach(user => {
                     tbody.innerHTML += `
                         <tr>
                             <td>${user.id}</td>
                             <td>${user.username}</td>
                             <td>
-                                <button class="op-btn edit-btn" onclick="editUser('${user.id}')">ویرایش</button>
-                                <button class="op-btn delete-btn" onclick="deleteUser('${user.id}')">حذف</button>
+                                <button onclick="editUser('${user.id}')" class="edit-btn">ویرایش</button>
+                                <button onclick="deleteUser('${user.id}')" class="delete-btn">حذف</button>
                             </td>
                         </tr>
                     `;
                 });
+            } catch (error) {
+                alert('خطا در بارگذاری کاربران');
             }
+        }
 
-            // افزودن کاربر جدید
-            document.getElementById('add-user-form').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const username = document.getElementById('username').value.trim();
-                const password = document.getElementById('password').value;
+        document.getElementById('add-user-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
 
-                if (!username || !password) return;
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .insert([{ username, password, role: 'user' }]);
 
-                try {
-                    const { data, error } = await supabase
-                        .from('users')
-                        .insert([{ 
-                            username, 
-                            password,
-                            role: 'user',
-                            created_at: new Date().toISOString()
-                        }]);
+                if (error) throw error;
+                
+                document.getElementById('add-user-form').reset();
+                loadUsers();
+            } catch (error) {
+                alert('خطا در افزودن کاربر');
+            }
+        };
 
-                    if (error) throw error;
+        window.deleteUser = async (id) => {
+            if (!confirm('آیا مطمئن هستید؟')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .delete()
+                    .eq('id', id)
+                    .eq('role', 'user');
 
-                    await loadUsers();
-                    this.reset();
-                    alert('کاربر با موفقیت اضافه شد');
-                } catch (error) {
-                    console.error('Error adding user:', error);
-                    alert('خطا در افزودن کاربر');
-                }
-            });
+                if (error) throw error;
+                
+                loadUsers();
+            } catch (error) {
+                alert('خطا در حذف کاربر');
+            }
+        };
 
-            // حذف کاربر
-            window.deleteUser = async function(id) {
-                if (!confirm('آیا مطمئن هستید؟')) return;
+        window.editUser = async (id) => {
+            const newUsername = prompt('نام کاربری جدید:');
+            if (!newUsername) return;
 
-                try {
-                    const { error } = await supabase
-                        .from('users')
-                        .delete()
-                        .eq('id', id)
-                        .eq('role', 'user');
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .update({ username: newUsername })
+                    .eq('id', id)
+                    .eq('role', 'user');
 
-                    if (error) throw error;
+                if (error) throw error;
+                
+                loadUsers();
+            } catch (error) {
+                alert('خطا در ویرایش کاربر');
+            }
+        };
 
-                    await loadUsers();
-                    alert('کاربر با موفقیت حذف شد');
-                } catch (error) {
-                    console.error('Error deleting user:', error);
-                    alert('خطا در حذف کاربر');
-                }
-            };
+        document.getElementById('delete-all-users').onclick = async () => {
+            if (!confirm('آیا از حذف همه کاربران مطمئن هستید؟')) return;
 
-            // ویرایش کاربر
-            window.editUser = async function(id) {
-                const newUsername = prompt('نام کاربری جدید:');
-                if (!newUsername) return;
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .delete()
+                    .eq('role', 'user');
 
-                try {
-                    const { error } = await supabase
-                        .from('users')
-                        .update({ 
-                            username: newUsername,
-                            updated_at: new Date().toISOString()
-                        })
-                        .eq('id', id)
-                        .eq('role', 'user');
+                if (error) throw error;
+                
+                loadUsers();
+            } catch (error) {
+                alert('خطا در حذف کاربران');
+            }
+        };
 
-                    if (error) throw error;
-
-                    await loadUsers();
-                    alert('کاربر با موفقیت ویرایش شد');
-                } catch (error) {
-                    console.error('Error updating user:', error);
-                    alert('خطا در ویرایش کاربر');
-                }
-            };
-
-            // حذف همه کاربران
-            document.getElementById('delete-all-users').addEventListener('click', async function() {
-                if (!confirm('آیا مطمئن هستید که می‌خواهید همه کاربران غیر ادمین را حذف کنید؟')) return;
-
-                try {
-                    const { error } = await supabase
-                        .from('users')
-                        .delete()
-                        .eq('role', 'user');
-
-                    if (error) throw error;
-
-                    await loadUsers();
-                    alert('همه کاربران غیر ادمین با موفقیت حذف شدند');
-                } catch (error) {
-                    console.error('Error deleting all users:', error);
-                    alert('خطا در حذف کاربران');
-                }
-            });
-
-            // وارد کردن از اکسل
-            document.getElementById('import-users').addEventListener('click', async function() {
-                const fileInput = document.getElementById('excel-upload');
-                const file = fileInput.files[0];
-
-                if (!file) {
-                    alert('لطفاً یک فایل انتخاب کنید');
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = async function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, {type: 'array'});
-                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-                        if (jsonData.length === 0) {
-                            alert('فایل خالی است!');
-                            return;
-                        }
-
-                        // اضافه کردن نقش و تاریخ به همه کاربران
-                        const usersToInsert = jsonData.map(user => ({
-                            ...user,
-                            role: 'user',
-                            created_at: new Date().toISOString()
-                        }));
-
-                        const { error } = await supabase
-                            .from('users')
-                            .insert(usersToInsert);
-
-                        if (error) throw error;
-
-                        await loadUsers();
-                        fileInput.value = '';
-                        alert('کاربران با موفقیت اضافه شدند');
-                    } catch (error) {
-                        console.error('Error importing users:', error);
-                        alert('خطا در وارد کردن کاربران');
-                    }
-                };
-                reader.readAsArrayBuffer(file);
-            });
-
-            // دانلود نمونه اکسل
-            document.getElementById('download-sample').addEventListener('click', function(e) {
-                e.preventDefault();
-                const data = [
-                    ["username", "password"],
-                    ["user1", "12345"],
-                    ["user2", "abcde"]
-                ];
-                const ws = XLSX.utils.aoa_to_sheet(data);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "UsersSample");
-                XLSX.writeFile(wb, "users_sample.xlsx");
-            });
-
-            // بارگذاری اولیه
-            loadUsers();
-        });
+        // بارگذاری اولیه کاربران
+        loadUsers();
     </script>
 </body>
 </html>
