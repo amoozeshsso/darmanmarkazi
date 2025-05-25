@@ -35,7 +35,7 @@
             font-size: 15px;
             margin-bottom: 6px;
         }
-        input[type="text"], input[type="password"] {
+        input[type="text"], input[type="password"], select {
             padding: 7px 10px;
             border: 1px solid #bbb;
             border-radius: 4px;
@@ -105,13 +105,15 @@
             text-decoration: underline;
             margin-right: 10px;
         }
+        /* مخفی کردن فیلد نقش در فرم */
+        .role-row, .role-col { display: none !important; }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>مدیریت کاربران</h2>
         <div class="section">
-            <label>بارگذاری فایل اکسل کاربران:</label>
+            <label>بارگذاری فایل اکسل کاربران (فقط کاربر):</label>
             <input type="file" id="excel-upload">
             <a href="#" id="download-sample">دانلود نمونه فایل اکسل کاربران</a>
             <button id="import-users">وارد کردن کاربران</button>
@@ -124,6 +126,14 @@
                 <input type="text" id="username" required>
                 <label>رمز عبور:</label>
                 <input type="password" id="password" required>
+                <div class="role-row">
+                    <label>نقش:</label>
+                    <select id="role">
+                        <option value="">انتخاب کنید</option>
+                        <option value="admin">ادمین</option>
+                        <option value="user" selected>کاربر</option>
+                    </select>
+                </div>
                 <button type="submit">ذخیره</button>
             </form>
         </div>
@@ -134,11 +144,12 @@
                     <tr>
                         <th>شناسه</th>
                         <th>نام کاربری</th>
+                        <th class="role-col">نقش</th>
                         <th>عملیات</th>
                     </tr>
                 </thead>
                 <tbody id="users-tbody">
-                    <tr><td colspan="3">در حال بارگذاری کاربران...</td></tr>
+                    <tr><td colspan="4">در حال بارگذاری کاربران...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -167,12 +178,13 @@
                     <tr>
                         <td>${user.id}</td>
                         <td>${user.username}</td>
+                        <td class="role-col">${user.role === 'admin' ? 'ادمین' : 'کاربر'}</td>
                         <td>${ops}</td>
                     </tr>
                 `;
             });
             if (tbody.innerHTML.trim() === '') {
-                tbody.innerHTML = '<tr><td colspan="3">هیچ کاربری ثبت نشده است.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4">هیچ کاربری ثبت نشده است.</td></tr>';
             }
         }
 
