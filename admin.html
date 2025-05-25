@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>مدیریت کاربران</title>
     <link href="https://fonts.googleapis.com/css?family=Vazirmatn" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         body {
             font-family: 'Vazirmatn', Tahoma, sans-serif;
@@ -143,7 +144,7 @@
         </div>
     </div>
     <script>
-        // داده نمونه (در عمل باید از دیتابیس یا فایل CSV بارگذاری شود)
+        // داده نمونه (در عمل باید از دیتابیس یا فایل اکسل بارگذاری شود)
         const users = [
             {id: 1, username: 'admin', role: 'admin'},
             {id: 55, username: '666', role: 'user'},
@@ -232,24 +233,18 @@
         // تولید و دانلود نمونه فایل اکسل کاربران
         document.getElementById('download-sample').addEventListener('click', function(e) {
             e.preventDefault();
-            const header = ["id", "username", "password", "role"];
-            const rows = [
-                ["2", "user1", "12345", "user"],
-                ["3", "user2", "abcde", "user"]
+            // داده نمونه
+            const data = [
+                ["id", "username", "password", "role"],
+                [2, "user1", "12345", "user"],
+                [3, "user2", "abcde", "user"]
             ];
-            let csvContent = header.join(",") + "\n";
-            rows.forEach(row => {
-                csvContent += row.join(",") + "\n";
-            });
-            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "users_sample.csv";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            // ساخت ورک‌شیت و ورک‌بوک
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "UsersSample");
+            // تولید فایل اکسل و دانلود
+            XLSX.writeFile(wb, "users_sample.xlsx");
         });
 
         // بارگذاری اولیه
