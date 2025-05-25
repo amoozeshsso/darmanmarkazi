@@ -41,15 +41,10 @@
     <h1>مدیریت کاربران</h1>
     <div id="formBox">
       <label for="excelFile">بارگذاری فایل اکسل کاربران (فقط کاربر):</label>
-      <!-- دکمه دانلود نمونه فایل اکسل کاربران -->
-      <button type="button" id="downloadSampleUserExcel" class="add-btn" style="background:#27ae60;margin-bottom:10px;width:100%;font-size:15px;">
-        دانلود نمونه فایل اکسل کاربران
-      </button>
+      <button type="button" id="downloadSampleUserExcel" class="add-btn">دانلود نمونه فایل اکسل کاربران</button>
       <input type="file" id="excelFile" accept=".xlsx,.xls" />
       <button type="button" id="importBtn" class="add-btn">وارد کردن کاربران</button>
-      <button type="button" id="deleteAllUsersBtn" class="delete-btn" style="width:100%;font-size:16px;background:#c0392b;margin-bottom:20px;">
-        حذف همه کاربران غیرادمین
-      </button>
+      <button type="button" id="deleteAllUsersBtn" class="delete-btn">حذف همه کاربران غیرادمین</button>
 
       <h3 id="formTitle">افزودن کاربر جدید</h3>
       <form id="userForm">
@@ -87,194 +82,94 @@
       </tbody>
     </table>
   </div>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const list = document.getElementById('userList');
+  const loading = document.getElementById('loading');
+  const errEl = document.getElementById('error');
+  const okEl = document.getElementById('success');
+  const showLoading = show => loading.style.display = show ? 'block' : 'none';
+  const showError = msg => { errEl.textContent = msg; errEl.style.display = 'block'; okEl.style.display = 'none'; };
+  const showSuccess = msg => { okEl.textContent = msg; okEl.style.display = 'block'; errEl.style.display = 'none'; };
+  const hideMessages = () => { errEl.style.display = okEl.style.display = 'none'; };
 
-      const form = document.getElementById('userForm');
-      const list = document.getElementById('userList');
-      const loading = document.getElementById('loading');
-      const errEl = document.getElementById('error');
-      const okEl = document.getElementById('success');
-      const formTitle = document.getElementById('formTitle');
-      const editIdInput = document.getElementById('editId');
-      const submitBtn = document.getElementById('submitBtn');
+  async function loadUsers() {
+    showLoading(true);
+    const { data, error } = await supabase.from('users').select('id,username,role').order('id');
+    if (error) {
+      list.innerHTML = '<tr><td colspan="4">خطا در دریافت داده‌ها</td></tr>';
+    } else {
+      list.innerHTML = data.length ? data.map(u => `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.username}</td>
+          <td>${u.role}</td>
+          <td>
+            <button class="edit-btn" data-id="${u.id}" data-username="${u.username}" data-role="${u.role}">ویرایش</button>
+            <button class="delete-btn" data-id="${u.id}">حذف</button>
+          </td>
+        </tr>
+      `).join('') : '<tr><td colspan="4">کاربری یافت نشد</td></tr>';
+    }
+    showLoading(false);
+  }
 
-      // دکمه دانلود نمونه فایل اکسل کاربران
-      document.getElementById('downloadSampleUserExcel').onclick = function() {
-        const ws_data = [
-          ['username', 'password'],
-          ['sampleuser', '12345']
-        ];
-        const ws = XLSX.utils.aoa_to_sheet(ws_data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Users');
-        XLSX.writeFile(wb, 'sample_users.xlsx');
-      };
-
-      const showLoading = show => loading.style.display = show ? 'block' : 'none';
-      const showError = msg => { errEl.textContent = msg; errEl.style.display = 'block'; okEl.style.display = 'none'; };
-      const showSuccess = msg => { okEl.textContent = msg; okEl.style.display = 'block'; errEl.style.display = 'none'; };
-      const hideMessages = () => { errEl.style.display = okEl.style.display = 'none'; };
-
-      const loadUsers = async () => {
-        showLoading(true); hideMessages();
-        const { data, error } = await supabase.from('users').select('id,username,role').order('id');
-        if (error) {
-          showError(error.message || 'خطا در دریافت داده‌ها');
-          list.innerHTML = '<tr><td colspan="4">خطا در دریافت داده‌ها</td></tr>';
-        } else {
-          list.innerHTML = data.length ? data.map(u => `
-            <tr>
-              <td>${u.id}</td>
-              <td>${u.username}</td>
-              <td>${u.role === 'admin' ? 'ادمین' : 'کاربر'}</td>
-              <td>
-                <button class="edit-btn" data-id="${u.id}" data-username="${u.username}" data-role="${u.role}">ویرایش</button>
-                <button class="delete-btn" data-id="${u.id}">حذف</button>
-              </td>
-            </tr>`).join('') : '<tr><td colspan="4">کاربری یافت نشد</td></tr>';
-        }
+  document.getElementById('deleteAllUsersBtn').addEventListener('click', async () => {
+    hideMessages();
+    if (!confirm('آیا مطمئن هستید که می‌خواهید همه کاربران غیرادمین را حذف کنید؟')) return;
+    showLoading(true);
+    try {
+      const { data: usersToDelete, error: fetchError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('role', 'user');
+      if (fetchError) throw new Error(fetchError.message);
+      if (!usersToDelete.length) {
+        showError('هیچ کاربر غیرادمینی برای حذف وجود ندارد.');
         showLoading(false);
-      };
-
-      document.getElementById('importBtn').addEventListener('click', async () => {
-        hideMessages();
-        const fileInput = document.getElementById('excelFile');
-        const file = fileInput.files[0];
-        if (!file) {
-          showError('لطفاً یک فایل اکسل انتخاب کنید');
-          return;
-        }
-        showLoading(true);
-
-        try {
-          // خواندن داده‌های اکسل
-          const data = await file.arrayBuffer();
-          const workbook = XLSX.read(data, { type: 'array' });
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-          // استخراج کاربران از اکسل
-          const users = [];
-          for (let i = 1; i < rows.length; i++) {
-            const row = rows[i];
-            const username = row[0]?.toString().trim();
-            const password = row[1]?.toString();
-            if (username && password) {
-              users.push({ username, password, role: 'user' });
-            }
-          }
-          if (!users.length) {
-            showError('هیچ کاربری برای وارد کردن یافت نشد');
-            showLoading(false);
-            return;
-          }
-
-          // گرفتن لیست نام کاربری‌های موجود
-          const { data: existing, error: fetchError } = await supabase
-            .from('users')
-            .select('username');
-
-          if (fetchError) {
-            showError('خطا در دریافت کاربران موجود: ' + fetchError.message);
-            showLoading(false);
-            return;
-          }
-
-          const existingUsernames = new Set(existing.map(u => u.username));
-          // فیلتر کردن کاربران غیرتکراری
-          const newUsers = users.filter(u => !existingUsernames.has(u.username));
-
-          if (!newUsers.length) {
-            showError('همه کاربران فایل اکسل تکراری هستند و هیچ کاربری جدیدی اضافه نشد.');
-            showLoading(false);
-            return;
-          }
-
-          // درج کاربران غیرتکراری
-          const { error } = await supabase.from('users').insert(newUsers);
-          if (error) showError('خطا در وارد کردن کاربران: ' + error.message);
-          else showSuccess(`${newUsers.length} کاربر جدید با موفقیت وارد شد`);
-          await loadUsers();
-        } catch (err) {
-          showError('خطا در خواندن فایل اکسل');
-        }
-        showLoading(false);
-      });
-
-      form.addEventListener('submit', async e => {
-        e.preventDefault();
-        hideMessages();
-        const id = editIdInput.value;
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value;
-        const role = document.getElementById('role').value;
-
-        if (!username || (!id && !password) || !role) {
-          return showError('لطفاً تمام فیلدها را پر کنید');
-        }
-
-        showLoading(true);
-        if (id) {
-          const update = { username, role };
-          if (password) update.password = password;
-          const { error } = await supabase.from('users').update(update).eq('id', id);
-          if (error) showError(error.message);
-          else showSuccess('کاربر با موفقیت ویرایش شد');
-        } else {
-          const { error } = await supabase.from('users').insert([{ username, password, role }]);
-          if (error) showError(error.message);
-          else showSuccess('کاربر اضافه شد');
-        }
-        form.reset();
-        editIdInput.value = '';
-        formTitle.textContent = 'افزودن کاربر جدید';
-        submitBtn.textContent = 'ذخیره';
-        await loadUsers();
-        showLoading(false);
-      });
-
-      list.addEventListener('click', async e => {
-        const btn = e.target;
-        const id = btn.dataset.id;
-        if (btn.classList.contains('edit-btn')) {
-          editIdInput.value = id;
-          document.getElementById('username').value = btn.dataset.username;
-          document.getElementById('role').value = btn.dataset.role;
-          document.getElementById('password').value = '';
-          formTitle.textContent = 'ویرایش کاربر';
-          submitBtn.textContent = 'به‌روزرسانی';
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        if (btn.classList.contains('delete-btn')) {
-          if (confirm('آیا از حذف کاربر مطمئن هستید؟')) {
-            showLoading(true);
-            const { error } = await supabase.from('users').delete().eq('id', id);
-            if (error) showError(error.message);
-            else showSuccess('کاربر حذف شد');
-            await loadUsers();
-            showLoading(false);
-          }
-        }
-      });
-
-      document.getElementById('deleteAllUsersBtn').addEventListener('click', async () => {
-        hideMessages();
-        if (!confirm('آیا مطمئن هستید که می‌خواهید همه کاربران غیرادمین را حذف کنید؟')) return;
-        showLoading(true);
-        const { error } = await supabase.from('users').delete().eq('role', 'user');
-        if (error) showError('خطا در حذف کاربران: ' + error.message);
-        else showSuccess('همه کاربران غیرادمین با موفقیت حذف شدند');
-        await loadUsers();
-        showLoading(false);
-      });
-
+        return;
+      }
+      const ids = usersToDelete.map(u => u.id);
+      const { error: delError } = await supabase.from('users').delete().in('id', ids);
+      if (delError) throw new Error(delError.message);
+      showSuccess(`${ids.length} کاربر غیرادمین با موفقیت حذف شد`);
       await loadUsers();
-    });
-  </script>
+    } catch (e) {
+      showError('خطا: ' + e.message);
+    }
+    showLoading(false);
+  });
+
+  list.addEventListener('click', async e => {
+    const btn = e.target;
+    const id = btn.dataset.id;
+    if (btn.classList.contains('edit-btn')) {
+      document.getElementById('editId').value = id;
+      document.getElementById('username').value = btn.dataset.username;
+      document.getElementById('role').value = btn.dataset.role;
+      document.getElementById('password').value = '';
+      document.getElementById('formTitle').textContent = 'ویرایش کاربر';
+      document.getElementById('submitBtn').textContent = 'به‌روزرسانی';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    if (btn.classList.contains('delete-btn')) {
+      if (confirm('آیا از حذف کاربر مطمئن هستید؟')) {
+        showLoading(true);
+        const { error } = await supabase.from('users').delete().eq('id', id);
+        if (error) showError(error.message);
+        else showSuccess('کاربر حذف شد');
+        await loadUsers();
+        showLoading(false);
+      }
+    }
+  });
+
+  await loadUsers();
+});
+</script>
 </body>
 </html>
