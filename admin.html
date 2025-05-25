@@ -5,9 +5,7 @@
     <title>مدیریت کاربران</title>
     <link href="https://fonts.googleapis.com/css?family=Vazirmatn" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- استایل‌ها بدون تغییر باقی می‌مانند -->
     <style>
-        /* استایل‌های قبلی بدون تغییر */
         body {
             font-family: 'Vazirmatn', Tahoma, sans-serif;
             background: #f5f7fa;
@@ -37,7 +35,7 @@
             font-size: 15px;
             margin-bottom: 6px;
         }
-        input[type="text"], input[type="password"], select {
+        input[type="text"], input[type="password"] {
             padding: 7px 10px;
             border: 1px solid #bbb;
             border-radius: 4px;
@@ -93,10 +91,6 @@
             background: #f44336;
             color: #fff;
         }
-        .disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
         @media (max-width: 700px) {
             .container { padding: 12px; }
             table, th, td { font-size: 13px; }
@@ -114,7 +108,7 @@
         <h2>مدیریت کاربران</h2>
         <div class="section">
             <label>بارگذاری فایل اکسل کاربران:</label>
-            <input type="file" id="excel-upload">
+            <input type="file" id="excel-upload" accept=".xlsx, .xls">
             <a href="#" id="download-sample">دانلود نمونه فایل اکسل کاربران</a>
             <button id="import-users">وارد کردن کاربران</button>
             <button id="delete-all-users">حذف همه کاربران</button>
@@ -145,20 +139,21 @@
             </table>
         </div>
     </div>
-    <script>
-        // داده نمونه (در عمل باید از دیتابیس یا فایل اکسل بارگذاری شود)
-        const users = [
-            {id: 55, username: '666'},
-            {id: 56, username: '777'},
-            {id: 57, username: '888'},
-            {id: 59, username: '444'},
-            {id: 60, username: '555'},
-            {id: 90, username: 'ali'}
-        ];
 
+    <script>
+        // آرایه خالی برای نگهداری کاربران
+        const users = [];
+
+        // نمایش کاربران در جدول
         function renderUsers() {
             const tbody = document.getElementById('users-tbody');
             tbody.innerHTML = '';
+            
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3">هیچ کاربری ثبت نشده است.</td></tr>';
+                return;
+            }
+
             users.forEach(user => {
                 let ops = `<button class="op-btn edit-btn" onclick="editUser(${user.id})">ویرایش</button>
                           <button class="op-btn delete-btn" onclick="deleteUser(${user.id})">حذف</button>`;
@@ -170,9 +165,6 @@
                     </tr>
                 `;
             });
-            if (tbody.innerHTML.trim() === '') {
-                tbody.innerHTML = '<tr><td colspan="3">هیچ کاربری ثبت نشده است.</td></tr>';
-            }
         }
 
         // افزودن کاربر جدید
@@ -180,71 +172,183 @@
             e.preventDefault();
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
+            
             if (!username || !password) return;
-            if (users.some(u => u.username === username)) {
-                alert('این نام کاربری قبلاً ثبت شده است.');
-                return;
-            }
-            users.push({
-                id: users.length ? users[users.length - 1].id + 1 : 1,
-                username: username
+
+            const userData = {
+                username: username,
+                password: password
+            };
+
+            // ارسال به سرور
+            fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadUsers(); // بارگذاری مجدد لیست کاربران
+                    this.reset();
+                } else {
+                    alert(data.message || 'خطا در ثبت کاربر');
+                }
+            })
+            .catch(error => {
+                alert('خطا در ثبت کاربر');
             });
-            renderUsers();
-            this.reset();
         });
 
         // حذف کاربر
         function deleteUser(id) {
-            const idx = users.findIndex(u => u.id === id);
-            if (idx !== -1) {
-                if (confirm('آیا مطمئن هستید؟')) {
-                    users.splice(idx, 1);
-                    renderUsers();
+            if (!confirm('آیا مطمئن هستید؟')) return;
+
+            fetch(`/api/users/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadUsers(); // بارگذاری مجدد لیست کاربران
+                } else {
+                    alert(data.message || 'خطا در حذف کاربر');
                 }
-            }
+            })
+            .catch(error => {
+                alert('خطا در حذف کاربر');
+            });
         }
 
         // ویرایش کاربر
         function editUser(id) {
-            const user = users.find(u => u.id === id);
-            if (user) {
-                const newUsername = prompt('نام کاربری جدید:', user.username);
-                if (newUsername && !users.some(u => u.username === newUsername && u.id !== id)) {
-                    user.username = newUsername;
-                    renderUsers();
-                } else if (newUsername) {
-                    alert('این نام کاربری قبلاً ثبت شده است.');
+            const newUsername = prompt('نام کاربری جدید:');
+            if (!newUsername) return;
+
+            fetch(`/api/users/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username: newUsername })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadUsers(); // بارگذاری مجدد لیست کاربران
+                } else {
+                    alert(data.message || 'خطا در ویرایش کاربر');
                 }
-            }
+            })
+            .catch(error => {
+                alert('خطا در ویرایش کاربر');
+            });
         }
 
         // حذف همه کاربران
         document.getElementById('delete-all-users').addEventListener('click', function() {
-            if (confirm('آیا مطمئن هستید؟')) {
-                users.length = 0;
-                renderUsers();
-            }
+            if (!confirm('آیا مطمئن هستید که می‌خواهید همه کاربران را حذف کنید؟')) return;
+
+            fetch('/api/users/all', {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadUsers(); // بارگذاری مجدد لیست کاربران
+                } else {
+                    alert(data.message || 'خطا در حذف کاربران');
+                }
+            })
+            .catch(error => {
+                alert('خطا در حذف کاربران');
+            });
         });
 
-        // تولید و دانلود نمونه فایل اکسل کاربران
+        // بارگذاری فایل اکسل
+        document.getElementById('import-users').addEventListener('click', function() {
+            const fileInput = document.getElementById('excel-upload');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('لطفاً ابتدا یک فایل انتخاب کنید');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                    if (jsonData.length === 0) {
+                        alert('فایل خالی است!');
+                        return;
+                    }
+
+                    // ارسال به سرور
+                    fetch('/api/users/import', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(jsonData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadUsers(); // بارگذاری مجدد لیست کاربران
+                            fileInput.value = '';
+                            alert('کاربران با موفقیت اضافه شدند');
+                        } else {
+                            alert(data.message || 'خطا در وارد کردن کاربران');
+                        }
+                    })
+                    .catch(error => {
+                        alert('خطا در وارد کردن کاربران');
+                    });
+                } catch (error) {
+                    alert('خطا در خواندن فایل');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // دانلود نمونه فایل اکسل
         document.getElementById('download-sample').addEventListener('click', function(e) {
             e.preventDefault();
-            // داده نمونه
             const data = [
-                ["id", "username", "password"],
-                [2, "user1", "12345"],
-                [3, "user2", "abcde"]
+                ["username", "password"],
+                ["user1", "12345"],
+                ["user2", "abcde"]
             ];
-            // ساخت ورک‌شیت و ورک‌بوک
             const ws = XLSX.utils.aoa_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "UsersSample");
-            // تولید فایل اکسل و دانلود
             XLSX.writeFile(wb, "users_sample.xlsx");
         });
 
-        // بارگذاری اولیه
-        renderUsers();
+        // بارگذاری لیست کاربران از سرور
+        function loadUsers() {
+            fetch('/api/users')
+                .then(response => response.json())
+                .then(data => {
+                    users.length = 0; // پاک کردن آرایه
+                    users.push(...data); // اضافه کردن کاربران جدید
+                    renderUsers();
+                })
+                .catch(error => {
+                    console.error('Error loading users:', error);
+                    alert('خطا در بارگذاری لیست کاربران');
+                });
+        }
+
+        // بارگذاری اولیه کاربران
+        loadUsers();
     </script>
 </body>
 </html>
