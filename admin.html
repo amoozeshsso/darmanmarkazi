@@ -41,7 +41,6 @@
     <h1>مدیریت کاربران</h1>
     <div id="formBox">
       <label for="excelFile">بارگذاری فایل اکسل کاربران (فقط کاربر):</label>
-      <!-- دکمه دانلود نمونه فایل اکسل کاربران -->
       <button type="button" id="downloadSampleUserExcel" class="add-btn" style="background:#27ae60;margin-bottom:10px;width:100%;font-size:15px;">
         دانلود نمونه فایل اکسل کاربران
       </button>
@@ -54,16 +53,11 @@
       <h3 id="formTitle">افزودن کاربر جدید</h3>
       <form id="userForm">
         <input type="hidden" id="editId" />
+        <input type="hidden" id="role" value="user" /> <!-- نقش به صورت مخفی و پیش‌فرض user -->
         <label for="username">نام کاربری:</label>
         <input type="text" id="username" required />
         <label for="password">رمز عبور:</label>
         <input type="password" id="password" />
-        <label for="role">نقش:</label>
-        <select id="role" required>
-          <option value="">انتخاب کنید</option>
-          <option value="admin">ادمین</option>
-          <option value="user">کاربر</option>
-        </select>
         <button type="submit" id="submitBtn" class="add-btn">ذخیره</button>
       </form>
       <div id="error"></div>
@@ -78,12 +72,11 @@
         <tr>
           <th>شناسه</th>
           <th>نام کاربری</th>
-          <th>نقش</th>
           <th class="action-column">عملیات</th>
         </tr>
       </thead>
       <tbody id="userList">
-        <tr><td colspan="4">در حال بارگذاری کاربران...</td></tr>
+        <tr><td colspan="3">در حال بارگذاری کاربران...</td></tr>
       </tbody>
     </table>
   </div>
@@ -91,7 +84,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF[...]
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const form = document.getElementById('userForm');
@@ -103,7 +96,6 @@
       const editIdInput = document.getElementById('editId');
       const submitBtn = document.getElementById('submitBtn');
 
-      // دکمه دانلود نمونه فایل اکسل کاربران
       document.getElementById('downloadSampleUserExcel').onclick = function() {
         const ws_data = [
           ['username', 'password'],
@@ -121,22 +113,28 @@
       const hideMessages = () => { errEl.style.display = okEl.style.display = 'none'; };
 
       const loadUsers = async () => {
-        showLoading(true); hideMessages();
-        const { data, error } = await supabase.from('users').select('id,username,role').order('id');
+        showLoading(true); 
+        hideMessages();
+        // تغییر کوئری برای نمایش فقط کاربران غیر ادمین
+        const { data, error } = await supabase
+          .from('users')
+          .select('id,username,role')
+          .eq('role', 'user')
+          .order('id');
+          
         if (error) {
           showError(error.message || 'خطا در دریافت داده‌ها');
-          list.innerHTML = '<tr><td colspan="4">خطا در دریافت داده‌ها</td></tr>';
+          list.innerHTML = '<tr><td colspan="3">خطا در دریافت داده‌ها</td></tr>';
         } else {
           list.innerHTML = data.length ? data.map(u => `
             <tr>
               <td>${u.id}</td>
               <td>${u.username}</td>
-              <td>${u.role === 'admin' ? 'ادمین' : 'کاربر'}</td>
               <td>
-                <button class="edit-btn" data-id="${u.id}" data-username="${u.username}" data-role="${u.role}">ویرایش</button>
+                <button class="edit-btn" data-id="${u.id}" data-username="${u.username}">ویرایش</button>
                 <button class="delete-btn" data-id="${u.id}">حذف</button>
               </td>
-            </tr>`).join('') : '<tr><td colspan="4">کاربری یافت نشد</td></tr>';
+            </tr>`).join('') : '<tr><td colspan="3">کاربری یافت نشد</td></tr>';
         }
         showLoading(false);
       };
@@ -152,20 +150,18 @@
         showLoading(true);
 
         try {
-          // خواندن داده‌های اکسل
           const data = await file.arrayBuffer();
           const workbook = XLSX.read(data, { type: 'array' });
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
           const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-          // استخراج کاربران از اکسل
           const users = [];
           for (let i = 1; i < rows.length; i++) {
             const row = rows[i];
             const username = row[0]?.toString().trim();
             const password = row[1]?.toString();
             if (username && password) {
-              users.push({ username, password, role: 'user' });
+              users.push({ username, password, role: 'user' }); // نقش همیشه user
             }
           }
           if (!users.length) {
@@ -174,7 +170,6 @@
             return;
           }
 
-          // گرفتن لیست نام کاربری‌های موجود
           const { data: existing, error: fetchError } = await supabase
             .from('users')
             .select('username');
@@ -186,7 +181,6 @@
           }
 
           const existingUsernames = new Set(existing.map(u => u.username));
-          // فیلتر کردن کاربران غیرتکراری
           const newUsers = users.filter(u => !existingUsernames.has(u.username));
 
           if (!newUsers.length) {
@@ -195,7 +189,6 @@
             return;
           }
 
-          // درج کاربران غیرتکراری
           const { error } = await supabase.from('users').insert(newUsers);
           if (error) showError('خطا در وارد کردن کاربران: ' + error.message);
           else showSuccess(`${newUsers.length} کاربر جدید با موفقیت وارد شد`);
@@ -212,15 +205,15 @@
         const id = editIdInput.value;
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
-        const role = document.getElementById('role').value;
+        const role = 'user'; // نقش همیشه user
 
-        if (!username || (!id && !password) || !role) {
+        if (!username || (!id && !password)) {
           return showError('لطفاً تمام فیلدها را پر کنید');
         }
 
         showLoading(true);
         if (id) {
-          const update = { username, role };
+          const update = { username };
           if (password) update.password = password;
           const { error } = await supabase.from('users').update(update).eq('id', id);
           if (error) showError(error.message);
@@ -244,7 +237,6 @@
         if (btn.classList.contains('edit-btn')) {
           editIdInput.value = id;
           document.getElementById('username').value = btn.dataset.username;
-          document.getElementById('role').value = btn.dataset.role;
           document.getElementById('password').value = '';
           formTitle.textContent = 'ویرایش کاربر';
           submitBtn.textContent = 'به‌روزرسانی';
