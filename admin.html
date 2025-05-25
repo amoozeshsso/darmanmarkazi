@@ -4,54 +4,62 @@
     <meta charset="UTF-8">
     <title>مدیریت کاربران</title>
     <style>
-        /* استایل‌های ساده برای جدول و فرم */
-        table, th, td { border: 1px solid #ccc; border-collapse: collapse; padding: 8px; }
-        th { background: #eee; }
-        .hidden { display: none; }
+        body { font-family: Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 30px; }
+        h2, h3 { color: #333; }
+        .panel { background: #fff; border-radius: 6px; box-shadow: 0 2px 8px #eee; padding: 24px; margin-bottom: 30px; }
+        label { display: inline-block; width: 90px; }
+        input[type="text"], input[type="password"] { padding: 6px; margin: 6px 0; border: 1px solid #ccc; border-radius: 3px; }
+        button { padding: 6px 16px; border: none; border-radius: 3px; background: #1976d2; color: #fff; cursor: pointer; margin-right: 8px; }
+        button:disabled { background: #aaa; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px 10px; text-align: center; }
+        th { background: #f0f0f0; }
+        tr:nth-child(even) { background: #fafafa; }
     </style>
 </head>
 <body>
-    <h2>مدیریت کاربران</h2>
+    <div class="panel">
+        <h2>مدیریت کاربران</h2>
 
-    <!-- بارگذاری فایل اکسل کاربران (فقط کاربر) -->
-    <div>
-        <label>بارگذاری فایل اکسل کاربران:</label>
-        <input type="file" id="excel-upload">
-        <a href="sample.xlsx" download>دانلود نمونه فایل اکسل کاربران</a>
-        <button id="import-users">وارد کردن کاربران</button>
-        <button id="delete-all-users">حذف همه کاربران غیرادمین</button>
+        <!-- بارگذاری فایل اکسل کاربران (فقط کاربر) -->
+        <div style="margin-bottom: 18px;">
+            <label>بارگذاری فایل اکسل کاربران:</label>
+            <input type="file" id="excel-upload">
+            <a href="sample.xlsx" download>دانلود نمونه فایل اکسل کاربران</a>
+            <button id="import-users">وارد کردن کاربران</button>
+            <button id="delete-all-users">حذف همه کاربران غیرادمین</button>
+        </div>
+
+        <h3>افزودن کاربر جدید</h3>
+        <form id="add-user-form" autocomplete="off">
+            <label>نام کاربری:</label>
+            <input type="text" id="username" required>
+            <label>رمز عبور:</label>
+            <input type="password" id="password" required>
+            <!-- فیلد نقش حذف شد -->
+            <button type="submit">ذخیره</button>
+        </form>
     </div>
 
-    <!-- افزودن کاربر جدید -->
-    <h3>افزودن کاربر جدید</h3>
-    <form id="add-user-form">
-        <label>نام کاربری:</label>
-        <input type="text" id="username" required>
-        <label>رمز عبور:</label>
-        <input type="password" id="password" required>
-        <!-- فیلد نقش حذف شد -->
-        <button type="submit">ذخیره</button>
-    </form>
-
-    <!-- جدول کاربران -->
-    <h3>لیست کاربران</h3>
-    <table id="users-table">
-        <thead>
-            <tr>
-                <th>شناسه</th>
-                <th>نام کاربری</th>
-                <th>نقش</th>
-                <th>عملیات</th>
-            </tr>
-        </thead>
-        <tbody id="users-tbody">
-            <!-- ردیف کاربران اینجا درج می‌شود -->
-        </tbody>
-    </table>
+    <div class="panel">
+        <h3>لیست کاربران</h3>
+        <table id="users-table">
+            <thead>
+                <tr>
+                    <th>شناسه</th>
+                    <th>نام کاربری</th>
+                    <th>نقش</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody id="users-tbody">
+                <tr><td colspan="4">در حال بارگذاری کاربران...</td></tr>
+            </tbody>
+        </table>
+    </div>
 
     <script>
-        // فرض: لیست کاربران از سمت سرور یا فایل CSV بارگذاری می‌شود
-        // نمونه داده برای نمایش (در عمل باید از دیتابیس یا فایل بارگذاری شود)
+        // نمونه داده‌ها از فایل CSV شما
         const users = [
             {id: 1, username: 'admin', role: 'admin'},
             {id: 55, username: '666', role: 'user'},
@@ -62,13 +70,12 @@
             {id: 90, username: 'ali', role: 'user'}
         ];
 
-        // نمایش کاربران در جدول
         function renderUsers() {
             const tbody = document.getElementById('users-tbody');
             tbody.innerHTML = '';
             users.forEach(user => {
-                // کاربران ادمین فقط نمایش داده می‌شوند، بدون دکمه حذف/ویرایش
                 let ops = '';
+                // فقط کاربران غیرادمین قابل ویرایش/حذف هستند
                 if (user.role !== 'admin') {
                     ops = `<button onclick="editUser(${user.id})">ویرایش</button>
                            <button onclick="deleteUser(${user.id})">حذف</button>`;
@@ -84,14 +91,17 @@
             });
         }
 
-        renderUsers();
-
-        // افزودن کاربر جدید (فقط با نقش کاربر)
+        // افزودن کاربر جدید (فقط نقش کاربر)
         document.getElementById('add-user-form').addEventListener('submit', function(e) {
             e.preventDefault();
-            const username = document.getElementById('username').value;
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
-            // نقش به طور پیش‌فرض user ذخیره می‌شود
+            if (!username || !password) return;
+            // بررسی یکتا بودن نام کاربری
+            if (users.some(u => u.username === username)) {
+                alert('این نام کاربری قبلاً ثبت شده است.');
+                return;
+            }
             users.push({
                 id: users.length ? users[users.length - 1].id + 1 : 2,
                 username: username,
@@ -101,36 +111,45 @@
             this.reset();
         });
 
-        // حذف کاربر (فقط کاربران غیرادمین)
+        // حذف کاربر (فقط غیرادمین)
         function deleteUser(id) {
             const idx = users.findIndex(u => u.id === id);
             if (idx !== -1 && users[idx].role !== 'admin') {
-                users.splice(idx, 1);
-                renderUsers();
+                if (confirm('آیا مطمئن هستید؟')) {
+                    users.splice(idx, 1);
+                    renderUsers();
+                }
             }
         }
 
-        // ویرایش کاربر (نمونه ساده)
+        // ویرایش کاربر (فقط غیرادمین)
         function editUser(id) {
             const user = users.find(u => u.id === id);
             if (user && user.role !== 'admin') {
                 const newUsername = prompt('نام کاربری جدید:', user.username);
-                if (newUsername) {
+                if (newUsername && !users.some(u => u.username === newUsername && u.id !== id)) {
                     user.username = newUsername;
                     renderUsers();
+                } else if (newUsername) {
+                    alert('این نام کاربری قبلاً ثبت شده است.');
                 }
             }
         }
 
         // حذف همه کاربران غیرادمین
         document.getElementById('delete-all-users').addEventListener('click', function() {
-            for (let i = users.length - 1; i >= 0; i--) {
-                if (users[i].role !== 'admin') users.splice(i, 1);
+            if (confirm('آیا مطمئن هستید؟')) {
+                for (let i = users.length - 1; i >= 0; i--) {
+                    if (users[i].role !== 'admin') users.splice(i, 1);
+                }
+                renderUsers();
             }
-            renderUsers();
         });
 
-        // بارگذاری فایل اکسل و سایر امکانات بدون تغییر باقی می‌ماند
+        // بارگذاری اولیه
+        renderUsers();
+
+        // بارگذاری اکسل و سایر امکانات بدون تغییر باقی می‌ماند
     </script>
 </body>
 </html>
