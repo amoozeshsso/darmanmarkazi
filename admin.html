@@ -5,6 +5,7 @@
     <title>مدیریت کاربران</title>
     <link href="https://fonts.googleapis.com/css?family=Vazirmatn" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: 'Vazirmatn', Tahoma, sans-serif;
@@ -35,7 +36,7 @@
             font-size: 15px;
             margin-bottom: 6px;
         }
-        input[type="text"], input[type="password"] {
+        input[type="text"], input[type="password"], select {
             padding: 7px 10px;
             border: 1px solid #bbb;
             border-radius: 4px;
@@ -141,8 +142,13 @@
     </div>
 
     <script>
-        // آرایه خالی برای نگهداری کاربران
-        const users = [];
+        // تنظیمات Supabase
+        const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+        const supabase = supabaseClient.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // آرایه برای نگهداری کاربران
+        let users = [];
 
         // نمایش کاربران در جدول
         function renderUsers() {
@@ -155,8 +161,8 @@
             }
 
             users.forEach(user => {
-                let ops = `<button class="op-btn edit-btn" onclick="editUser(${user.id})">ویرایش</button>
-                          <button class="op-btn delete-btn" onclick="deleteUser(${user.id})">حذف</button>`;
+                let ops = `<button class="op-btn edit-btn" onclick="editUser('${user.id}')">ویرایش</button>
+                          <button class="op-btn delete-btn" onclick="deleteUser('${user.id}')">حذف</button>`;
                 tbody.innerHTML += `
                     <tr>
                         <td>${user.id}</td>
@@ -167,108 +173,115 @@
             });
         }
 
+        // بارگذاری کاربران از Supabase
+        async function loadUsers() {
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .neq('role', 'admin');
+
+                if (error) throw error;
+
+                users = data || [];
+                renderUsers();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('خطا در بارگذاری کاربران');
+            }
+        }
+
         // افزودن کاربر جدید
-        document.getElementById('add-user-form').addEventListener('submit', function(e) {
+        document.getElementById('add-user-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
-            
+
             if (!username || !password) return;
 
-            const userData = {
-                username: username,
-                password: password
-            };
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .insert([
+                        { username, password, role: 'user' }
+                    ]);
 
-            // ارسال به سرور
-            fetch('/api/users', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(userData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadUsers(); // بارگذاری مجدد لیست کاربران
-                    this.reset();
-                } else {
-                    alert(data.message || 'خطا در ثبت کاربر');
-                }
-            })
-            .catch(error => {
+                if (error) throw error;
+
+                await loadUsers();
+                this.reset();
+                alert('کاربر با موفقیت اضافه شد');
+            } catch (error) {
+                console.error('Error:', error);
                 alert('خطا در ثبت کاربر');
-            });
+            }
         });
 
         // حذف کاربر
-        function deleteUser(id) {
+        async function deleteUser(id) {
             if (!confirm('آیا مطمئن هستید؟')) return;
 
-            fetch(`/api/users/${id}`, {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadUsers(); // بارگذاری مجدد لیست کاربران
-                } else {
-                    alert(data.message || 'خطا در حذف کاربر');
-                }
-            })
-            .catch(error => {
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .delete()
+                    .eq('id', id)
+                    .neq('role', 'admin');
+
+                if (error) throw error;
+
+                await loadUsers();
+                alert('کاربر با موفقیت حذف شد');
+            } catch (error) {
+                console.error('Error:', error);
                 alert('خطا در حذف کاربر');
-            });
+            }
         }
 
         // ویرایش کاربر
-        function editUser(id) {
+        async function editUser(id) {
             const newUsername = prompt('نام کاربری جدید:');
             if (!newUsername) return;
 
-            fetch(`/api/users/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username: newUsername })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadUsers(); // بارگذاری مجدد لیست کاربران
-                } else {
-                    alert(data.message || 'خطا در ویرایش کاربر');
-                }
-            })
-            .catch(error => {
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .update({ username: newUsername })
+                    .eq('id', id)
+                    .neq('role', 'admin');
+
+                if (error) throw error;
+
+                await loadUsers();
+                alert('کاربر با موفقیت ویرایش شد');
+            } catch (error) {
+                console.error('Error:', error);
                 alert('خطا در ویرایش کاربر');
-            });
+            }
         }
 
         // حذف همه کاربران
-        document.getElementById('delete-all-users').addEventListener('click', function() {
+        document.getElementById('delete-all-users').addEventListener('click', async function() {
             if (!confirm('آیا مطمئن هستید که می‌خواهید همه کاربران را حذف کنید؟')) return;
 
-            fetch('/api/users/all', {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadUsers(); // بارگذاری مجدد لیست کاربران
-                } else {
-                    alert(data.message || 'خطا در حذف کاربران');
-                }
-            })
-            .catch(error => {
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .delete()
+                    .neq('role', 'admin');
+
+                if (error) throw error;
+
+                await loadUsers();
+                alert('همه کاربران با موفقیت حذف شدند');
+            } catch (error) {
+                console.error('Error:', error);
                 alert('خطا در حذف کاربران');
-            });
+            }
         });
 
-        // بارگذاری فایل اکسل
-        document.getElementById('import-users').addEventListener('click', function() {
+        // وارد کردن کاربران از فایل اکسل
+        document.getElementById('import-users').addEventListener('click', async function() {
             const fileInput = document.getElementById('excel-upload');
             const file = fileInput.files[0];
             
@@ -278,7 +291,7 @@
             }
 
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, {type: 'array'});
@@ -290,29 +303,24 @@
                         return;
                     }
 
-                    // ارسال به سرور
-                    fetch('/api/users/import', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(jsonData)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            loadUsers(); // بارگذاری مجدد لیست کاربران
-                            fileInput.value = '';
-                            alert('کاربران با موفقیت اضافه شدند');
-                        } else {
-                            alert(data.message || 'خطا در وارد کردن کاربران');
-                        }
-                    })
-                    .catch(error => {
-                        alert('خطا در وارد کردن کاربران');
-                    });
+                    // افزودن نقش user به همه رکوردها
+                    const usersToInsert = jsonData.map(user => ({
+                        ...user,
+                        role: 'user'
+                    }));
+
+                    const { error } = await supabase
+                        .from('users')
+                        .insert(usersToInsert);
+
+                    if (error) throw error;
+
+                    await loadUsers();
+                    fileInput.value = '';
+                    alert('کاربران با موفقیت اضافه شدند');
                 } catch (error) {
-                    alert('خطا در خواندن فایل');
+                    console.error('Error:', error);
+                    alert('خطا در وارد کردن کاربران');
                 }
             };
             reader.readAsArrayBuffer(file);
@@ -331,21 +339,6 @@
             XLSX.utils.book_append_sheet(wb, ws, "UsersSample");
             XLSX.writeFile(wb, "users_sample.xlsx");
         });
-
-        // بارگذاری لیست کاربران از سرور
-        function loadUsers() {
-            fetch('/api/users')
-                .then(response => response.json())
-                .then(data => {
-                    users.length = 0; // پاک کردن آرایه
-                    users.push(...data); // اضافه کردن کاربران جدید
-                    renderUsers();
-                })
-                .catch(error => {
-                    console.error('Error loading users:', error);
-                    alert('خطا در بارگذاری لیست کاربران');
-                });
-        }
 
         // بارگذاری اولیه کاربران
         loadUsers();
