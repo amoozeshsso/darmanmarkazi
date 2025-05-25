@@ -115,7 +115,7 @@
 
     <div class="form-group">
       <button type="button" id="deleteAllUsersBtn" class="delete-btn">
-        حذف همه کاربران غیرادمین
+        حذف همه کاربران 
       </button>
     </div>
 
@@ -346,7 +346,7 @@
 
       // حذف همه کاربران
       document.getElementById('deleteAllUsersBtn').onclick = async () => {
-        if (!confirm('آیا از حذف همه کاربران غیرادمین اطمینان دارید؟')) return;
+        if (!confirm('آیا از حذف همه کاربران  اطمینان دارید؟')) return;
         
         utils.showLoading(true);
         try {
@@ -356,7 +356,7 @@
             .eq('role', 'user');
 
           if (error) throw error;
-          utils.showMessage('success', 'همه کاربران غیرادمین حذف شدند');
+          utils.showMessage('success', 'همه کاربران  حذف شدند');
           await loadUsers();
         } catch (err) {
           utils.showMessage('error', 'خطا در حذف کاربران');
