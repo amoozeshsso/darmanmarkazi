@@ -21,13 +21,7 @@
       max-width: 1000px; 
       margin: auto; 
     }
-    .header-info {
-      background: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
+    
     .user-info {
       color: #2c3e50;
       font-size: 14px;
@@ -170,11 +164,7 @@
 </head>
 <body>
   <div class="container">
-    <div class="header-info">
-      <div class="user-info">کاربر فعال: amoozeshsso</div>
-      <div class="date-info">تاریخ: 2025-05-25 17:15:04</div>
-    </div>
-
+    
     <h1>مدیریت کاربران</h1>
     
     <div id="formBox">
@@ -192,7 +182,7 @@
 
       <div class="form-group">
         <button type="button" id="deleteAllUsersBtn" class="delete-btn">
-          حذف همه کاربران غیرادمین
+          حذف همه کاربران 
         </button>
       </div>
 
@@ -235,12 +225,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      // System Info
-      const SYSTEM_INFO = {
-        currentUser: 'amoozeshsso',
-        currentDateTime: '2025-05-25 17:15:04',
-        timezone: 'UTC'
-      };
+           
 
       // Supabase Configuration
       const supabase = window.supabase.createClient(
@@ -483,7 +468,7 @@
 
       // Delete All Users
       document.getElementById('deleteAllUsersBtn').onclick = async () => {
-        if (!confirm('آیا از حذف همه کاربران غیرادمین اطمینان دارید؟\nاین عمل غیرقابل بازگشت است!')) {
+        if (!confirm('آیا از حذف همه کاربران  اطمینان دارید؟\nاین عمل غیرقابل بازگشت است!')) {
           return;
         }
         
@@ -495,7 +480,7 @@
             .eq('role', 'user');
 
           if (error) throw error;
-          utils.showMessage('success', 'همه کاربران غیرادمین با موفقیت حذف شدند');
+          utils.showMessage('success', 'همه کاربران  با موفقیت حذف شدند');
           await loadUsers();
         } catch (err) {
           utils.showMessage('error', 'خطا در حذف کاربران');
