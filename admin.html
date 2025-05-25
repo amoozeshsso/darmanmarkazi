@@ -7,11 +7,117 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        /* استایل‌های قبلی بدون تغییر */
+        body {
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 0;
+            direction: rtl;
+        }
+        .container {
+            max-width: 850px;
+            margin: 36px auto 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 6px 24px #e3e3e3;
+            padding: 32px 40px 40px 40px;
+        }
+        .header-info {
+            background: #f0f4fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        h2, h3 {
+            color: #1976d2;
+            margin-top: 0;
+        }
+        .section {
+            margin-bottom: 32px;
+        }
+        label {
+            display: inline-block;
+            width: 100px;
+            color: #444;
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+        input[type="text"], input[type="password"] {
+            padding: 7px 10px;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            font-size: 15px;
+            margin-bottom: 12px;
+            width: 180px;
+        }
+        button {
+            background: #1976d2;
+            color: #fff;
+            border: none;
+            padding: 7px 20px;
+            border-radius: 4px;
+            font-size: 15px;
+            cursor: pointer;
+            margin-right: 8px;
+            margin-top: 8px;
+        }
+        button:disabled {
+            background: #aaa;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 10px 6px;
+            text-align: center;
+            font-size: 15px;
+        }
+        th {
+            background: #f0f4fa;
+            color: #1976d2;
+        }
+        tr:nth-child(even) {
+            background: #fafbfc;
+        }
+        .op-btn {
+            padding: 4px 12px;
+            font-size: 14px;
+            margin: 0 2px;
+            border-radius: 3px;
+            border: none;
+            cursor: pointer;
+        }
+        .edit-btn {
+            background: #4caf50;
+            color: #fff;
+        }
+        .delete-btn {
+            background: #f44336;
+            color: #fff;
+        }
+        @media (max-width: 700px) {
+            .container { padding: 12px; }
+            table, th, td { font-size: 13px; }
+            label, input, button { font-size: 13px; }
+        }
+        a {
+            color: #1976d2;
+            text-decoration: underline;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="header-info">
+            <div>تاریخ و زمان: <span id="current-time">2025-05-25 15:35:36</span></div>
+            <div>کاربر: <span id="current-user">amoozeshsso</span></div>
+        </div>
+
         <h2>مدیریت کاربران</h2>
         <div class="section">
             <label>بارگذاری فایل اکسل کاربران:</label>
@@ -56,12 +162,13 @@
 
             let users = [];
 
+            // بارگذاری کاربران
             async function loadUsers() {
                 try {
                     const { data, error } = await supabase
                         .from('users')
                         .select('*')
-                        .neq('role', 'admin');
+                        .eq('role', 'user');
 
                     if (error) throw error;
 
@@ -73,6 +180,7 @@
                 }
             }
 
+            // نمایش کاربران
             function renderUsers() {
                 const tbody = document.getElementById('users-tbody');
                 tbody.innerHTML = '';
@@ -107,7 +215,12 @@
                 try {
                     const { data, error } = await supabase
                         .from('users')
-                        .insert([{ username, password }]);
+                        .insert([{ 
+                            username, 
+                            password,
+                            role: 'user',
+                            created_at: new Date().toISOString()
+                        }]);
 
                     if (error) throw error;
 
@@ -129,7 +242,7 @@
                         .from('users')
                         .delete()
                         .eq('id', id)
-                        .neq('role', 'admin');
+                        .eq('role', 'user');
 
                     if (error) throw error;
 
@@ -149,9 +262,12 @@
                 try {
                     const { error } = await supabase
                         .from('users')
-                        .update({ username: newUsername })
+                        .update({ 
+                            username: newUsername,
+                            updated_at: new Date().toISOString()
+                        })
                         .eq('id', id)
-                        .neq('role', 'admin');
+                        .eq('role', 'user');
 
                     if (error) throw error;
 
@@ -165,18 +281,18 @@
 
             // حذف همه کاربران
             document.getElementById('delete-all-users').addEventListener('click', async function() {
-                if (!confirm('آیا مطمئن هستید که می‌خواهید همه کاربران را حذف کنید؟')) return;
+                if (!confirm('آیا مطمئن هستید که می‌خواهید همه کاربران غیر ادمین را حذف کنید؟')) return;
 
                 try {
                     const { error } = await supabase
                         .from('users')
                         .delete()
-                        .neq('role', 'admin');
+                        .eq('role', 'user');
 
                     if (error) throw error;
 
                     await loadUsers();
-                    alert('همه کاربران با موفقیت حذف شدند');
+                    alert('همه کاربران غیر ادمین با موفقیت حذف شدند');
                 } catch (error) {
                     console.error('Error deleting all users:', error);
                     alert('خطا در حذف کاربران');
@@ -206,9 +322,16 @@
                             return;
                         }
 
+                        // اضافه کردن نقش و تاریخ به همه کاربران
+                        const usersToInsert = jsonData.map(user => ({
+                            ...user,
+                            role: 'user',
+                            created_at: new Date().toISOString()
+                        }));
+
                         const { error } = await supabase
                             .from('users')
-                            .insert(jsonData);
+                            .insert(usersToInsert);
 
                         if (error) throw error;
 
