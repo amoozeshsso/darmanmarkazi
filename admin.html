@@ -230,10 +230,9 @@
             }
         });
 
-        // تولید و دانلود نمونه فایل اکسل کاربران (بدون id و role)
+        // تولید و دانلود نمونه فایل اکسل کاربران (فقط username و password)
         document.getElementById('download-sample').addEventListener('click', function(e) {
             e.preventDefault();
-            // فقط ستون‌های username و password
             const data = [
                 ["username", "password"],
                 ["user1", "12345"],
