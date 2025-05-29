@@ -138,13 +138,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
+
     const title = document.getElementById('title').value.trim();
     const maxAttempts = parseInt(document.getElementById('maxAttempts').value) || 1;
     const duration = parseInt(document.getElementById('durationMinutes').value) || 20;
     const randomQuestionCount = parseInt(document.getElementById('randomQuestionCount').value) || 2;
     const passMark = parseInt(document.getElementById('passMark').value) || 10;
-    const startAt = startAtISO.value;
-    const endAt = endAtISO.value || null;
+
+    const startAtPersian = $('#startAtPersian').val();
+    const endAtPersian = $('#endAtPersian').val();
+
+    if (!startAtPersian) return showError('تاریخ شروع آزمون الزامی است.');
+
+    const startAt = new persianDate.fromString(startAtPersian).toDate().toISOString();
+    const endAt = endAtPersian ? new persianDate.fromString(endAtPersian).toDate().toISOString() : null;
+
     const id = editIdInput.value;
 
     const examData = {
@@ -166,7 +174,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       await supabase.from('exams').insert([examData]);
       showSuccess('آزمون جدید اضافه شد');
     }
+
     form.reset();
+    $('#startAtPersian').val('');
+    $('#endAtPersian').val('');
+    editIdInput.value = '';
     showLoading(false);
     await loadExams();
   });
@@ -241,6 +253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadExams();
 });
 </script>
+
 <style>
 @keyframes spin {
   0% { transform: rotate(0deg); }
