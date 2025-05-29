@@ -152,8 +152,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let startAt, endAt;
     try {
-      startAt = new persianDate(startAtPersian).toDate().toISOString();
-      endAt = endAtPersian ? new persianDate(endAtPersian).toDate().toISOString() : null;
+      startAt = persianDate().parse(startAtPersian, 'YYYY/MM/DD HH:mm').toDate().toISOString();
+      endAt = endAtPersian ? persianDate().parse(endAtPersian, 'YYYY/MM/DD HH:mm').toDate().toISOString() : null;
     } catch (err) {
       return showError('خطا در تبدیل تاریخ. لطفاً تاریخ را صحیح وارد کنید.');
     }
@@ -261,6 +261,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadExams();
 });
 </script>
+
 
 <style>
 @keyframes spin {
