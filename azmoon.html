@@ -168,10 +168,79 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     form.reset();
     showLoading(false);
+    await loadExams();
   });
+
+  list.addEventListener('click', async e => {
+    const btn = e.target;
+    const row = btn.closest('tr');
+    const id = btn.dataset.id;
+    if (btn.classList.contains('edit-btn')) {
+      const { data, error } = await supabase.from('exams').select('*').eq('id', id).single();
+      if (!error) {
+        document.getElementById('title').value = data.title;
+        document.getElementById('maxAttempts').value = data.max_attempts;
+        document.getElementById('randomQuestionCount').value = data.random_question_count;
+        document.getElementById('durationMinutes').value = data.duration_minutes;
+        document.getElementById('passMark').value = data.pass_mark;
+        editIdInput.value = data.id;
+        if (data.start_at) {
+          const pd = new persianDate(new Date(data.start_at)).format('YYYY/MM/DD HH:mm');
+          $('#startAtPersian').persianDatepicker('setDate', pd);
+        }
+        if (data.end_at) {
+          const pd = new persianDate(new Date(data.end_at)).format('YYYY/MM/DD HH:mm');
+          $('#endAtPersian').persianDatepicker('setDate', pd);
+        }
+      }
+    }
+    if (btn.classList.contains('delete-btn')) {
+      if (confirm('آیا از حذف این آزمون مطمئن هستید؟')) {
+        await supabase.from('exams').delete().eq('id', id);
+        await loadExams();
+      }
+    }
+    if (btn.classList.contains('active-toggle')) {
+      const active = btn.checked;
+      await supabase.from('exams').update({ active }).eq('id', id);
+    }
+  });
+
+  async function loadExams() {
+    showLoading(true);
+    const { data, error } = await supabase.from('exams').select('*').order('id');
+    if (error) {
+      list.innerHTML = '<tr><td colspan="10">خطا در دریافت داده‌ها</td></tr>';
+    } else {
+      if (!data.length) {
+        list.innerHTML = '<tr><td colspan="10">آزمونی یافت نشد</td></tr>';
+      } else {
+        list.innerHTML = data.map(exam => `
+          <tr>
+            <td>${exam.id}</td>
+            <td>${exam.title}</td>
+            <td>${exam.max_attempts || 1}</td>
+            <td>${exam.pass_mark || '-'}</td>
+            <td>${exam.duration_minutes || 20}</td>
+            <td>${exam.start_at ? new Date(exam.start_at).toLocaleString('fa-IR') : '-'}</td>
+            <td>${exam.end_at ? new Date(exam.end_at).toLocaleString('fa-IR') : '-'}</td>
+            <td>${exam.created_at ? new Date(exam.created_at).toLocaleString('fa-IR') : ''}</td>
+            <td>
+              <input type="checkbox" class="active-toggle" data-id="${exam.id}" ${exam.active ? 'checked' : ''} />
+              <span style="font-size:12px; color:${exam.active ? '#27ae60' : '#c0392b'}">${exam.active ? 'فعال' : 'غیرفعال'}</span>
+            </td>
+            <td>
+              <button class="edit-btn" data-id="${exam.id}">ویرایش</button>
+              <button class="delete-btn" data-id="${exam.id}">حذف</button>
+            </td>
+          </tr>`).join('');
+      }
+    }
+    showLoading(false);
+  }
+  await loadExams();
 });
 </script>
-
 <style>
 @keyframes spin {
   0% { transform: rotate(0deg); }
