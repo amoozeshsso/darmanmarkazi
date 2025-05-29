@@ -17,6 +17,9 @@
         label { display: block; margin: 8px 0 4px; }
         input, select { padding: 5px; width: 250px; }
         .btn { padding: 6px 16px; margin-top: 10px; cursor: pointer; }
+        .btn-danger { background: #d9534f; color: #fff; border: none; }
+        .btn-edit { background: #0275d8; color: #fff; border: none; }
+        .btn:hover { opacity: 0.85; }
     </style>
 </head>
 <body>
@@ -129,7 +132,8 @@
                     <td>${toJalali(exam.created)}</td>
                     <td>${exam.active ? 'بله' : 'خیر'}</td>
                     <td>
-                        <button class="btn" onclick="editExam(${exam.id})">ویرایش</button>
+                        <button class="btn btn-edit" onclick="editExam(${exam.id})">ویرایش</button>
+                        <button class="btn btn-danger" onclick="deleteExam(${exam.id})">حذف</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -219,6 +223,21 @@
             $("#start_date, #end_date").val('');
             document.getElementById('exam_id').value = '';
             this.style.display = 'none';
+        };
+
+        // حذف آزمون
+        window.deleteExam = function(id) {
+            if (confirm('آیا مطمئن هستید که این آزمون حذف شود؟')) {
+                exams = exams.filter(e => e.id != id);
+                renderExams();
+                // اگر در حال ویرایش همین آزمون بودید، فرم را ریست کن
+                if (document.getElementById('exam_id').value == id) {
+                    document.getElementById('examForm').reset();
+                    $("#start_date, #end_date").val('');
+                    document.getElementById('exam_id').value = '';
+                    document.getElementById('cancelEdit').style.display = 'none';
+                }
+            }
         };
 
         renderExams();
