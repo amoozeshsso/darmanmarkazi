@@ -131,6 +131,9 @@ $(document).ready(function () {
  <!-- افزودن تقویم Mds.PersianDateTimePicker -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mds.bs.datetimepicker@1.0.3/dist/mds.bs.datetimepicker.style.css">
 <script src="https://cdn.jsdelivr.net/npm/mds.bs.datetimepicker@1.0.3/dist/mds.bs.datetimepicker.js"></script>
+<script>
+  window.mds = window.mds || {};
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
@@ -206,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         showSuccess('آزمون جدید اضافه شد');
       }
       form.reset();
-      document.getElementById('startAtPersian').value = '';
+      document.getElementById('startAtPersian').value = new Date().toLocaleString('fa-IR');
       document.getElementById('endAtPersian').value = '';
       editIdInput.value = '';
       await loadExams();
@@ -281,7 +284,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadExams();
 });
 </script>
-
 
 <style>
 @keyframes spin {
