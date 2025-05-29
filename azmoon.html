@@ -209,31 +209,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         editIdInput.value = data.id;
         if (data.start_at) {
           const pd = new persianDate(new Date(data.start_at)).format('YYYY/MM/DD HH:mm');
-          $('#startAtPersian').persianDatepicker({
-    format: 'YYYY/MM/DD HH:mm',
-    timePicker: { enabled: true },
-    altField: '#startAtISO',
-    altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
-    initialValue: false,
-    observer: true,
-    autoClose: true,
-    calendar: { persian: { locale: 'fa' } },
-    toolbox: { calendarSwitch: { enabled: false } }
-  });
+          const todayPersian = new persianDate().format('YYYY/MM/DD HH:mm');
+$('#startAtPersian').persianDatepicker({
+  format: 'YYYY/MM/DD HH:mm',
+  timePicker: { enabled: true },
+  altField: '#startAtISO',
+  altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
+  observer: true,
+  autoClose: true,
+  initialValue: true,
+  initialValueType: 'persian',
+  calendar: { persian: { locale: 'fa' } },
+  toolbox: { calendarSwitch: { enabled: false } }
+});
+$('#startAtPersian').val(todayPersian);
+$('#startAtISO').val(new persianDate().toDate().toISOString());
         }
         if (data.end_at) {
           const pd = new persianDate(new Date(data.end_at)).format('YYYY/MM/DD HH:mm');
-          $('#endAtPersian').persianDatepicker({
-    format: 'YYYY/MM/DD HH:mm',
-    timePicker: { enabled: true },
-    altField: '#endAtISO',
-    altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
-    initialValue: false,
-    observer: true,
-    autoClose: true,
-    calendar: { persian: { locale: 'fa' } },
-    toolbox: { calendarSwitch: { enabled: false } }
-  });
+          const todayPersianEnd = new persianDate().format('YYYY/MM/DD HH:mm');
+$('#endAtPersian').persianDatepicker({
+  format: 'YYYY/MM/DD HH:mm',
+  timePicker: { enabled: true },
+  altField: '#endAtISO',
+  altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
+  observer: true,
+  autoClose: true,
+  initialValue: true,
+  initialValueType: 'persian',
+  calendar: { persian: { locale: 'fa' } },
+  toolbox: { calendarSwitch: { enabled: false } }
+});
+$('#endAtPersian').val(todayPersianEnd);
+$('#endAtISO').val(new persianDate().toDate().toISOString());
         }
       }
     }
@@ -284,7 +292,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadExams();
 });
 </script>
-
 
 <style>
 @keyframes spin {
