@@ -153,9 +153,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const startPicker = $('#startAtPersian').data('datepicker');
       const endPicker = $('#endAtPersian').data('datepicker');
-      startAt = new persianDate(startPicker.getState().selected.unixDate).format('YYYY-MM-DDTHH:mm:ss');
+      startAt = new persianDate(startPicker.getState().selected.unixDate).toDate().toISOString();
       endAt = endPicker.getState().selected.unixDate
-        ? new persianDate(endPicker.getState().selected.unixDate).format('YYYY-MM-DDTHH:mm:ss')
+        ? new persianDate(endPicker.getState().selected.unixDate).toDate().toISOString()
         : null;
     } catch (err) {
       return showError('خطا در تبدیل تاریخ. لطفاً تاریخ را صحیح وارد کنید.');
@@ -230,6 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   async function loadExams() {
+    persianDate.toLocale('fa').utcMode(false);
     showLoading(true);
     const { data, error } = await supabase.from('exams').select('*').order('id');
     if (error) {
@@ -245,9 +246,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             <td>${exam.max_attempts || 1}</td>
             <td>${exam.pass_mark || '-'}</td>
             <td>${exam.duration_minutes || 20}</td>
-            <td>${exam.start_at ? new Date(exam.start_at).toLocaleString('fa-IR') : '-'}</td>
-            <td>${exam.end_at ? new Date(exam.end_at).toLocaleString('fa-IR') : '-'}</td>
-            <td>${exam.created_at ? new Date(exam.created_at).toLocaleString('fa-IR') : ''}</td>
+            <td>${exam.start_at ? new persianDate(new Date(exam.start_at)).format('YYYY/MM/DD HH:mm') : '-'}</td>
+            <td>${exam.end_at ? new persianDate(new Date(exam.end_at)).format('YYYY/MM/DD HH:mm') : '-'}</td>
+            <td>${exam.created_at ? new persianDate(new Date(exam.created_at)).format('YYYY/MM/DD HH:mm') : ''}</td>
             <td>
               <input type="checkbox" class="active-toggle" data-id="${exam.id}" ${exam.active ? 'checked' : ''} />
               <span style="font-size:12px; color:${exam.active ? '#27ae60' : '#c0392b'}">${exam.active ? 'فعال' : 'غیرفعال'}</span>
