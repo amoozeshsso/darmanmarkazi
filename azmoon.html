@@ -152,8 +152,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let startAt, endAt;
     try {
-      startAt = persianDate().parse(startAtPersian, 'YYYY/MM/DD HH:mm').toDate().toISOString();
-      endAt = endAtPersian ? persianDate().parse(endAtPersian, 'YYYY/MM/DD HH:mm').toDate().toISOString() : null;
+      const startPicker = $('#startAtPersian').data('datepicker');
+      const endPicker = $('#endAtPersian').data('datepicker');
+      startAt = new Date(startPicker.getState().selected.unixDate).toISOString();
+      endAt = endPicker.getState().selected.unixDate ? new Date(endPicker.getState().selected.unixDate).toISOString() : null;
+    } catch (err) {
+      return showError('خطا در تبدیل تاریخ. لطفاً تاریخ را صحیح وارد کنید.');
     } catch (err) {
       return showError('خطا در تبدیل تاریخ. لطفاً تاریخ را صحیح وارد کنید.');
     }
