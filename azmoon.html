@@ -129,8 +129,9 @@ $(document).ready(function () {
 });
 </script>
  <!-- افزودن تقویم Mds.PersianDateTimePicker -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mds.bs.datetimepicker/dist/mds.bs.datetimepicker.style.css">
-<script src="https://cdn.jsdelivr.net/npm/mds.bs.datetimepicker/dist/mds.bs.datetimepicker.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mds.bs.datetimepicker@1.0.3/dist/mds.bs.datetimepicker.style.css">
+<script src="https://cdn.jsdelivr.net/npm/mds.bs.datetimepicker@1.0.3/dist/mds.bs.datetimepicker.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
@@ -146,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const showError = msg => { document.getElementById('error').textContent = msg; };
   const showSuccess = msg => { document.getElementById('success').textContent = msg; };
 
-  // تقویم شمسی با مقدار پیش‌فرض امروز
+  // فعال‌سازی تقویم MDS برای فیلد شروع
   new mds.MdsPersianDateTimePicker(document.getElementById('startAtPersian'), {
     targetTextSelector: '#startAtPersian',
     targetDateSelector: '#startAtISO',
@@ -158,6 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     defaultDate: new Date()
   });
 
+  // فعال‌سازی تقویم MDS برای فیلد پایان
   new mds.MdsPersianDateTimePicker(document.getElementById('endAtPersian'), {
     targetTextSelector: '#endAtPersian',
     targetDateSelector: '#endAtISO',
@@ -279,6 +281,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadExams();
 });
 </script>
+
 
 <style>
 @keyframes spin {
