@@ -120,12 +120,39 @@ $(document).ready(function () {
   });
 });
 </script>
-  <script>
+ <script>
+$(document).ready(function () {
+  // مقداردهی اولیه دقیق با تاریخ و ساعت شمسی امروز
+  const nowPersian = new persianDate().format('YYYY/MM/DD HH:mm');
+  $('#startAtPersian').persianDatepicker({
+    format: 'YYYY/MM/DD HH:mm',
+    timePicker: { enabled: true },
+    altField: '#startAtISO',
+    altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
+    initialValue: true,
+    initialValueType: 'persian',
+    calendar: { persian: { locale: 'fa' } },
+    toolbox: { calendarSwitch: { enabled: false } }
+  }).val(nowPersian);
+
+  $('#endAtPersian').persianDatepicker({
+    format: 'YYYY/MM/DD HH:mm',
+    timePicker: { enabled: true },
+    altField: '#endAtISO',
+    altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
+    initialValue: false,
+    initialValueType: 'persian',
+    calendar: { persian: { locale: 'fa' } },
+    toolbox: { calendarSwitch: { enabled: false } }
+  });
+});
+</script>
+
+<script>
 document.addEventListener('DOMContentLoaded', async () => {
   const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
   const form = document.getElementById('examForm');
   const startAtISO = document.getElementById('startAtISO');
   const endAtISO = document.getElementById('endAtISO');
@@ -207,41 +234,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('durationMinutes').value = data.duration_minutes;
         document.getElementById('passMark').value = data.pass_mark;
         editIdInput.value = data.id;
+
+        // مقداردهی صحیح تقویم با تاریخ آزمون
         if (data.start_at) {
           const pd = new persianDate(new Date(data.start_at)).format('YYYY/MM/DD HH:mm');
-          const todayPersian = new persianDate().format('YYYY/MM/DD HH:mm');
-$('#startAtPersian').persianDatepicker({
-  format: 'YYYY/MM/DD HH:mm',
-  timePicker: { enabled: true },
-  altField: '#startAtISO',
-  altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
-  observer: true,
-  autoClose: true,
-  initialValue: true,
-  initialValueType: 'persian',
-  calendar: { persian: { locale: 'fa' } },
-  toolbox: { calendarSwitch: { enabled: false } }
-});
-$('#startAtPersian').val(todayPersian);
-$('#startAtISO').val(new persianDate().toDate().toISOString());
+          $('#startAtPersian').data('datepicker').setDate(pd);
+        } else {
+          $('#startAtPersian').val('');
         }
         if (data.end_at) {
           const pd = new persianDate(new Date(data.end_at)).format('YYYY/MM/DD HH:mm');
-          const todayPersianEnd = new persianDate().format('YYYY/MM/DD HH:mm');
-$('#endAtPersian').persianDatepicker({
-  format: 'YYYY/MM/DD HH:mm',
-  timePicker: { enabled: true },
-  altField: '#endAtISO',
-  altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
-  observer: true,
-  autoClose: true,
-  initialValue: true,
-  initialValueType: 'persian',
-  calendar: { persian: { locale: 'fa' } },
-  toolbox: { calendarSwitch: { enabled: false } }
-});
-$('#endAtPersian').val(todayPersianEnd);
-$('#endAtISO').val(new persianDate().toDate().toISOString());
+          $('#endAtPersian').data('datepicker').setDate(pd);
+        } else {
+          $('#endAtPersian').val('');
         }
       }
     }
@@ -258,7 +263,7 @@ $('#endAtISO').val(new persianDate().toDate().toISOString());
   });
 
   async function loadExams() {
-        showLoading(true);
+    showLoading(true);
     const { data, error } = await supabase.from('exams').select('*').order('id');
     if (error) {
       list.innerHTML = '<tr><td colspan="10">خطا در دریافت داده‌ها</td></tr>';
