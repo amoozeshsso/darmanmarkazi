@@ -153,8 +153,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       const startPicker = $('#startAtPersian').data('datepicker');
       const endPicker = $('#endAtPersian').data('datepicker');
-      startAt = new Date(startPicker.getState().selected.unixDate).toISOString();
-      endAt = endPicker.getState().selected.unixDate ? new Date(endPicker.getState().selected.unixDate).toISOString() : null;
+      startAt = new persianDate(startPicker.getState().selected.unixDate).toDate().toISOString();
+      endAt = endPicker.getState().selected.unixDate
+        ? new persianDate(endPicker.getState().selected.unixDate).toDate().toISOString()
+        : null;
     } catch (err) {
       return showError('خطا در تبدیل تاریخ. لطفاً تاریخ را صحیح وارد کنید.');
     }
