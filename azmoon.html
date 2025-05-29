@@ -6,8 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet" />
-   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
-     <style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+  <style>
     body { font-family: 'Vazirmatn', Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 20px; }
     h1 { text-align: center; color: #333; }
     .container { max-width: 1100px; margin: auto; }
@@ -101,41 +104,23 @@
     </table>
   </div>
 
- <script>
+<script>
 $(document).ready(function () {
-  // مقداردهی اولیه دقیق با تاریخ و ساعت شمسی امروز
-  const nowPersian = new persianDate().format('YYYY/MM/DD HH:mm');
   $('#startAtPersian').persianDatepicker({
     format: 'YYYY/MM/DD HH:mm',
     timePicker: { enabled: true },
     altField: '#startAtISO',
     altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
-    initialValue: true,
-    initialValueType: 'persian',
-    calendar: { persian: { locale: 'fa' } },
-    toolbox: { calendarSwitch: { enabled: false } }
-  }).val(nowPersian);
-
+  });
   $('#endAtPersian').persianDatepicker({
     format: 'YYYY/MM/DD HH:mm',
     timePicker: { enabled: true },
     altField: '#endAtISO',
     altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
-    initialValue: false,
-    initialValueType: 'persian',
-    calendar: { persian: { locale: 'fa' } },
-    toolbox: { calendarSwitch: { enabled: false } }
   });
 });
 </script>
- <!-- افزودن تقویم Mds.PersianDateTimePicker -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mds.bs.datetimepicker@1.0.3/dist/mds.bs.datetimepicker.style.css">
-<script src="https://cdn.jsdelivr.net/npm/mds.bs.datetimepicker@1.0.3/dist/mds.bs.datetimepicker.js"></script>
-<script>
-  window.mds = window.mds || {};
-</script>
-
-<script>
+  <script>
 document.addEventListener('DOMContentLoaded', async () => {
   const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
@@ -150,30 +135,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const showError = msg => { document.getElementById('error').textContent = msg; };
   const showSuccess = msg => { document.getElementById('success').textContent = msg; };
 
-  // فعال‌سازی تقویم MDS برای فیلد شروع
-  new mds.MdsPersianDateTimePicker(document.getElementById('startAtPersian'), {
-    targetTextSelector: '#startAtPersian',
-    targetDateSelector: '#startAtISO',
-    textFormat: 'yyyy/MM/dd HH:mm',
-    dateFormat: 'yyyy-MM-ddTHH:mm:ss',
-    enableTimePicker: true,
-    modalMode: true,
-    englishNumber: true,
-    defaultDate: new Date()
-  });
-
-  // فعال‌سازی تقویم MDS برای فیلد پایان
-  new mds.MdsPersianDateTimePicker(document.getElementById('endAtPersian'), {
-    targetTextSelector: '#endAtPersian',
-    targetDateSelector: '#endAtISO',
-    textFormat: 'yyyy/MM/dd HH:mm',
-    dateFormat: 'yyyy-MM-ddTHH:mm:ss',
-    enableTimePicker: true,
-    modalMode: true,
-    englishNumber: true,
-    defaultDate: new Date()
-  });
-
   form.addEventListener('submit', async e => {
     e.preventDefault();
 
@@ -182,11 +143,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     const duration = parseInt(document.getElementById('durationMinutes').value) || 20;
     const randomQuestionCount = parseInt(document.getElementById('randomQuestionCount').value) || 2;
     const passMark = parseInt(document.getElementById('passMark').value) || 10;
-    const startAt = startAtISO.value;
-    const endAt = endAtISO.value || null;
-    const id = editIdInput.value;
 
-    if (!startAt) return showError('تاریخ شروع آزمون الزامی است.');
+    const startAtPersian = $('#startAtPersian').val();
+    const endAtPersian = $('#endAtPersian').val();
+
+    if (!startAtPersian) return showError('تاریخ شروع آزمون الزامی است.');
+
+    let startAt, endAt;
+    try {
+      const startPicker = $('#startAtPersian').data('datepicker');
+      const endPicker = $('#endAtPersian').data('datepicker');
+      startAt = new persianDate(startPicker.getState().selected.unixDate).toDate().toISOString();
+      endAt = endPicker.getState().selected.unixDate
+        ? new persianDate(endPicker.getState().selected.unixDate).toDate().toISOString()
+        : null;
+    } catch (err) {
+      return showError('خطا در تبدیل تاریخ. لطفاً تاریخ را صحیح وارد کنید.');
+    }
+
+    const id = editIdInput.value;
 
     const examData = {
       title,
@@ -209,8 +184,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         showSuccess('آزمون جدید اضافه شد');
       }
       form.reset();
-      document.getElementById('startAtPersian').value = new Date().toLocaleString('fa-IR');
-      document.getElementById('endAtPersian').value = '';
+      $('#startAtPersian').val('');
+      $('#endAtPersian').val('');
       editIdInput.value = '';
       await loadExams();
     } catch (err) {
@@ -232,8 +207,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('durationMinutes').value = data.duration_minutes;
         document.getElementById('passMark').value = data.pass_mark;
         editIdInput.value = data.id;
-        document.getElementById('startAtISO').value = data.start_at;
-        document.getElementById('endAtISO').value = data.end_at || '';
+        if (data.start_at) {
+          const pd = new persianDate(new Date(data.start_at)).format('YYYY/MM/DD HH:mm');
+          const todayPersian = new persianDate().format('YYYY/MM/DD HH:mm');
+$('#startAtPersian').persianDatepicker({
+  format: 'YYYY/MM/DD HH:mm',
+  timePicker: { enabled: true },
+  altField: '#startAtISO',
+  altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
+  observer: true,
+  autoClose: true,
+  initialValue: true,
+  initialValueType: 'persian',
+  calendar: { persian: { locale: 'fa' } },
+  toolbox: { calendarSwitch: { enabled: false } }
+});
+$('#startAtPersian').val(todayPersian);
+$('#startAtISO').val(new persianDate().toDate().toISOString());
+        }
+        if (data.end_at) {
+          const pd = new persianDate(new Date(data.end_at)).format('YYYY/MM/DD HH:mm');
+          const todayPersianEnd = new persianDate().format('YYYY/MM/DD HH:mm');
+$('#endAtPersian').persianDatepicker({
+  format: 'YYYY/MM/DD HH:mm',
+  timePicker: { enabled: true },
+  altField: '#endAtISO',
+  altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
+  observer: true,
+  autoClose: true,
+  initialValue: true,
+  initialValueType: 'persian',
+  calendar: { persian: { locale: 'fa' } },
+  toolbox: { calendarSwitch: { enabled: false } }
+});
+$('#endAtPersian').val(todayPersianEnd);
+$('#endAtISO').val(new persianDate().toDate().toISOString());
+        }
       }
     }
     if (btn.classList.contains('delete-btn')) {
@@ -249,7 +258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   async function loadExams() {
-    showLoading(true);
+        showLoading(true);
     const { data, error } = await supabase.from('exams').select('*').order('id');
     if (error) {
       list.innerHTML = '<tr><td colspan="10">خطا در دریافت داده‌ها</td></tr>';
@@ -264,9 +273,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             <td>${exam.max_attempts || 1}</td>
             <td>${exam.pass_mark || '-'}</td>
             <td>${exam.duration_minutes || 20}</td>
-            <td>${exam.start_at ? new Date(exam.start_at).toLocaleString('fa-IR') : '-'}</td>
-            <td>${exam.end_at ? new Date(exam.end_at).toLocaleString('fa-IR') : '-'}</td>
-            <td>${exam.created_at ? new Date(exam.created_at).toLocaleString('fa-IR') : ''}</td>
+            <td>${exam.start_at ? new persianDate(new Date(exam.start_at)).format('YYYY/MM/DD HH:mm') : '-'}</td>
+            <td>${exam.end_at ? new persianDate(new Date(exam.end_at)).format('YYYY/MM/DD HH:mm') : '-'}</td>
+            <td>${exam.created_at ? new persianDate(new Date(exam.created_at)).format('YYYY/MM/DD HH:mm') : ''}</td>
             <td>
               <input type="checkbox" class="active-toggle" data-id="${exam.id}" ${exam.active ? 'checked' : ''} />
               <span style="font-size:12px; color:${exam.active ? '#27ae60' : '#c0392b'}">${exam.active ? 'فعال' : 'غیرفعال'}</span>
@@ -280,7 +289,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     showLoading(false);
   }
-
   await loadExams();
 });
 </script>
