@@ -230,8 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   async function loadExams() {
-    persianDate.toLocale('fa').utcMode(false);
-    showLoading(true);
+        showLoading(true);
     const { data, error } = await supabase.from('exams').select('*').order('id');
     if (error) {
       list.innerHTML = '<tr><td colspan="10">خطا در دریافت داده‌ها</td></tr>';
