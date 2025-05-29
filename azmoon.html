@@ -209,11 +209,35 @@ document.addEventListener('DOMContentLoaded', async () => {
         editIdInput.value = data.id;
         if (data.start_at) {
           const pd = new persianDate(new Date(data.start_at)).format('YYYY/MM/DD HH:mm');
-          $('#startAtPersian').persianDatepicker('setDate', pd);
+          const now = new persianDate();
+  $('#startAtPersian').persianDatepicker({
+    format: 'YYYY/MM/DD HH:mm',
+    timePicker: { enabled: true },
+    altField: '#startAtISO',
+    altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
+    initialValue: true,
+    initialValueType: 'persian',
+    observer: true,
+    autoClose: true,
+    calendar: { persian: { locale: 'fa' } },
+    toolbox: { calendarSwitch: { enabled: false } },
+    minDate: now
+  });
         }
         if (data.end_at) {
           const pd = new persianDate(new Date(data.end_at)).format('YYYY/MM/DD HH:mm');
-          $('#endAtPersian').persianDatepicker('setDate', pd);
+          $('#endAtPersian').persianDatepicker({
+    format: 'YYYY/MM/DD HH:mm',
+    timePicker: { enabled: true },
+    altField: '#endAtISO',
+    altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
+    initialValue: false,
+    initialValueType: 'persian',
+    observer: true,
+    autoClose: true,
+    calendar: { persian: { locale: 'fa' } },
+    toolbox: { calendarSwitch: { enabled: false } }
+  });
         }
       }
     }
@@ -264,6 +288,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadExams();
 });
 </script>
+
 
 <style>
 @keyframes spin {
