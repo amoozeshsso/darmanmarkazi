@@ -120,7 +120,6 @@ $(document).ready(function () {
   });
 });
 </script>
-
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
@@ -156,8 +155,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const endPicker = $('#endAtPersian').data('datepicker');
       startAt = new Date(startPicker.getState().selected.unixDate).toISOString();
       endAt = endPicker.getState().selected.unixDate ? new Date(endPicker.getState().selected.unixDate).toISOString() : null;
-    } catch (err) {
-      return showError('خطا در تبدیل تاریخ. لطفاً تاریخ را صحیح وارد کنید.');
     } catch (err) {
       return showError('خطا در تبدیل تاریخ. لطفاً تاریخ را صحیح وارد کنید.');
     }
@@ -265,7 +262,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadExams();
 });
 </script>
-
 
 <style>
 @keyframes spin {
