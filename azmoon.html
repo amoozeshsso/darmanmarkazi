@@ -9,22 +9,33 @@
     <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.1.0/dist/jalaali.min.js"></script>
     <style>
-        body { font-family: Tahoma, Arial, sans-serif; direction: rtl; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #aaa; padding: 8px; text-align: center; }
-        th { background: #f2f2f2; }
+        body { font-family: Tahoma, Arial, sans-serif; direction: rtl; background: #fafafa; }
+        .container { max-width: 900px; margin: 30px auto; background: #fff; border-radius: 8px; box-shadow: 0 0 8px #ddd; padding: 24px; }
+        h2 { margin-bottom: 18px; }
         .form-section { margin-bottom: 30px; }
         label { display: block; margin: 8px 0 4px; }
         input, select { padding: 5px; width: 250px; }
         .btn { padding: 6px 16px; margin-top: 10px; cursor: pointer; }
         .btn-danger { background: #d9534f; color: #fff; border: none; }
         .btn-edit { background: #0275d8; color: #fff; border: none; }
+        .btn-add { background: #5cb85c; color: #fff; border: none; }
         .btn:hover { opacity: 0.85; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #aaa; padding: 8px; text-align: center; }
+        th { background: #f2f2f2; }
+        .loading { color: #888; font-style: italic; }
+        .hidden { display: none; }
+        .actions button { margin-left: 4px; }
     </style>
 </head>
 <body>
+<div class="container">
+    <a href="#" onclick="window.location='dashboard.html';return false;" class="btn">بازگشت به منوی مدیریت</a>
     <h2>تعریف و مدیریت آزمون</h2>
-    <div class="form-section">
+
+    <button class="btn btn-add" id="showFormBtn">افزودن آزمون جدید</button>
+
+    <div class="form-section hidden" id="examFormSection">
         <form id="examForm">
             <input type="hidden" id="exam_id">
             <label>عنوان آزمون:</label>
@@ -42,11 +53,12 @@
             <label>نمره قبولی:</label>
             <input type="number" id="pass_score" min="0" required>
             <br>
-            <button type="submit" class="btn">ذخیره</button>
-            <button type="button" class="btn" id="cancelEdit" style="display:none;">انصراف</button>
+            <button type="submit" class="btn btn-add">ذخیره</button>
+            <button type="button" class="btn" id="cancelEdit">انصراف</button>
         </form>
     </div>
 
+    <div id="loadingMsg" class="loading">در حال بارگذاری آزمونها...</div>
     <table>
         <thead>
             <tr>
@@ -64,183 +76,192 @@
             </tr>
         </thead>
         <tbody id="examTableBody">
-            <!-- آزمون‌ها اینجا بارگذاری می‌شوند -->
+            <tr><td colspan="11" class="loading">در حال بارگذاری...</td></tr>
         </tbody>
     </table>
+</div>
 
-    <script>
-        // داده نمونه (در عمل باید از سرور بیاید)
-        let exams = [
-            {
-                id: 1,
-                title: "آزمون اول",
-                max_attempts: 2,
-                random_questions: 3,
-                pass_score: 12,
-                duration: 30,
-                start: "2025-05-29T09:00",
-                end: "2025-06-10T18:00",
-                created: "2025-05-20T12:00",
-                active: true
-            },
-            {
-                id: 2,
-                title: "آزمون دوم",
-                max_attempts: 1,
-                random_questions: 5,
-                pass_score: 15,
-                duration: 45,
-                start: "2025-06-01T10:00",
-                end: "2025-06-15T17:00",
-                created: "2025-05-25T10:00",
-                active: false
-            }
-        ];
-
-        // تبدیل تاریخ میلادی به شمسی
-        function toJalali(dateStr) {
-            if (!dateStr) return '';
-            const [date, time] = dateStr.split('T');
-            const [gy, gm, gd] = date.split('-').map(Number);
-            const jalali = jalaali.toJalaali(gy, gm, gd);
-            return `${jalali.jy}/${jalali.jm.toString().padStart(2, '0')}/${jalali.jd.toString().padStart(2, '0')}` + (time ? ` ${time}` : '');
+<script>
+    // داده نمونه (در عمل باید از سرور بیاید)
+    let exams = [
+        {
+            id: 1,
+            title: "آزمون اول",
+            max_attempts: 2,
+            random_questions: 3,
+            pass_score: 12,
+            duration: 30,
+            start: "2025-05-29T09:00",
+            end: "2025-06-10T18:00",
+            created: "2025-05-20T12:00",
+            active: true
+        },
+        {
+            id: 2,
+            title: "آزمون دوم",
+            max_attempts: 1,
+            random_questions: 5,
+            pass_score: 15,
+            duration: 45,
+            start: "2025-06-01T10:00",
+            end: "2025-06-15T17:00",
+            created: "2025-05-25T10:00",
+            active: false
         }
+    ];
 
-        // تبدیل تاریخ شمسی (yyyy/mm/dd HH:mm) به میلادی (YYYY-MM-DDTHH:mm)
-        function jalaliToGregorian(jalaliDateTime) {
-            if (!jalaliDateTime) return '';
-            let [date, time] = jalaliDateTime.split(' ');
-            let [jy, jm, jd] = date.split('/').map(Number);
-            let g = jalaali.toGregorian(jy, jm, jd);
-            return `${g.gy}-${g.gm.toString().padStart(2, '0')}-${g.gd.toString().padStart(2, '0')}` + (time ? `T${time}` : '');
+    // تبدیل تاریخ میلادی به شمسی
+    function toJalali(dateStr) {
+        if (!dateStr) return '';
+        const [date, time] = dateStr.split('T');
+        const [gy, gm, gd] = date.split('-').map(Number);
+        const jalali = jalaali.toJalaali(gy, gm, gd);
+        return `${jalali.jy}/${jalali.jm.toString().padStart(2, '0')}/${jalali.jd.toString().padStart(2, '0')}` + (time ? ` ${time}` : '');
+    }
+
+    // تبدیل تاریخ شمسی (yyyy/mm/dd HH:mm) به میلادی (YYYY-MM-DDTHH:mm)
+    function jalaliToGregorian(jalaliDateTime) {
+        if (!jalaliDateTime) return '';
+        let [date, time] = jalaliDateTime.split(' ');
+        let [jy, jm, jd] = date.split('/').map(Number);
+        let g = jalaali.toGregorian(jy, jm, jd);
+        return `${g.gy}-${g.gm.toString().padStart(2, '0')}-${g.gd.toString().padStart(2, '0')}` + (time ? `T${time}` : '');
+    }
+
+    function renderExams() {
+        const tbody = document.getElementById('examTableBody');
+        tbody.innerHTML = '';
+        if (!exams.length) {
+            tbody.innerHTML = '<tr><td colspan="11" class="loading">آزمونی وجود ندارد.</td></tr>';
+            return;
         }
-
-        function renderExams() {
-            const tbody = document.getElementById('examTableBody');
-            tbody.innerHTML = '';
-            exams.forEach(exam => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${exam.id}</td>
-                    <td>${exam.title}</td>
-                    <td>${exam.max_attempts}</td>
-                    <td>${exam.random_questions}</td>
-                    <td>${exam.pass_score}</td>
-                    <td>${exam.duration}</td>
-                    <td>${toJalali(exam.start)}</td>
-                    <td>${toJalali(exam.end)}</td>
-                    <td>${toJalali(exam.created)}</td>
-                    <td>${exam.active ? 'بله' : 'خیر'}</td>
-                    <td>
-                        <button class="btn btn-edit" onclick="editExam(${exam.id})">ویرایش</button>
-                        <button class="btn btn-danger" onclick="deleteExam(${exam.id})">حذف</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // مقداردهی اولیه تقویم شمسی
-        $(function() {
-            $("#start_date").persianDatepicker({
-                format: "YYYY/MM/DD HH:mm",
-                timePicker: { enabled: true },
-                initialValue: false
-            });
-            $("#end_date").persianDatepicker({
-                format: "YYYY/MM/DD HH:mm",
-                timePicker: { enabled: true },
-                initialValue: false
-            });
+        exams.forEach(exam => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${exam.id}</td>
+                <td>${exam.title}</td>
+                <td>${exam.max_attempts}</td>
+                <td>${exam.random_questions}</td>
+                <td>${exam.pass_score}</td>
+                <td>${exam.duration}</td>
+                <td>${toJalali(exam.start)}</td>
+                <td>${toJalali(exam.end)}</td>
+                <td>${toJalali(exam.created)}</td>
+                <td>${exam.active ? 'بله' : 'خیر'}</td>
+                <td class="actions">
+                    <button class="btn btn-edit" onclick="editExam(${exam.id})">ویرایش</button>
+                    <button class="btn btn-danger" onclick="deleteExam(${exam.id})">حذف</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
+    }
 
-        // ثبت یا ویرایش آزمون
-        document.getElementById('examForm').onsubmit = function(e) {
-            e.preventDefault();
-            let id = document.getElementById('exam_id').value;
-            let title = document.getElementById('title').value;
-            let max_attempts = document.getElementById('max_attempts').value;
-            let random_questions = document.getElementById('random_questions').value;
-            let duration = document.getElementById('duration').value;
-            let start_jalali = document.getElementById('start_date').value;
-            let end_jalali = document.getElementById('end_date').value;
-            let pass_score = document.getElementById('pass_score').value;
+    // مقداردهی اولیه تقویم شمسی
+    function initDatePickers() {
+        $("#start_date").persianDatepicker({
+            format: "YYYY/MM/DD HH:mm",
+            timePicker: { enabled: true },
+            initialValue: false,
+            autoClose: true
+        });
+        $("#end_date").persianDatepicker({
+            format: "YYYY/MM/DD HH:mm",
+            timePicker: { enabled: true },
+            initialValue: false,
+            autoClose: true
+        });
+    }
 
-            let start = jalaliToGregorian(start_jalali);
-            let end = jalaliToGregorian(end_jalali);
+    // نمایش فرم افزودن/ویرایش
+    document.getElementById('showFormBtn').onclick = function() {
+        document.getElementById('examFormSection').classList.remove('hidden');
+        document.getElementById('examForm').reset();
+        $("#start_date, #end_date").val('');
+        document.getElementById('exam_id').value = '';
+        document.getElementById('cancelEdit').style.display = '';
+        initDatePickers();
+    };
 
-            if (id) {
-                // ویرایش
-                let exam = exams.find(e => e.id == id);
-                exam.title = title;
-                exam.max_attempts = Number(max_attempts);
-                exam.random_questions = Number(random_questions);
-                exam.duration = Number(duration);
-                exam.start = start;
-                exam.end = end;
-                exam.pass_score = Number(pass_score);
-            } else {
-                // افزودن جدید
-                exams.push({
-                    id: exams.length ? Math.max(...exams.map(e => e.id)) + 1 : 1,
-                    title,
-                    max_attempts: Number(max_attempts),
-                    random_questions: Number(random_questions),
-                    duration: Number(duration),
-                    start,
-                    end,
-                    created: new Date().toISOString().slice(0,16),
-                    pass_score: Number(pass_score),
-                    active: true
-                });
-            }
-            renderExams();
-            this.reset();
-            $("#start_date, #end_date").val('');
-            document.getElementById('exam_id').value = '';
-            document.getElementById('cancelEdit').style.display = 'none';
-        };
+    // ثبت یا ویرایش آزمون
+    document.getElementById('examForm').onsubmit = function(e) {
+        e.preventDefault();
+        let id = document.getElementById('exam_id').value;
+        let title = document.getElementById('title').value;
+        let max_attempts = document.getElementById('max_attempts').value;
+        let random_questions = document.getElementById('random_questions').value;
+        let duration = document.getElementById('duration').value;
+        let start_jalali = document.getElementById('start_date').value;
+        let end_jalali = document.getElementById('end_date').value;
+        let pass_score = document.getElementById('pass_score').value;
 
-        // ویرایش آزمون
-        window.editExam = function(id) {
+        let start = jalaliToGregorian(start_jalali);
+        let end = jalaliToGregorian(end_jalali);
+
+        if (id) {
+            // ویرایش
             let exam = exams.find(e => e.id == id);
-            document.getElementById('exam_id').value = exam.id;
-            document.getElementById('title').value = exam.title;
-            document.getElementById('max_attempts').value = exam.max_attempts;
-            document.getElementById('random_questions').value = exam.random_questions;
-            document.getElementById('duration').value = exam.duration;
-            document.getElementById('pass_score').value = exam.pass_score;
-
-            // تبدیل تاریخ میلادی به شمسی برای نمایش در فرم
-            $("#start_date").val(toJalali(exam.start));
-            $("#end_date").val(toJalali(exam.end));
-            document.getElementById('cancelEdit').style.display = '';
-        };
-
-        // لغو ویرایش
-        document.getElementById('cancelEdit').onclick = function() {
-            document.getElementById('examForm').reset();
-            $("#start_date, #end_date").val('');
-            document.getElementById('exam_id').value = '';
-            this.style.display = 'none';
-        };
-
-        // حذف آزمون
-        window.deleteExam = function(id) {
-            if (confirm('آیا مطمئن هستید که این آزمون حذف شود؟')) {
-                exams = exams.filter(e => e.id != id);
-                renderExams();
-                // اگر در حال ویرایش همین آزمون بودید، فرم را ریست کن
-                if (document.getElementById('exam_id').value == id) {
-                    document.getElementById('examForm').reset();
-                    $("#start_date, #end_date").val('');
-                    document.getElementById('exam_id').value = '';
-                    document.getElementById('cancelEdit').style.display = 'none';
-                }
-            }
-        };
-
+            exam.title = title;
+            exam.max_attempts = Number(max_attempts);
+            exam.random_questions = Number(random_questions);
+            exam.duration = Number(duration);
+            exam.start = start;
+            exam.end = end;
+            exam.pass_score = Number(pass_score);
+        } else {
+            // افزودن جدید
+            exams.push({
+                id: exams.length ? Math.max(...exams.map(e => e.id)) + 1 : 1,
+                title,
+                max_attempts: Number(max_attempts),
+                random_questions: Number(random_questions),
+                duration: Number(duration),
+                start,
+                end,
+                created: new Date().toISOString().slice(0,16),
+                pass_score: Number(pass_score),
+                active: true
+            });
+        }
         renderExams();
-    </script>
+        document.getElementById('examFormSection').classList.add('hidden');
+    };
+
+    // ویرایش آزمون
+    window.editExam = function(id) {
+        let exam = exams.find(e => e.id == id);
+        document.getElementById('examFormSection').classList.remove('hidden');
+        document.getElementById('exam_id').value = exam.id;
+        document.getElementById('title').value = exam.title;
+        document.getElementById('max_attempts').value = exam.max_attempts;
+        document.getElementById('random_questions').value = exam.random_questions;
+        document.getElementById('duration').value = exam.duration;
+        document.getElementById('pass_score').value = exam.pass_score;
+        $("#start_date").val(toJalali(exam.start));
+        $("#end_date").val(toJalali(exam.end));
+        initDatePickers();
+        document.getElementById('cancelEdit').style.display = '';
+    };
+
+    // لغو ویرایش یا افزودن
+    document.getElementById('cancelEdit').onclick = function() {
+        document.getElementById('examFormSection').classList.add('hidden');
+    };
+
+    // حذف آزمون
+    window.deleteExam = function(id) {
+        if (confirm('آیا مطمئن هستید که این آزمون حذف شود؟')) {
+            exams = exams.filter(e => e.id != id);
+            renderExams();
+            document.getElementById('examFormSection').classList.add('hidden');
+        }
+    };
+
+    // بارگذاری اولیه
+    window.onload = function() {
+        renderExams();
+        document.getElementById('loadingMsg').style.display = 'none';
+    };
+</script>
 </body>
 </html>
