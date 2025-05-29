@@ -6,11 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
-  <style>
+   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+     <style>
     body { font-family: 'Vazirmatn', Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 20px; }
     h1 { text-align: center; color: #333; }
     .container { max-width: 1100px; margin: auto; }
@@ -104,22 +101,6 @@
     </table>
   </div>
 
-<script>
-$(document).ready(function () {
-  $('#startAtPersian').persianDatepicker({
-    format: 'YYYY/MM/DD HH:mm',
-    timePicker: { enabled: true },
-    altField: '#startAtISO',
-    altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
-  });
-  $('#endAtPersian').persianDatepicker({
-    format: 'YYYY/MM/DD HH:mm',
-    timePicker: { enabled: true },
-    altField: '#endAtISO',
-    altFormat: 'YYYY-MM-DDTHH:mm:ssZ',
-  });
-});
-</script>
  <script>
 $(document).ready(function () {
   // مقداردهی اولیه دقیق با تاریخ و ساعت شمسی امروز
@@ -147,14 +128,9 @@ $(document).ready(function () {
   });
 });
 </script>
-  <!-- افزودن تقویم Mds.PersianDateTimePicker -->
+ <!-- افزودن تقویم Mds.PersianDateTimePicker -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mds.bs.datetimepicker/dist/mds.bs.datetimepicker.style.css">
 <script src="https://cdn.jsdelivr.net/npm/mds.bs.datetimepicker/dist/mds.bs.datetimepicker.js"></script>
-
-<!-- افزودن تقویم Mds.PersianDateTimePicker -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mds.bs.datetimepicker/dist/mds.bs.datetimepicker.style.css">
-<script src="https://cdn.jsdelivr.net/npm/mds.bs.datetimepicker/dist/mds.bs.datetimepicker.js"></script>
-
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
@@ -170,7 +146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const showError = msg => { document.getElementById('error').textContent = msg; };
   const showSuccess = msg => { document.getElementById('success').textContent = msg; };
 
-  // تنظیمات تقویم شمسی جدید برای دو فیلد
+  // تقویم شمسی با مقدار پیش‌فرض امروز
   new mds.MdsPersianDateTimePicker(document.getElementById('startAtPersian'), {
     targetTextSelector: '#startAtPersian',
     targetDateSelector: '#startAtISO',
@@ -178,7 +154,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     dateFormat: 'yyyy-MM-ddTHH:mm:ss',
     enableTimePicker: true,
     modalMode: true,
-    englishNumber: true
+    englishNumber: true,
+    defaultDate: new Date()
   });
 
   new mds.MdsPersianDateTimePicker(document.getElementById('endAtPersian'), {
@@ -188,7 +165,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     dateFormat: 'yyyy-MM-ddTHH:mm:ss',
     enableTimePicker: true,
     modalMode: true,
-    englishNumber: true
+    englishNumber: true,
+    defaultDate: new Date()
   });
 
   form.addEventListener('submit', async e => {
