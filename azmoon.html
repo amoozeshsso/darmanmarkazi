@@ -3,36 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <title>تعریف و مدیریت آزمون</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vazirmatn@33.003.0/dist/font-face.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/persian-date@1.0.6/dist/persian-date.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.1.0/dist/jalaali.min.js"></script>
     <style>
-        body { font-family: Tahoma, Arial, sans-serif; direction: rtl; background: #fafafa; }
-        .container { max-width: 900px; margin: 30px auto; background: #fff; border-radius: 8px; box-shadow: 0 0 8px #ddd; padding: 24px; }
+        body {
+            font-family: Vazirmatn, Tahoma, Arial, sans-serif;
+            direction: rtl;
+            background: #f7f7f7;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 12px #ddd;
+            padding: 28px;
+        }
         h2 { margin-bottom: 18px; }
         .form-section { margin-bottom: 30px; }
         label { display: block; margin: 8px 0 4px; }
-        input, select { padding: 5px; width: 250px; }
-        .btn { padding: 6px 16px; margin-top: 10px; cursor: pointer; }
-        .btn-danger { background: #d9534f; color: #fff; border: none; }
-        .btn-edit { background: #0275d8; color: #fff; border: none; }
-        .btn-add { background: #5cb85c; color: #fff; border: none; }
-        .btn:hover { opacity: 0.85; }
+        input, select {
+            padding: 6px 8px;
+            width: 260px;
+            border: 1px solid #bbb;
+            border-radius: 5px;
+            font-family: Vazirmatn, Tahoma, Arial, sans-serif;
+        }
+        .btn {
+            padding: 7px 18px;
+            margin-top: 10px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            font-family: Vazirmatn, Tahoma, Arial, sans-serif;
+            font-size: 15px;
+        }
+        .btn-danger { background: #d9534f; color: #fff; }
+        .btn-edit { background: #0275d8; color: #fff; }
+        .btn-add { background: #5cb85c; color: #fff; }
+        .btn-cancel { background: #888; color: #fff; }
+        .btn:hover { opacity: 0.88; }
         table { border-collapse: collapse; width: 100%; margin-top: 20px; }
         th, td { border: 1px solid #aaa; padding: 8px; text-align: center; }
         th { background: #f2f2f2; }
         .loading { color: #888; font-style: italic; }
         .hidden { display: none; }
         .actions button { margin-left: 4px; }
+        #showFormBtn { margin-bottom: 18px; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/persian-date@0.1.8/dist/persian-date.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.1.0/dist/jalaali.js"></script>
 </head>
 <body>
 <div class="container">
-    <a href="#" onclick="window.location='dashboard.html';return false;" class="btn">بازگشت به منوی مدیریت</a>
     <h2>تعریف و مدیریت آزمون</h2>
-
     <button class="btn btn-add" id="showFormBtn">افزودن آزمون جدید</button>
 
     <div class="form-section hidden" id="examFormSection">
@@ -54,11 +81,11 @@
             <input type="number" id="pass_score" min="0" required>
             <br>
             <button type="submit" class="btn btn-add">ذخیره</button>
-            <button type="button" class="btn" id="cancelEdit">انصراف</button>
+            <button type="button" class="btn btn-cancel" id="cancelEdit">انصراف</button>
         </form>
     </div>
 
-    <div id="loadingMsg" class="loading">در حال بارگذاری آزمونها...</div>
+    <div id="loadingMsg" class="loading">در حال بارگذاری آزمون‌ها...</div>
     <table>
         <thead>
             <tr>
@@ -82,7 +109,7 @@
 </div>
 
 <script>
-    // داده نمونه (در عمل باید از سرور بیاید)
+    // داده نمونه
     let exams = [
         {
             id: 1,
@@ -113,19 +140,19 @@
     // تبدیل تاریخ میلادی به شمسی
     function toJalali(dateStr) {
         if (!dateStr) return '';
-        const [date, time] = dateStr.split('T');
-        const [gy, gm, gd] = date.split('-').map(Number);
-        const jalali = jalaali.toJalaali(gy, gm, gd);
-        return `${jalali.jy}/${jalali.jm.toString().padStart(2, '0')}/${jalali.jd.toString().padStart(2, '0')}` + (time ? ` ${time}` : '');
+        var parts = dateStr.split('T');
+        var date = parts[0].split('-');
+        var g = window.jalaali.toJalaali(Number(date[0]), Number(date[1]), Number(date[2]));
+        return g.jy + '/' + (g.jm < 10 ? '0' : '') + g.jm + '/' + (g.jd < 10 ? '0' : '') + g.jd + (parts[1] ? ' ' + parts[1] : '');
     }
 
     // تبدیل تاریخ شمسی (yyyy/mm/dd HH:mm) به میلادی (YYYY-MM-DDTHH:mm)
     function jalaliToGregorian(jalaliDateTime) {
         if (!jalaliDateTime) return '';
-        let [date, time] = jalaliDateTime.split(' ');
-        let [jy, jm, jd] = date.split('/').map(Number);
-        let g = jalaali.toGregorian(jy, jm, jd);
-        return `${g.gy}-${g.gm.toString().padStart(2, '0')}-${g.gd.toString().padStart(2, '0')}` + (time ? `T${time}` : '');
+        var parts = jalaliDateTime.split(' ');
+        var date = parts[0].split('/');
+        var g = window.jalaali.toGregorian(Number(date[0]), Number(date[1]), Number(date[2]));
+        return g.gy + '-' + (g.gm < 10 ? '0' : '') + g.gm + '-' + (g.gd < 10 ? '0' : '') + g.gd + (parts[1] ? 'T' + parts[1] : '');
     }
 
     function renderExams() {
@@ -179,7 +206,6 @@
         document.getElementById('examForm').reset();
         $("#start_date, #end_date").val('');
         document.getElementById('exam_id').value = '';
-        document.getElementById('cancelEdit').style.display = '';
         initDatePickers();
     };
 
@@ -240,7 +266,6 @@
         $("#start_date").val(toJalali(exam.start));
         $("#end_date").val(toJalali(exam.end));
         initDatePickers();
-        document.getElementById('cancelEdit').style.display = '';
     };
 
     // لغو ویرایش یا افزودن
