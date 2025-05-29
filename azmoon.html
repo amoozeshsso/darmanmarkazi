@@ -150,8 +150,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!startAtPersian) return showError('تاریخ شروع آزمون الزامی است.');
 
-    const startAt = new persianDate.fromString(startAtPersian).toDate().toISOString();
-    const endAt = endAtPersian ? new persianDate.fromString(endAtPersian).toDate().toISOString() : null;
+    let startAt, endAt;
+    try {
+      startAt = new persianDate(startAtPersian).toDate().toISOString();
+      endAt = endAtPersian ? new persianDate(endAtPersian).toDate().toISOString() : null;
+    } catch (err) {
+      return showError('خطا در تبدیل تاریخ. لطفاً تاریخ را صحیح وارد کنید.');
+    }
 
     const id = editIdInput.value;
 
@@ -167,20 +172,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     showLoading(true);
-    if (id) {
-      await supabase.from('exams').update(examData).eq('id', id);
-      showSuccess('آزمون با موفقیت ویرایش شد');
-    } else {
-      await supabase.from('exams').insert([examData]);
-      showSuccess('آزمون جدید اضافه شد');
+    try {
+      if (id) {
+        await supabase.from('exams').update(examData).eq('id', id);
+        showSuccess('آزمون با موفقیت ویرایش شد');
+      } else {
+        await supabase.from('exams').insert([examData]);
+        showSuccess('آزمون جدید اضافه شد');
+      }
+      form.reset();
+      $('#startAtPersian').val('');
+      $('#endAtPersian').val('');
+      editIdInput.value = '';
+      await loadExams();
+    } catch (err) {
+      showError('خطا در ذخیره آزمون: ' + err.message);
     }
-
-    form.reset();
-    $('#startAtPersian').val('');
-    $('#endAtPersian').val('');
-    editIdInput.value = '';
     showLoading(false);
-    await loadExams();
   });
 
   list.addEventListener('click', async e => {
