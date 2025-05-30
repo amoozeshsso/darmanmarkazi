@@ -120,8 +120,8 @@
         <a href="admin_exam.html" class="back-btn">بازگشت به منوی مدیریت</a>
         <h1>ویرایش صفحه اصلی سایت</h1>
         <div class="form-group">
-            <label for="welcome">پیام خوش آمدگویی:</label>
-            <textarea id="welcome"></textarea>
+            <label for="welcome_text">پیام خوش آمدگویی:</label>
+            <textarea id="welcome_text"></textarea>
         </div>
         <div class="form-group">
             <label for="mainImage">عکس صفحه اصلی (آپلود از سیستم):</label>
@@ -199,7 +199,7 @@
 
             if (error || !data) return;
 
-            document.getElementById('welcome').value = data.welcome || '';
+            document.getElementById('welcome_text').value = data.welcome_text || '';
             document.getElementById('mainImageUrl').value = data.image_url || '';
             if (data.image_url) {
                 document.getElementById('imgPreview').src = data.image_url;
@@ -228,11 +228,11 @@
         });
 
         async function saveContent() {
-            const welcome = document.getElementById('welcome').value;
+            const welcome_text = document.getElementById('welcome_text).value;
             const mainImageUrl = document.getElementById('mainImageUrl').value;
             let updates = {
                 id: 1,
-                welcome,
+                welcome_text,
                 image_url: mainImageUrl
             };
             for (let i = 1; i <= linkCount; i++) {
