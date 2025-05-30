@@ -231,10 +231,10 @@
                     // تعداد دفعات مجاز و شرکت‌کرده را بگیر
                     const attempts = await getUserAttempts(exam.id, user_id);
                     const maxAttempts = exam.max_attempts || '-';
+                    // فقط دفعات مجاز نمایش داده می‌شود
                     const attemptsMsg = `
                         <div class="exam-attempts">
-                            دفعات مجاز شرکت: ${maxAttempts} <br>
-                            دفعات شرکت‌کرده شما: ${attempts}
+                            دفعات مجاز شرکت: ${maxAttempts}
                             ${maxAttempts !== '-' && attempts >= maxAttempts ? '<br><span style="color:#c0392b;">شما به سقف مجاز شرکت رسیده‌اید.</span>' : ''}
                         </div>
                     `;
