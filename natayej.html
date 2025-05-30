@@ -5,6 +5,7 @@
     <title>مشاهده نتایج آزمون</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -108,141 +109,133 @@
     </div>
 
     <script>
-const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let userMap = {};
-let resultsSummary = [];
-let currentExamTitle = "";
-let currentPassMark = 0;
+        let userMap = {};
+        let resultsSummary = [];
+        let currentExamTitle = "";
+        let currentPassMark = 0;
 
-window.onload = async () => {
-    await loadUserMap();
-    await loadExams();
-};
+        window.onload = async () => {
+            await loadUserMap();
+            await loadExams();
+        };
 
-async function loadUserMap() {
-    const { data: users } = await supabase
-        .from('users')
-        .select('id, username');
-    userMap = {};
-    if (users) {
-        users.forEach(u => {
-            userMap[u.id] = u.username;
-        });
-    }
-}
-
-async function loadExams() {
-    const { data: exams } = await supabase
-        .from('exams')
-        .select('id, title, pass_mark')
-        .order('id', { ascending: false });
-    const select = document.getElementById('examSelect');
-    select.innerHTML = '<option value="">-- آزمون را انتخاب کنید --</option>';
-    if (exams) {
-        exams.forEach(exam => {
-            const opt = document.createElement('option');
-            opt.value = exam.id;
-            opt.textContent = exam.title;
-            opt.setAttribute('data-passmark', exam.pass_mark || 0);
-            select.appendChild(opt);
-        });
-    }
-    select.onchange = () => {
-        const passMark = select.options[select.selectedIndex].getAttribute('data-passmark');
-        loadResults(select.value, select.options[select.selectedIndex].textContent, passMark);
-    };
-}
-
-async function loadResults(examId, examTitle, passMark) {
-    document.getElementById('msg').textContent = '';
-    document.getElementById('resultsTable').innerHTML = '';
-    document.getElementById('downloadBtn').style.display = "none";
-    if (!examId) return;
-    currentExamTitle = examTitle;
-    currentPassMark = Number(passMark) || 0;
-
-    // همه رکوردهای شرکت در آزمون را بگیر
-    const { data: results, error } = await supabase
-        .from('exam_results')
-        .select('user_id, score')
-        .eq('exam_id', Number(examId));
-
-    if (error || !results || results.length === 0) {
-        document.getElementById('msg').textContent = 'نتیجه‌ای برای این آزمون یافت نشد.';
-        resultsSummary = [];
-        return;
-    }
-
-    // ساخت خروجی خلاصه برای هر کاربر
-    const userStats = {};
-    results.forEach(row => {
-        if (!userStats[row.user_id]) {
-            userStats[row.user_id] = { count: 0, maxScore: 0 };
+        async function loadUserMap() {
+            const { data: users } = await supabase
+                .from('users')
+                .select('id, username');
+            userMap = {};
+            if (users) {
+                users.forEach(u => {
+                    userMap[u.id] = u.username;
+                });
+            }
         }
-        userStats[row.user_id].count++;
-        if (row.score > userStats[row.user_id].maxScore) {
-            userStats[row.user_id].maxScore = row.score;
+
+        async function loadExams() {
+            const { data: exams } = await supabase
+                .from('exams')
+                .select('id, title, pass_mark')
+                .order('id', { ascending: false });
+            const select = document.getElementById('examSelect');
+            select.innerHTML = '<option value="">-- آزمون را انتخاب کنید --</option>';
+            if (exams) {
+                exams.forEach(exam => {
+                    const opt = document.createElement('option');
+                    opt.value = exam.id;
+                    opt.textContent = exam.title;
+                    opt.setAttribute('data-passmark', exam.pass_mark || 0);
+                    select.appendChild(opt);
+                });
+            }
+            select.onchange = () => {
+                const passMark = select.options[select.selectedIndex].getAttribute('data-passmark');
+                loadResults(select.value, select.options[select.selectedIndex].textContent, passMark);
+            };
         }
-    });
 
-    // ساخت آرایه نهایی برای نمایش و اکسل
-    resultsSummary = Object.keys(userStats).map((user_id) => {
-        const username = userMap[user_id] || 'نامشخص';
-        const count = userStats[user_id].count;
-        const maxScore = userStats[user_id].maxScore;
-        const status = maxScore >= currentPassMark ? 'قبول' : 'رد';
-        return { username, count, maxScore, status };
-    });
+        async function loadResults(examId, examTitle, passMark) {
+            document.getElementById('msg').textContent = '';
+            document.getElementById('resultsTable').innerHTML = '';
+            document.getElementById('downloadBtn').style.display = "none";
+            if (!examId) return;
+            currentExamTitle = examTitle;
+            currentPassMark = Number(passMark) || 0;
 
-    // نمایش جدول
-    let html = `
-        <table style="font-family: Tahoma, Vazirmatn, Tahoma, sans-serif;">
-            <tr>
-                <th>ردیف</th>
-                <th>نام کاربری</th>
-                <th>تعداد دفعات شرکت</th>
-                <th>بیشترین نمره</th>
-                <th>وضعیت</th>
-            </tr>
-    `;
-    resultsSummary.forEach((row, idx) => {
-        html += `
-            <tr>
-                <td>${idx + 1}</td>
-                <td>${row.username}</td>
-                <td>${row.count}</td>
-                <td>${row.maxScore}</td>
-                <td style="color:${row.status === 'قبول' ? '#27ae60' : '#c0392b'};font-weight:bold">${row.status}</td>
-            </tr>
-        `;
-    });
-    html += '</table>';
-    document.getElementById('resultsTable').innerHTML = html;
-    document.getElementById('downloadBtn').style.display = "inline-block";
-}
+            const { data: results, error } = await supabase
+                .from('exam_results')
+                .select('user_id, score')
+                .eq('exam_id', Number(examId));
 
-function downloadExcel() {
-    if (!resultsSummary.length) return;
-    // BOM برای اکسل و فونت فارسی
-    let csv = '\uFEFF';
-    csv += `ردیف,نام کاربری,تعداد دفعات شرکت,بیشترین نمره,وضعیت\n`;
-    resultsSummary.forEach((row, idx) => {
-        csv += `${idx + 1},${row.username},${row.count},${row.maxScore},${row.status}\n`;
-    });
-    const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `نتایج آزمون ${currentExamTitle}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-</script>
+            if (error || !results || results.length === 0) {
+                document.getElementById('msg').textContent = 'نتیجه‌ای برای این آزمون یافت نشد.';
+                resultsSummary = [];
+                return;
+            }
 
+            // ساخت خروجی خلاصه برای هر کاربر
+            const userStats = {};
+            results.forEach(row => {
+                if (!userStats[row.user_id]) {
+                    userStats[row.user_id] = { count: 0, maxScore: 0 };
+                }
+                userStats[row.user_id].count++;
+                if (row.score > userStats[row.user_id].maxScore) {
+                    userStats[row.user_id].maxScore = row.score;
+                }
+            });
+
+            resultsSummary = Object.keys(userStats).map((user_id) => {
+                const username = userMap[user_id] || 'نامشخص';
+                const count = userStats[user_id].count;
+                const maxScore = userStats[user_id].maxScore;
+                const status = maxScore >= currentPassMark ? 'قبول' : 'رد';
+                return { username, count, maxScore, status };
+            });
+
+            let html = `
+                <table style="font-family: Tahoma, Vazirmatn, Tahoma, sans-serif;">
+                    <tr>
+                        <th>ردیف</th>
+                        <th>نام کاربری</th>
+                        <th>تعداد دفعات شرکت</th>
+                        <th>بیشترین نمره</th>
+                        <th>وضعیت</th>
+                    </tr>
+            `;
+            resultsSummary.forEach((row, idx) => {
+                html += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td>${row.username}</td>
+                        <td>${row.count}</td>
+                        <td>${row.maxScore}</td>
+                        <td style="color:${row.status === 'قبول' ? '#27ae60' : '#c0392b'};font-weight:bold">${row.status}</td>
+                    </tr>
+                `;
+            });
+            html += '</table>';
+            document.getElementById('resultsTable').innerHTML = html;
+            document.getElementById('downloadBtn').style.display = "inline-block";
+        }
+
+        function downloadExcel() {
+            if (!resultsSummary.length) return;
+            const data = resultsSummary.map((row, idx) => ({
+                "ردیف": idx + 1,
+                "نام کاربری": row.username,
+                "تعداد دفعات شرکت": row.count,
+                "بیشترین نمره": row.maxScore,
+                "وضعیت": row.status
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "نتایج آزمون");
+            XLSX.writeFile(wb, `نتایج آزمون ${currentExamTitle}.xlsx`);
+        }
+    </script>
 </body>
 </html>
