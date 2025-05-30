@@ -158,7 +158,7 @@
             if (!examId) return;
             currentExamTitle = examTitle;
             const { data: results, error } = await supabase
-                .from('Exam_results')
+                .from('exam_results')
                 .select('*')
                 .eq('exam_id', Number(examId))
                 .order('submitted_at', { ascending: false });
