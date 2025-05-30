@@ -129,8 +129,8 @@
             <img id="imgPreview" class="img-preview" style="display:none;" />
         </div>
         <div class="form-group">
-            <label for="mainImageUrl">آدرس عکس (اختیاری، اگر عکس اینترنتی داری):</label>
-            <input type="text" id="mainImageUrl" placeholder="https://...">
+            <label for="image_url">آدرس عکس (اختیاری، اگر عکس اینترنتی داری):</label>
+            <input type="text" id="image_url" placeholder="https://...">
         </div>
         <div class="form-group">
             <label>لینک‌ها:</label>
@@ -200,7 +200,7 @@
             if (error || !data) return;
 
             document.getElementById('welcome_text').value = data.welcome_text || '';
-            document.getElementById('mainImageUrl').value = data.image_url || '';
+            document.getElementById('image_url').value = data.image_url || '';
             if (data.image_url) {
                 document.getElementById('imgPreview').src = data.image_url;
                 document.getElementById('imgPreview').style.display = 'block';
@@ -209,7 +209,6 @@
             for (let i = 1; i <= linkCount; i++) {
                 document.getElementById(`link${i}_text`).value = data[`link${i}_text`] || '';
                 document.getElementById(`link${i}_url`).value = data[`link${i}_url`] || '';
-                // مقدار exam_id برای هر لینک را ست کن
                 if (data[`link${i}_exam_id`]) {
                     document.getElementById(`link${i}_exam_id`).value = data[`link${i}_exam_id`];
                 }
@@ -228,12 +227,12 @@
         });
 
         async function saveContent() {
-            const welcome_text = document.getElementById('welcome_text).value;
-            const mainImageUrl = document.getElementById('mainImageUrl').value;
+            const welcome_text = document.getElementById('welcome_text').value;
+            const image_url = document.getElementById('image_url').value;
             let updates = {
                 id: 1,
                 welcome_text,
-                image_url: mainImageUrl
+                image_url
             };
             for (let i = 1; i <= linkCount; i++) {
                 updates[`link${i}_text`] = document.getElementById(`link${i}_text`).value;
@@ -246,7 +245,7 @@
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
                 const fileExt = file.name.split('.').pop();
-                const fileName = `main_image_${Date.now()}.${fileExt}`;
+                const fileName = `main-image-${Date.now()}.${fileExt}`;
                 const { data: uploadData, error: uploadError } = await supabase
                     .storage.from('main-images')
                     .upload(fileName, file, { upsert: true });
