@@ -96,7 +96,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="admin.html" class="back-link">بازگشت به منوی مدیریت</a>
+        <a href="admin_exam.html" class="back-link">بازگشت به منوی مدیریت</a>
         <h1>مشاهده نتایج آزمون</h1>
         <label class="select-label" for="examSelect">انتخاب آزمون:</label>
         <select id="examSelect">
@@ -159,10 +159,14 @@
             if (!examId) return;
             currentExamTitle = examTitle;
             const { data: results, error } = await supabase
-                .from('exam_attempts')
+                .from('Exam_results')
                 .select('*')
-                .eq('exam_id', examId)
+                .eq('exam_id', Number(examId))
                 .order('submitted_at', { ascending: false });
+
+            // برای دیباگ: ببین دیتا می‌آید یا نه
+            // console.log('examId:', examId, 'results:', results, 'error:', error);
+
             if (error || !results || results.length === 0) {
                 document.getElementById('msg').textContent = 'نتیجه‌ای برای این آزمون یافت نشد.';
                 resultsCache = [];
