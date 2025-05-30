@@ -99,11 +99,12 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- فرض: user_id کاربر فعلی را از session یا localStorage می‌گیریم ---
+        // --- گرفتن user_id کاربر فعلی ---
         const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
         if (!user_id) {
             alert('کاربر شناسایی نشد. لطفاً وارد شوید.');
-            // window.location.href = 'login.html';
+            window.location.href = 'login.html'; // آدرس صفحه ورود شما
+            throw new Error('User not logged in');
         }
 
         // --- بارگذاری اطلاعات صفحه ---
@@ -174,40 +175,54 @@
             return !!data;
         }
 
-        // --- بارگذاری لیست آزمون‌های فعال ---
+        // --- بارگذاری لیست آزمون‌های فعال فقط برای کاربران مجاز ---
         async function loadExams() {
-            const { data, error } = await supabase
+            const { data: exams, error } = await supabase
                 .from('exams')
                 .select('*')
                 .eq('active', true)
                 .order('start_at', { ascending: false });
 
             const examListDiv = document.getElementById('examList');
-            if (!data || data.length === 0) {
+            if (!exams || exams.length === 0) {
                 examListDiv.innerHTML = '<div>هیچ آزمون فعالی وجود ندارد.</div>';
                 return;
             }
 
             examListDiv.innerHTML = '';
-            data.forEach(exam => {
-                const examDiv = document.createElement('div');
-                examDiv.className = 'exam-item';
-                examDiv.innerHTML = `
-                    <div class="exam-title">${exam.title}</div>
-                    <div class="exam-details">
-                        زمان شروع: ${exam.start_at ? new Date(exam.start_at).toLocaleString('fa-IR') : '-'}
-                        <br>
-                        زمان پایان: ${exam.end_at ? new Date(exam.end_at).toLocaleString('fa-IR') : '-'}
-                        <br>
-                        مدت آزمون: ${exam.duration_minutes || '-'} دقیقه
-                        <br>
-                        تعداد دفعات مجاز شرکت: ${exam.max_attempts || '-'}
-                        <br>
-                        حدنصاب قبولی: ${exam.pass_mark || '-'}
-                    </div>
-                `;
-                examListDiv.appendChild(examDiv);
-            });
+            let hasAnyExam = false;
+            for (const exam of exams) {
+                const { data: allowed } = await supabase
+                    .from('exam_users')
+                    .select('id')
+                    .eq('exam_id', exam.id)
+                    .eq('user_id', user_id)
+                    .maybeSingle();
+
+                if (allowed) {
+                    hasAnyExam = true;
+                    const examDiv = document.createElement('div');
+                    examDiv.className = 'exam-item';
+                    examDiv.innerHTML = `
+                        <div class="exam-title">${exam.title}</div>
+                        <div class="exam-details">
+                            زمان شروع: ${exam.start_at ? new Date(exam.start_at).toLocaleString('fa-IR') : '-'}
+                            <br>
+                            زمان پایان: ${exam.end_at ? new Date(exam.end_at).toLocaleString('fa-IR') : '-'}
+                            <br>
+                            مدت آزمون: ${exam.duration_minutes || '-'} دقیقه
+                            <br>
+                            تعداد دفعات مجاز شرکت: ${exam.max_attempts || '-'}
+                            <br>
+                            حدنصاب قبولی: ${exam.pass_mark || '-'}
+                        </div>
+                    `;
+                    examListDiv.appendChild(examDiv);
+                }
+            }
+            if (!hasAnyExam) {
+                examListDiv.innerHTML = '<div>هیچ آزمون مجازی برای شما وجود ندارد.</div>';
+            }
         }
     </script>
 </body>
