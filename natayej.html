@@ -87,6 +87,35 @@
         .download-btn:hover {
             background: #1c5980;
         }
+        .delete-btn {
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            padding: 3px 8px;
+            cursor: pointer;
+            margin: 0 2px;
+            transition: background 0.2s;
+        }
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        .delete-all-btn {
+            margin-top: 18px;
+            padding: 8px 26px;
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline-block;
+        }
+        .delete-all-btn:hover {
+            background: #c0392b;
+        }
         .msg {
             margin-top: 30px;
             color: #b35c00;
@@ -105,6 +134,7 @@
         </select>
         <button class="download-btn" onclick="downloadExcel()" style="display:none;" id="downloadBtn">دانلود اکسل نتایج</button>
         <div id="resultsTable"></div>
+        <button class="delete-all-btn" style="display:none;" id="deleteAllBtn" onclick="deleteAllResults()">حذف همه نتایج این آزمون</button>
         <div class="msg" id="msg"></div>
     </div>
 
@@ -117,6 +147,8 @@
         let resultsSummary = [];
         let currentExamTitle = "";
         let currentPassMark = 0;
+        let currentExamId = null;
+        let allResults = []; // برای حذف تکی
 
         window.onload = async () => {
             await loadUserMap();
@@ -161,14 +193,19 @@
             document.getElementById('msg').textContent = '';
             document.getElementById('resultsTable').innerHTML = '';
             document.getElementById('downloadBtn').style.display = "none";
+            document.getElementById('deleteAllBtn').style.display = "none";
             if (!examId) return;
             currentExamTitle = examTitle;
             currentPassMark = Number(passMark) || 0;
+            currentExamId = Number(examId);
 
+            // همه رکوردهای شرکت در آزمون را بگیر
             const { data: results, error } = await supabase
                 .from('exam_results')
-                .select('user_id, score')
+                .select('id, user_id, score')
                 .eq('exam_id', Number(examId));
+
+            allResults = results || [];
 
             if (error || !results || results.length === 0) {
                 document.getElementById('msg').textContent = 'نتیجه‌ای برای این آزمون یافت نشد.';
@@ -180,12 +217,13 @@
             const userStats = {};
             results.forEach(row => {
                 if (!userStats[row.user_id]) {
-                    userStats[row.user_id] = { count: 0, maxScore: 0 };
+                    userStats[row.user_id] = { count: 0, maxScore: 0, ids: [] };
                 }
                 userStats[row.user_id].count++;
                 if (row.score > userStats[row.user_id].maxScore) {
                     userStats[row.user_id].maxScore = row.score;
                 }
+                userStats[row.user_id].ids.push(row.id); // همه id رکوردهای این کاربر
             });
 
             resultsSummary = Object.keys(userStats).map((user_id) => {
@@ -193,7 +231,8 @@
                 const count = userStats[user_id].count;
                 const maxScore = userStats[user_id].maxScore;
                 const status = maxScore >= currentPassMark ? 'قبول' : 'رد';
-                return { username, count, maxScore, status };
+                const ids = userStats[user_id].ids;
+                return { username, user_id, count, maxScore, status, ids };
             });
 
             let html = `
@@ -204,6 +243,7 @@
                         <th>تعداد دفعات شرکت</th>
                         <th>بیشترین نمره</th>
                         <th>وضعیت</th>
+                        <th>حذف</th>
                     </tr>
             `;
             resultsSummary.forEach((row, idx) => {
@@ -214,12 +254,47 @@
                         <td>${row.count}</td>
                         <td>${row.maxScore}</td>
                         <td style="color:${row.status === 'قبول' ? '#27ae60' : '#c0392b'};font-weight:bold">${row.status}</td>
+                        <td>
+                            <button class="delete-btn" title="حذف نتایج این کاربر" onclick="deleteUserResults('${row.user_id}')">🗑️</button>
+                        </td>
                     </tr>
                 `;
             });
             html += '</table>';
             document.getElementById('resultsTable').innerHTML = html;
             document.getElementById('downloadBtn').style.display = "inline-block";
+            document.getElementById('deleteAllBtn').style.display = "inline-block";
+        }
+
+        // حذف همه نتایج یک کاربر برای آزمون انتخابی
+        async function deleteUserResults(user_id) {
+            if (!currentExamId || !user_id) return;
+            if (!confirm('آیا مطمئن هستید که می‌خواهید تمام نتایج این کاربر را حذف کنید؟')) return;
+            const { error } = await supabase
+                .from('exam_results')
+                .delete()
+                .eq('exam_id', currentExamId)
+                .eq('user_id', user_id);
+            if (error) {
+                alert('خطا در حذف!');
+            } else {
+                await loadResults(currentExamId, currentExamTitle, currentPassMark);
+            }
+        }
+
+        // حذف همه نتایج آزمون انتخابی
+        async function deleteAllResults() {
+            if (!currentExamId) return;
+            if (!confirm('آیا مطمئن هستید که می‌خواهید تمام نتایج این آزمون را حذف کنید؟')) return;
+            const { error } = await supabase
+                .from('exam_results')
+                .delete()
+                .eq('exam_id', currentExamId);
+            if (error) {
+                alert('خطا در حذف!');
+            } else {
+                await loadResults(currentExamId, currentExamTitle, currentPassMark);
+            }
         }
 
         function downloadExcel() {
