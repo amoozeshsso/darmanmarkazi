@@ -200,9 +200,9 @@
             if (error || !data) return;
 
             document.getElementById('welcome').value = data.welcome || '';
-            document.getElementById('mainImageUrl').value = data.main_image_url || '';
-            if (data.main_image_url) {
-                document.getElementById('imgPreview').src = data.main_image_url;
+            document.getElementById('mainImageUrl').value = data.image_url || '';
+            if (data.image_url) {
+                document.getElementById('imgPreview').src = data.image_url;
                 document.getElementById('imgPreview').style.display = 'block';
             }
 
@@ -233,7 +233,7 @@
             let updates = {
                 id: 1,
                 welcome,
-                main_image_url: mainImageUrl
+                image_url: mainImageUrl
             };
             for (let i = 1; i <= linkCount; i++) {
                 updates[`link${i}_text`] = document.getElementById(`link${i}_text`).value;
@@ -257,7 +257,7 @@
                 const { data: publicUrlData } = supabase
                     .storage.from('site-content')
                     .getPublicUrl(fileName);
-                updates.main_image_url = publicUrlData.publicUrl;
+                updates.image_url = publicUrlData.publicUrl;
             }
 
             // ذخیره در دیتابیس
