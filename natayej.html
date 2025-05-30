@@ -108,7 +108,6 @@
     </div>
 
     <script>
-        // --- Supabase Config ---
         const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -122,22 +121,19 @@
             await loadExams();
         };
 
-        // گرفتن لیست کاربران و ساخت map
         async function loadUserMap() {
+            // گرفتن لیست کاربران و ساخت map
             const { data: users, error } = await supabase
                 .from('users')
                 .select('id, username');
-            if (error) {
-                document.getElementById('msg').textContent = 'خطا در دریافت کاربران';
-                return;
-            }
             userMap = {};
-            users.forEach(u => {
-                userMap[u.id] = u.username;
-            });
+            if (users) {
+                users.forEach(u => {
+                    userMap[u.id] = u.username;
+                });
+            }
         }
 
-        // بارگذاری لیست آزمون‌ها
         async function loadExams() {
             const { data: exams, error } = await supabase
                 .from('exams')
@@ -156,7 +152,6 @@
             select.onchange = () => loadResults(select.value, select.options[select.selectedIndex].textContent);
         }
 
-        // بارگذاری نتایج آزمون انتخاب شده
         async function loadResults(examId, examTitle) {
             document.getElementById('msg').textContent = '';
             document.getElementById('resultsTable').innerHTML = '';
@@ -199,7 +194,6 @@
             document.getElementById('downloadBtn').style.display = "inline-block";
         }
 
-        // ساخت و دانلود اکسل نتایج
         function downloadExcel() {
             if (!resultsCache.length) return;
             let csv = `ردیف,نام کاربری,نمره,تاریخ ارسال\n`;
