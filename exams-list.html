@@ -48,6 +48,11 @@
             color: #555;
             font-size: 0.96rem;
         }
+        .exam-attempts {
+            color: #b35c00;
+            font-size: 0.97rem;
+            margin: 5px 0 0 0;
+        }
         .start-btn {
             background: #4e54c8;
             color: #fff;
@@ -59,7 +64,11 @@
             align-self: flex-start;
             transition: background 0.2s;
         }
-        .start-btn:hover {
+        .start-btn[disabled] {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+        .start-btn:hover:enabled {
             background: #1c5980;
         }
         .resources-title {
@@ -219,6 +228,17 @@
 
                 if (allowed) {
                     hasAnyExam = true;
+                    // تعداد دفعات مجاز و شرکت‌کرده را بگیر
+                    const attempts = await getUserAttempts(exam.id, user_id);
+                    const maxAttempts = exam.max_attempts || '-';
+                    const attemptsMsg = `
+                        <div class="exam-attempts">
+                            دفعات مجاز شرکت: ${maxAttempts} <br>
+                            دفعات شرکت‌کرده شما: ${attempts}
+                            ${maxAttempts !== '-' && attempts >= maxAttempts ? '<br><span style="color:#c0392b;">شما به سقف مجاز شرکت رسیده‌اید.</span>' : ''}
+                        </div>
+                    `;
+                    const disabled = maxAttempts !== '-' && attempts >= maxAttempts ? 'disabled' : '';
                     const examDiv = document.createElement('div');
                     examDiv.className = 'exam-item';
                     examDiv.innerHTML = `
@@ -230,11 +250,10 @@
                             <br>
                             مدت آزمون: ${exam.duration_minutes || '-'} دقیقه
                             <br>
-                            تعداد دفعات مجاز شرکت: ${exam.max_attempts || '-'}
-                            <br>
                             حدنصاب قبولی: ${exam.pass_mark || '-'}
                         </div>
-                        <button class="start-btn" onclick="startExam(${exam.id})">شروع آزمون</button>
+                        ${attemptsMsg}
+                        <button class="start-btn" onclick="startQuiz(${exam.id}, ${maxAttempts}, ${attempts})" ${disabled}>شروع آزمون</button>
                     `;
                     examListDiv.appendChild(examDiv);
                 }
@@ -244,8 +263,23 @@
             }
         }
 
+        // --- گرفتن تعداد دفعات شرکت کاربر در آزمون ---
+        async function getUserAttempts(examId, userId) {
+            const { count, error } = await supabase
+                .from('exam_attempts')
+                .select('id', { count: 'exact', head: true })
+                .eq('exam_id', examId)
+                .eq('user_id', userId);
+
+            return typeof count === 'number' ? count : 0;
+        }
+
         // --- هدایت به صفحه آزمون ---
-        function startExam(examId) {
+        function startQuiz(examId, maxAttempts, attempts) {
+            if (maxAttempts !== '-' && attempts >= maxAttempts) {
+                alert('شما به سقف مجاز شرکت در این آزمون رسیده‌اید.');
+                return;
+            }
             window.location.href = `quiz.html?exam_id=${examId}`;
         }
     </script>
