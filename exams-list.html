@@ -265,15 +265,14 @@
 
         // --- گرفتن تعداد دفعات شرکت کاربر در آزمون ---
         async function getUserAttempts(examId, userId) {
-    const { data, error } = await supabase
-        .from('exam_attempts')
-        .select('id')
-        .eq('exam_id', examId)
-        .eq('user_id', userId);
+            const { data, error } = await supabase
+                .from('exam_attempts')
+                .select('id')
+                .eq('exam_id', examId)
+                .eq('user_id', userId);
 
-    return data ? data.length : 0;
-}
-
+            return data ? data.length : 0;
+        }
 
         // --- هدایت به صفحه آزمون ---
         function startQuiz(examId, maxAttempts, attempts) {
