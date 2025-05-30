@@ -14,7 +14,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 750px;
+            max-width: 800px;
             margin: 30px auto;
             background: #fff;
             border-radius: 10px;
@@ -52,15 +52,34 @@
             font-weight: bold;
             color: #1c5980;
         }
+        .resources-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px 32px;
+            margin: 10px 0 30px 0;
+        }
         .resource-link {
             display: block;
-            margin: 7px 0;
+            background: #e3eafc;
             color: #3366cc;
             text-decoration: none;
             font-size: 1.01rem;
+            padding: 10px 18px;
+            border-radius: 7px;
+            min-width: 170px;
+            text-align: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            transition: background 0.2s;
         }
         .resource-link:hover {
+            background: #d0dbf7;
             text-decoration: underline;
+        }
+        @media (max-width: 600px) {
+            .resources-list {
+                flex-direction: column;
+                gap: 10px 0;
+            }
         }
     </style>
 </head>
@@ -69,7 +88,7 @@
         <h1>لیست آزمون‌های فعال</h1>
         <div id="resourcesSection">
             <div class="resources-title">منابع آزمون (فقط منابع مجاز برای شما نمایش داده می‌شود):</div>
-            <div id="resources-list"></div>
+            <div class="resources-list" id="resources-list"></div>
         </div>
         <div class="exam-list" id="examList"></div>
     </div>
@@ -81,21 +100,20 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // --- فرض: user_id کاربر فعلی را از session یا localStorage می‌گیریم ---
-        // این خط را با منطق واقعی پروژه خود جایگزین کن
         const user_id = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
         if (!user_id) {
             alert('کاربر شناسایی نشد. لطفاً وارد شوید.');
-            // می‌توانی به صفحه ورود ریدایرکت کنی
+            // window.location.href = 'login.html';
         }
 
         // --- بارگذاری اطلاعات صفحه ---
         window.onload = async () => {
-            await loadSiteContent();
+            await loadSiteResources();
             await loadExams();
         };
 
         // --- بارگذاری منابع ---
-        async function loadSiteContent() {
+        async function loadSiteResources() {
             const { data, error } = await supabase
                 .from('site_content')
                 .select('*')
@@ -104,7 +122,6 @@
 
             if (!data) return;
 
-            // فقط منابع (لینک‌ها) با کنترل دسترسی
             showResourceLinks(data);
         }
 
@@ -112,6 +129,8 @@
         async function showResourceLinks(siteData) {
             const container = document.getElementById('resources-list');
             container.innerHTML = '';
+            const promises = [];
+
             for (let i = 1; i <= 5; i++) {
                 const linkText = siteData[`link${i}_text`];
                 const linkUrl = siteData[`link${i}_url`];
@@ -124,10 +143,14 @@
                     addResourceLink(linkText, linkUrl, container);
                 } else {
                     // فقط اگر کاربر برای این آزمون مجاز است
-                    const allowed = await isUserAllowedForExam(linkExamId);
-                    if (allowed) addResourceLink(linkText, linkUrl, container);
+                    promises.push(
+                        isUserAllowedForExam(linkExamId).then(allowed => {
+                            if (allowed) addResourceLink(linkText, linkUrl, container);
+                        })
+                    );
                 }
             }
+            await Promise.all(promises);
         }
 
         function addResourceLink(text, url, container) {
