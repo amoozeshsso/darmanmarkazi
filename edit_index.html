@@ -1,285 +1,154 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>ویرایش صفحه اصلی سایت</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Vazirmatn', Tahoma, sans-serif;
-            background: #f8f8f8;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 600px;
-            margin: 30px auto;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-            padding: 30px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-        }
-        .form-group {
-            margin-bottom: 22px;
-        }
-        label {
-            display: block;
-            margin-bottom: 7px;
-            color: #34495e;
-            font-weight: bold;
-        }
-        input[type="text"], textarea, select {
-            width: 100%;
-            padding: 11px;
-            border: 2px solid #bdc3c7;
-            border-radius: 6px;
-            font-size: 16px;
-            margin-bottom: 2px;
-        }
-        textarea {
-            resize: vertical;
-            min-height: 60px;
-        }
-        .link-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 10px;
-        }
-        .link-row input[type="text"] {
-            flex: 2;
-        }
-        .link-row select {
-            flex: 1.2;
-            min-width: 120px;
-        }
-        .save-btn {
-            background: #2980b9;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 18px;
-            transition: background 0.3s;
-            margin-top: 10px;
-        }
-        .save-btn:hover {
-            background: #1c5980;
-        }
-        .message {
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 6px;
-            display: none;
-        }
-        .success {
-            background: #2ecc71;
-            color: white;
-        }
-        .error {
-            background: #e74c3c;
-            color: white;
-        }
-        .img-preview {
-            margin: 10px 0;
-            max-width: 180px;
-            border-radius: 7px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-        }
-        .back-btn {
-            display: inline-block;
-            margin-bottom: 18px;
-            background: #4e54c8;
-            color: #fff;
-            padding: 10px 28px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .back-btn:hover {
-            background: #1c5980;
-            color: #fff;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>ویرایش صفحه اصلی و منابع</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.42.3/dist/umd/supabase.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Vazirmatn', Tahoma, sans-serif; background: #f8f8f8; margin: 0; padding: 0; }
+    .container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 12px; padding: 30px 25px; box-shadow: 0 3px 18px rgba(44,62,80,0.07);}
+    h1 { color: #4e54c8; margin-bottom: 30px; }
+    label { font-weight: bold; color: #2c3e50; margin-top: 18px; display: block; }
+    input, textarea, select { width: 100%; padding: 10px; margin: 6px 0 14px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+    textarea { resize: vertical; min-height: 60px; }
+    button { padding: 12px 30px; background: #4e54c8; color: #fff; border: none; border-radius: 6px; font-size: 18px; cursor: pointer; margin-top: 15px; }
+    button:hover { background: #2c3e50; }
+    .links-section { background: #f5f7fa; border-radius: 8px; padding: 15px 10px; margin-bottom: 25px; }
+    .link-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap;}
+    .link-row label { margin: 0 0 0 8px; min-width: 90px; }
+    .link-row input { width: 30%; min-width: 120px; }
+    .link-row select { width: 18%; min-width: 80px; }
+    #loading { display: none; margin: 18px 0; color: #4e54c8; font-size: 18px;}
+    #error, #success { display: none; padding: 12px; border-radius: 4px; margin: 18px 0; font-size: 16px;}
+    #error { background: #ffebee; color: #c0392b; }
+    #success { background: #e8f5e9; color: #27ae60; }
+    @media (max-width: 700px) {
+      .container { padding: 10px 2vw; }
+      .link-row { flex-direction: column; gap: 2px; }
+      .link-row input, .link-row select { width: 100%; min-width: 0; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <a href="admin_exam.html" class="back-btn">بازگشت به منوی مدیریت</a>
-        <h1>ویرایش صفحه اصلی سایت</h1>
-        <div class="form-group">
-            <label for="welcome_text">پیام خوش آمدگویی:</label>
-            <textarea id="welcome_text"></textarea>
-        </div>
-        <div class="form-group">
-            <label for="mainImage">عکس صفحه اصلی (آپلود از سیستم):</label>
-            <input type="file" id="mainImage" accept="image/*">
-            <img id="imgPreview" class="img-preview" style="display:none;" />
-        </div>
-        <div class="form-group">
-            <label for="image_url">آدرس عکس (اختیاری، اگر عکس اینترنتی داری):</label>
-            <input type="text" id="image_url" placeholder="https://...">
-        </div>
-        <div class="form-group">
-            <label>لینک‌ها:</label>
-            <div id="linksSection">
-                <!-- لینک‌ها و dropdown آزمون اینجا ساخته می‌شوند -->
-            </div>
-        </div>
-        <button class="save-btn" onclick="saveContent()">ذخیره تغییرات</button>
-        <div id="message" class="message"></div>
-    </div>
+  <div class="container">
+    <h1>ویرایش صفحه اصلی و منابع</h1>
+    <form id="contentForm" autocomplete="off">
+      <label for="welcome_text">متن خوش‌آمدگویی:</label>
+      <textarea id="welcome_text" name="welcome_text" placeholder="متن خوش آمدگویی..."></textarea>
 
-    <script>
-        const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      <label for="image_url">آدرس تصویر اصلی (اختیاری):</label>
+      <input type="text" id="image_url" name="image_url" placeholder="https://...">
 
-        const linkCount = 5; // تعداد لینک‌ها
-        let exams = [];
+      <div class="links-section">
+        <h3 style="margin-bottom:10px;">لینک‌های سایت (حداکثر ۲۰ لینک):</h3>
+        <div id="linksContainer"></div>
+      </div>
 
-        // بارگذاری آزمون‌ها و محتوا هنگام لود صفحه
-        window.onload = async () => {
-            await loadExams();
-            await loadContent();
-        };
+      <button type="submit">ذخیره تغییرات</button>
+      <div id="loading">در حال ذخیره...</div>
+      <div id="error"></div>
+      <div id="success"></div>
+    </form>
+  </div>
 
-        async function loadExams() {
-            // دریافت لیست آزمون‌ها
-            const { data, error } = await supabase
-                .from('exams')
-                .select('id, title')
-                .order('created_at', { ascending: false });
-            if (error) {
-                showMessage('خطا در دریافت آزمون‌ها: ' + error.message, false);
-                exams = [];
-                return;
-            }
-            exams = data;
-            buildLinksSection();
+  <script>
+    // --- Supabase Config ---
+    const supabase = window.supabase.createClient(
+      'https://qdccjbakfuywvdqfcoyg.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU'
+    );
+
+    // --- ایجاد فیلدهای لینک به صورت داینامیک ---
+    const linksContainer = document.getElementById('linksContainer');
+    const linkCount = 20;
+    for (let i = 1; i <= linkCount; i++) {
+      const row = document.createElement('div');
+      row.className = 'link-row';
+      row.innerHTML = `
+        <label>لینک ${i}:</label>
+        <input type="text" id="link${i}_url" name="link${i}_url" placeholder="آدرس لینک ${i}">
+        <input type="text" id="link${i}_text" name="link${i}_text" placeholder="متن لینک ${i}">
+        <input type="number" id="link${i}_exam_id" name="link${i}_exam_id" placeholder="کد آزمون (اختیاری)">
+      `;
+      linksContainer.appendChild(row);
+    }
+
+    // --- نمایش پیام ---
+    function showMsg(type, msg) {
+      document.getElementById('error').style.display = 'none';
+      document.getElementById('success').style.display = 'none';
+      if (type === 'error') {
+        document.getElementById('error').textContent = msg;
+        document.getElementById('error').style.display = 'block';
+      } else if (type === 'success') {
+        document.getElementById('success').textContent = msg;
+        document.getElementById('success').style.display = 'block';
+      }
+    }
+
+    // --- بارگذاری داده‌های فعلی سایت ---
+    async function loadContent() {
+      document.getElementById('loading').style.display = 'block';
+      const { data, error } = await supabase.from('site_content').select('*').order('id', {ascending: true}).limit(1);
+      document.getElementById('loading').style.display = 'none';
+      if (error) {
+        showMsg('error', 'خطا در دریافت اطلاعات سایت');
+        return;
+      }
+      if (data && data.length) {
+        const content = data[0];
+        document.getElementById('welcome_text').value = content.welcome_text || '';
+        document.getElementById('image_url').value = content.image_url || '';
+        for (let i = 1; i <= linkCount; i++) {
+          document.getElementById(`link${i}_url`).value = content[`link${i}_url`] || '';
+          document.getElementById(`link${i}_text`).value = content[`link${i}_text`] || '';
+          document.getElementById(`link${i}_exam_id`).value = content[`link${i}_exam_id`] || '';
         }
+        // ذخیره id رکورد برای ویرایش
+        document.getElementById('contentForm').dataset.rowId = content.id;
+      }
+    }
 
-        function buildLinksSection() {
-            const linksSection = document.getElementById('linksSection');
-            linksSection.innerHTML = '';
-            for (let i = 1; i <= linkCount; i++) {
-                const row = document.createElement('div');
-                row.className = 'link-row';
-                row.innerHTML = `
-                    <input type="text" id="link${i}_text" placeholder="عنوان لینک ${i}">
-                    <input type="text" id="link${i}_url" placeholder="آدرس لینک ${i}">
-                    <select id="link${i}_exam_id">
-                        <option value="">بدون محدودیت آزمون</option>
-                        ${exams.map(exam => `<option value="${exam.id}">${exam.title}</option>`).join('')}
-                    </select>
-                `;
-                linksSection.appendChild(row);
-            }
-        }
+    // --- ذخیره تغییرات ---
+    document.getElementById('contentForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      document.getElementById('loading').style.display = 'block';
+      showMsg('error', ''); showMsg('success', '');
 
-        async function loadContent() {
-            // فرض بر این است که فقط یک رکورد با id=1 داریم
-            const { data, error } = await supabase
-                .from('site_content')
-                .select('*')
-                .eq('id', 1)
-                .single();
+      // جمع‌آوری داده‌ها
+      const data = {
+        welcome_text: document.getElementById('welcome_text').value,
+        image_url: document.getElementById('image_url').value,
+        updated_at: new Date().toISOString()
+      };
+      for (let i = 1; i <= linkCount; i++) {
+        data[`link${i}_url`] = document.getElementById(`link${i}_url`).value;
+        data[`link${i}_text`] = document.getElementById(`link${i}_text`).value;
+        data[`link${i}_exam_id`] = document.getElementById(`link${i}_exam_id`).value || null;
+      }
 
-            if (error || !data) return;
+      // ویرایش یا درج
+      const rowId = this.dataset.rowId;
+      let res;
+      if (rowId) {
+        res = await supabase.from('site_content').update(data).eq('id', rowId);
+      } else {
+        res = await supabase.from('site_content').insert([data]);
+      }
+      document.getElementById('loading').style.display = 'none';
 
-            document.getElementById('welcome_text').value = data.welcome_text || '';
-            document.getElementById('image_url').value = data.image_url || '';
-            if (data.image_url) {
-                document.getElementById('imgPreview').src = data.image_url;
-                document.getElementById('imgPreview').style.display = 'block';
-            }
+      if (res.error) {
+        showMsg('error', 'خطا در ذخیره اطلاعات: ' + res.error.message);
+      } else {
+        showMsg('success', 'تغییرات با موفقیت ذخیره شد.');
+        if (!rowId) loadContent();
+      }
+    });
 
-            for (let i = 1; i <= linkCount; i++) {
-                document.getElementById(`link${i}_text`).value = data[`link${i}_text`] || '';
-                document.getElementById(`link${i}_url`).value = data[`link${i}_url`] || '';
-                if (data[`link${i}_exam_id`]) {
-                    document.getElementById(`link${i}_exam_id`).value = data[`link${i}_exam_id`];
-                }
-            }
-        }
-
-        document.getElementById('mainImage').addEventListener('change', async function (e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function (evt) {
-                document.getElementById('imgPreview').src = evt.target.result;
-                document.getElementById('imgPreview').style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        });
-
-        async function saveContent() {
-            const welcome_text = document.getElementById('welcome_text').value;
-            const image_url = document.getElementById('image_url').value;
-            let updates = {
-                id: 1,
-                welcome_text,
-                image_url
-            };
-            for (let i = 1; i <= linkCount; i++) {
-                updates[`link${i}_text`] = document.getElementById(`link${i}_text`).value;
-                updates[`link${i}_url`] = document.getElementById(`link${i}_url`).value;
-                updates[`link${i}_exam_id`] = document.getElementById(`link${i}_exam_id`).value || null;
-            }
-
-            // اگر عکس جدید انتخاب شده، آپلود کن
-            const fileInput = document.getElementById('mainImage');
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                const fileExt = file.name.split('.').pop();
-                const fileName = `main-image-${Date.now()}.${fileExt}`;
-                const { data: uploadData, error: uploadError } = await supabase
-                    .storage.from('main-images')
-                    .upload(fileName, file, { upsert: true });
-                if (uploadError) {
-                    showMessage('خطا در آپلود عکس: ' + uploadError.message, false);
-                    return;
-                }
-                const { data: publicUrlData } = supabase
-                    .storage.from('main-images')
-                    .getPublicUrl(fileName);
-                updates.image_url = publicUrlData.publicUrl;
-            }
-
-            // ذخیره در دیتابیس
-            const { error } = await supabase
-                .from('site_content')
-                .upsert(updates, { onConflict: 'id' });
-
-            if (error) {
-                showMessage('خطا در ذخیره تغییرات: ' + error.message, false);
-            } else {
-                showMessage('تغییرات با موفقیت ذخیره شد.', true);
-            }
-        }
-
-        function showMessage(text, isSuccess) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${isSuccess ? 'success' : 'error'}`;
-            messageDiv.style.display = 'block';
-            setTimeout(() => {
-                messageDiv.style.display = 'none';
-            }, 5000);
-        }
-    </script>
+    // --- بارگذاری اولیه ---
+    loadContent();
+  </script>
 </body>
 </html>
