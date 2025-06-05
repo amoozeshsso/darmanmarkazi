@@ -160,6 +160,24 @@
       gap: 10px;
       justify-content: center;
     }
+    /* استایل فیلد جستجو */
+    #searchContainer {
+      margin-top: 10px;
+      text-align: center;
+    }
+    #searchInput {
+      padding: 8px;
+      width: 300px;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: inherit;
+    }
+    #searchInput:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 5px rgba(52,152,219,0.3);
+    }
   </style>
 </head>
 <body>
@@ -221,12 +239,15 @@
         <tr><td colspan="3">در حال بارگذاری کاربران...</td></tr>
       </tbody>
     </table>
+
+    <!-- فیلد جستجو اضافه شده پایین جدول -->
+    <div id="searchContainer">
+      <input type="text" id="searchInput" placeholder="جستجو بر اساس نام کاربری..." />
+    </div>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-           
-
       // Supabase Configuration
       const supabase = window.supabase.createClient(
         'https://qdccjbakfuywvdqfcoyg.supabase.co',
@@ -264,15 +285,22 @@
         }
       };
 
-      // Load Users Function
-      const loadUsers = async () => {
+      // Load Users Function with searchTerm parameter
+      const loadUsers = async (searchTerm = '') => {
         utils.showLoading(true);
         try {
-          const { data, error } = await supabase
+          let query = supabase
             .from('users')
             .select('id, username')
             .eq('role', 'user')
             .order('id');
+
+          if (searchTerm.trim() !== '') {
+            // فیلتر بر اساس نام کاربری با ilike برای جستجوی غیر حساس به حروف بزرگ و کوچک
+            query = query.ilike('username', `%${searchTerm.trim()}%`);
+          }
+
+          const { data, error } = await query;
 
           if (error) throw error;
 
@@ -478,7 +506,6 @@
             .from('users')
             .delete()
             .eq('role', 'user');
-
           if (error) throw error;
           utils.showMessage('success', 'همه کاربران  با موفقیت حذف شدند');
           await loadUsers();
@@ -490,7 +517,17 @@
         }
       };
 
-      // Initial Load
+      // Search Input Handler with debounce
+      const searchInput = document.getElementById('searchInput');
+      let searchTimeout = null;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          loadUsers(searchInput.value);
+        }, 300);
+      });
+
+      // Initial load of users without filter
       await loadUsers();
     });
   </script>
