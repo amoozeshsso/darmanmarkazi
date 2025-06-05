@@ -54,6 +54,17 @@
             margin-bottom: 20px;
             min-width: 180px;
         }
+        .search-input {
+            width: 100%;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding: 7px;
+            border-radius: 6px;
+            border: 1px solid #bbb;
+            font-size: 1.01rem;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -132,6 +143,8 @@
         <select id="examSelect">
             <option value="">-- آزمون را انتخاب کنید --</option>
         </select>
+        <!-- کادر جستجو برای نام کاربری -->
+        <input type="text" id="searchInput" class="search-input" placeholder="جستجو بر اساس نام کاربری...">
         <button class="download-btn" onclick="downloadExcel()" style="display:none;" id="downloadBtn">دانلود اکسل نتایج</button>
         <div id="resultsTable"></div>
         <button class="delete-all-btn" style="display:none;" id="deleteAllBtn" onclick="deleteAllResults()">حذف همه نتایج این آزمون</button>
@@ -145,14 +158,18 @@
 
         let userMap = {};
         let resultsSummary = [];
+        let filteredResults = [];
         let currentExamTitle = "";
         let currentPassMark = 0;
         let currentExamId = null;
-        let allResults = []; // برای حذف تکی
+        let allResults = [];
 
         window.onload = async () => {
             await loadUserMap();
             await loadExams();
+            document.getElementById('searchInput').addEventListener('input', function() {
+                filterResultsByUsername(this.value);
+            });
         };
 
         async function loadUserMap() {
@@ -199,7 +216,6 @@
             currentPassMark = Number(passMark) || 0;
             currentExamId = Number(examId);
 
-            // همه رکوردهای شرکت در آزمون را بگیر
             const { data: results, error } = await supabase
                 .from('exam_results')
                 .select('id, user_id, score')
@@ -210,10 +226,11 @@
             if (error || !results || results.length === 0) {
                 document.getElementById('msg').textContent = 'نتیجه‌ای برای این آزمون یافت نشد.';
                 resultsSummary = [];
+                filteredResults = [];
+                renderResultsTable(filteredResults);
                 return;
             }
 
-            // ساخت خروجی خلاصه برای هر کاربر
             const userStats = {};
             results.forEach(row => {
                 if (!userStats[row.user_id]) {
@@ -223,7 +240,7 @@
                 if (row.score > userStats[row.user_id].maxScore) {
                     userStats[row.user_id].maxScore = row.score;
                 }
-                userStats[row.user_id].ids.push(row.id); // همه id رکوردهای این کاربر
+                userStats[row.user_id].ids.push(row.id);
             });
 
             resultsSummary = Object.keys(userStats).map((user_id) => {
@@ -235,6 +252,23 @@
                 return { username, user_id, count, maxScore, status, ids };
             });
 
+            filteredResults = resultsSummary.slice();
+            renderResultsTable(filteredResults);
+            document.getElementById('downloadBtn').style.display = "inline-block";
+            document.getElementById('deleteAllBtn').style.display = "inline-block";
+        }
+
+        function filterResultsByUsername(query) {
+            query = (query || '').trim().toLowerCase();
+            if (!query) {
+                filteredResults = resultsSummary.slice();
+            } else {
+                filteredResults = resultsSummary.filter(row => (row.username || '').toLowerCase().includes(query));
+            }
+            renderResultsTable(filteredResults);
+        }
+
+        function renderResultsTable(data) {
             let html = `
                 <table style="font-family: Tahoma, Vazirmatn, Tahoma, sans-serif;">
                     <tr>
@@ -246,7 +280,7 @@
                         <th>حذف</th>
                     </tr>
             `;
-            resultsSummary.forEach((row, idx) => {
+            data.forEach((row, idx) => {
                 html += `
                     <tr>
                         <td>${idx + 1}</td>
@@ -262,11 +296,8 @@
             });
             html += '</table>';
             document.getElementById('resultsTable').innerHTML = html;
-            document.getElementById('downloadBtn').style.display = "inline-block";
-            document.getElementById('deleteAllBtn').style.display = "inline-block";
         }
 
-        // حذف همه نتایج یک کاربر برای آزمون انتخابی
         async function deleteUserResults(user_id) {
             if (!currentExamId || !user_id) return;
             if (!confirm('آیا مطمئن هستید که می‌خواهید تمام نتایج این کاربر را حذف کنید؟')) return;
@@ -282,7 +313,6 @@
             }
         }
 
-        // حذف همه نتایج آزمون انتخابی
         async function deleteAllResults() {
             if (!currentExamId) return;
             if (!confirm('آیا مطمئن هستید که می‌خواهید تمام نتایج این آزمون را حذف کنید؟')) return;
@@ -298,8 +328,8 @@
         }
 
         function downloadExcel() {
-            if (!resultsSummary.length) return;
-            const data = resultsSummary.map((row, idx) => ({
+            if (!filteredResults.length) return;
+            const data = filteredResults.map((row, idx) => ({
                 "ردیف": idx + 1,
                 "نام کاربری": row.username,
                 "تعداد دفعات شرکت": row.count,
