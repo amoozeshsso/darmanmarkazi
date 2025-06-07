@@ -203,7 +203,11 @@
           حذف همه کاربران 
         </button>
       </div>
-
+      <div class="form-group">
+     <button type="button" id="exportUsersExcel" class="add-btn">
+    دانلود اکسل کاربران (غیر ادمین)
+      </button>
+       </div>
       <h3 id="formTitle">افزودن کاربر جدید</h3>
       <form id="userForm">
         <input type="hidden" id="editId" />
@@ -532,6 +536,42 @@
       // Initial load of users without filter
       await loadUsers();
     });
+    document.getElementById('exportUsersExcel').onclick = async () => {
+  utils.showLoading(true);
+  try {
+    // دریافت کاربران غیرادمین
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('username, password')
+      .neq('role', 'admin')
+      .order('id');
+
+    if (error) throw error;
+
+    if (!users.length) {
+      utils.showMessage('error', 'کاربری برای دانلود یافت نشد');
+      return;
+    }
+
+    // ساخت آرایه برای اکسل
+    const ws_data = [
+      ['username', 'password'], // هدر
+      ...users.map(user => [user.username, user.password]) // داده‌ها
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Users');
+    XLSX.writeFile(wb, 'users_backup.xlsx');
+    utils.showMessage('success', 'اکسل کاربران با موفقیت دانلود شد');
+  } catch (err) {
+    utils.showMessage('error', 'خطا در دانلود اکسل کاربران');
+    console.error('Excel export error:', err);
+  } finally {
+    utils.showLoading(false);
+  }
+};
+
   </script>
 </body>
 </html>
