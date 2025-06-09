@@ -179,7 +179,7 @@
     userMap = {};
     if (users) {
         users.forEach(u => {
-            userMap[String(u.id).trim()] = u.username; // تبدیل به رشته و trim
+            userMap[String(u.id)] = u.username; // تبدیل به رشته و trim
         });
     }
 }
@@ -246,7 +246,7 @@ results.forEach(row => {
 });
 
 resultsSummary = Object.keys(userStats).map((user_id) => {
-    const username = userMap[String(user_id).trim()] || 'نامشخص';
+    const username = userMap[String(user_id)] || 'نامشخص';
     // برای اطمینان بیشتر، بهتر است اینجا هم user_id به رشته تبدیل شود:
     // const username = userMap[String(user_id).trim()] || 'نامشخص';
     const count = userStats[user_id].count;
