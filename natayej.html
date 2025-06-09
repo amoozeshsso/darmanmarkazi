@@ -181,8 +181,10 @@
     if (users) {
         users.forEach(u => {
             userMap[String(u.id)] = u.username;
+            
         });
     }
+            console.log("userMap", userMap);
 }
 
 
@@ -248,7 +250,7 @@ results.forEach(row => {
     }
     userStats[cleanUserId].ids.push(row.id);
 });
-
+console.log("userStats", userStats);
 resultsSummary = Object.keys(userStats).map((user_id) => {
     const username = userMap[user_id] || 'نامشخص'; // کلیدها حالا هر دو رشته‌اند
     const count = userStats[user_id].count;
