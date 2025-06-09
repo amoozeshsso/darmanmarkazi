@@ -224,6 +224,7 @@
                 .from('exam_results')
                 .select('id, user_id, score')
                 .eq('exam_id', Number(examId));
+            console.log("results", results); // اضافه کن
 
             allResults = results || [];
 
