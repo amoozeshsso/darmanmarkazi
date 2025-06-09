@@ -235,7 +235,7 @@
 
             const userStats = {};
 results.forEach(row => {
-    const cleanUserId = String(row.user_id).trim(); // تبدیل به رشته و trim
+    const cleanUserId = String(row.user_id); // تبدیل به رشته
     if (!userStats[cleanUserId]) {
         userStats[cleanUserId] = { count: 0, maxScore: 0, ids: [] };
     }
@@ -247,15 +247,14 @@ results.forEach(row => {
 });
 
 resultsSummary = Object.keys(userStats).map((user_id) => {
-    const username = userMap[String(user_id)] || 'نامشخص';
-    // برای اطمینان بیشتر، بهتر است اینجا هم user_id به رشته تبدیل شود:
-    // const username = userMap[String(user_id).trim()] || 'نامشخص';
+    const username = userMap[user_id] || 'نامشخص'; // کلیدها حالا هر دو رشته‌اند
     const count = userStats[user_id].count;
     const maxScore = userStats[user_id].maxScore;
     const status = maxScore >= currentPassMark ? 'قبول' : 'رد';
     const ids = userStats[user_id].ids;
     return { username, user_id, count, maxScore, status, ids };
 });
+
 
 
             filteredResults = resultsSummary.slice();
