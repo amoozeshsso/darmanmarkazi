@@ -176,7 +176,7 @@
             const { data: users } = await supabase
                 .from('users')
                 .select('id, username');
-             .range(0, 9999);
+             .range(0, 2000);
             userMap = {};
             if (users) {
                 users.forEach(u => {
