@@ -173,19 +173,25 @@
         };
 
         async function loadUserMap() {
-    const { data: users } = await supabase
+    const { data: users, error } = await supabase
         .from('users')
         .select('id, username')
-        .range(0, 1999); // این خط را تغییر بده
+        .range(0, 1999);
+    
+    console.log("Loaded users:", users?.length); // تعداد کاربران لود شده
+    console.log("Load error:", error);  // آیا خطایی رخ داده
+    
     userMap = {};
     if (users) {
         users.forEach(u => {
             userMap[String(u.id)] = u.username;
         });
     }
-    console.log("userMap", userMap);
+    
+    // چک کردن مقدار userMap
+    console.log("userMap size:", Object.keys(userMap).length);
+    console.log("Sample user IDs:", Object.keys(userMap).slice(0, 5));
 }
-
 
 
 
