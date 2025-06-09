@@ -245,7 +245,10 @@
             });
 
         resultsSummary = Object.keys(userStats).map((user_id) => {
+    console.log('user_id:', user_id, typeof user_id);
+    console.log('userMap keys:', Object.keys(userMap));
     const username = userMap[String(user_id)] || 'نامشخص';
+  
                         const count = userStats[user_id].count;
                 const maxScore = userStats[user_id].maxScore;
                 const status = maxScore >= currentPassMark ? 'قبول' : 'رد';
