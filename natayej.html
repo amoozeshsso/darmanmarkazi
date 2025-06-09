@@ -175,7 +175,7 @@
         async function loadUserMap() {
             const { data: users } = await supabase
                 .from('users')
-                .select('id, username');
+                .select('id, username')
              .range(0, 2000);
             userMap = {};
             if (users) {
