@@ -175,14 +175,16 @@
         async function loadUserMap() {
     const { data: users } = await supabase
         .from('users')
-        .select('id, username');
+        .select('id, username')
+        .range(0, 19999); // اینجا عدد را بیشتر از تعداد کل کاربران بگذار
     userMap = {};
     if (users) {
         users.forEach(u => {
-            userMap[String(u.id)] = u.username; // تبدیل به رشته
+            userMap[String(u.id)] = u.username;
         });
     }
 }
+
 
 
 
