@@ -173,18 +173,38 @@
         };
 
         async function loadUserMap() {
-            const { data: users } = await supabase
-                .from('users')
-                .select('id, username')
-            .limit(10000);
-            userMap = {};
-            if (users) {
-                users.forEach(u => {
-                    userMap[String(u.id)] = u.username;
+    userMap = {};
+    let from = 0;
+    const pageSize = 1000;
+    let hasMore = true;
 
-                });
-            }
+    while (hasMore) {
+        const { data: users, error } = await supabase
+            .from('users')
+            .select('id, username')
+            .range(from, from + pageSize - 1);
+
+        if (error) {
+            console.error('خطا در گرفتن کاربران:', error);
+            break;
         }
+
+        if (users && users.length > 0) {
+            users.forEach(u => {
+                userMap[u.id] = u.username;
+            });
+        }
+
+        if (!users || users.length < pageSize) {
+            hasMore = false;
+        } else {
+            from += pageSize;
+        }
+    }
+
+    console.log("userMap loaded:", Object.keys(userMap).length, "کاربر");
+}
+
 
         async function loadExams() {
             const { data: exams } = await supabase
