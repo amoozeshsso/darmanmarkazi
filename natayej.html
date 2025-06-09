@@ -176,15 +176,14 @@
     const { data: users } = await supabase
         .from('users')
         .select('id, username')
-        .range(0, 19999); // اینجا عدد را بیشتر از تعداد کل کاربران بگذار
+        .range(0, 1999); // این خط را تغییر بده
     userMap = {};
     if (users) {
         users.forEach(u => {
             userMap[String(u.id)] = u.username;
-            
         });
     }
-            console.log("userMap", userMap);
+    console.log("userMap", userMap);
 }
 
 
