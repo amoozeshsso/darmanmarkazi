@@ -179,10 +179,11 @@
     userMap = {};
     if (users) {
         users.forEach(u => {
-            userMap[String(u.id)] = u.username; // تبدیل به رشته و trim
+            userMap[String(u.id)] = u.username; // تبدیل به رشته
         });
     }
 }
+
 
 
         async function loadExams() {
