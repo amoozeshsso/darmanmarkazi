@@ -179,8 +179,9 @@
             userMap = {};
             if (users) {
                 users.forEach(u => {
-                    userMap[u.id] = u.username;
-                });
+    userMap[String(u.id)] = u.username;
+});
+
             }
         }
 
@@ -243,9 +244,9 @@
                 userStats[row.user_id].ids.push(row.id);
             });
 
-            resultsSummary = Object.keys(userStats).map((user_id) => {
+        resultsSummary = Object.keys(userStats).map((user_id) => {
     const username = userMap[String(user_id)] || 'نامشخص';
-                    const count = userStats[user_id].count;
+                        const count = userStats[user_id].count;
                 const maxScore = userStats[user_id].maxScore;
                 const status = maxScore >= currentPassMark ? 'قبول' : 'رد';
                 const ids = userStats[user_id].ids;
