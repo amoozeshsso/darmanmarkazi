@@ -145,14 +145,15 @@
             <label for="excelFile">بارگذاری فایل اکسل (فقط ستون username):</label>
             <input type="file" id="excelFile" accept=".xlsx, .xls">
             <div class="form-group">
+                </div>
+        <button onclick="processExcel()">ثبت کاربران مجاز</button>
+        <div id="message" class="message"></div>
     <label for="manualUsername">افزودن کاربر مجاز به صورت دستی:</label>
     <input type="text" id="manualUsername" placeholder="نام کاربری را وارد کنید">
 </div>
 <button onclick="addManualUser()">افزودن کاربر مجاز</button>
 
-        </div>
-        <button onclick="processExcel()">ثبت کاربران مجاز</button>
-        <div id="message" class="message"></div>
+        
 
         <div id="usersSection" style="display:none;">
             <h3 style="margin-top:40px;">لیست کاربران مجاز این آزمون</h3>
