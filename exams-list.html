@@ -122,7 +122,9 @@
         </div>
         <div class="exam-list" id="examList"></div>
     </div>
-
+<button id="logoutBtn" style="margin: 10px 0 20px 0; padding: 10px 20px; background:#c0392b; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+    خروج از سایت
+</button>
     <script>
     document.getElementById('changePasswordBtn').addEventListener('click', () => {
     window.location.href = 'change_password.html';  // نام صفحه تغییر رمز
@@ -291,6 +293,24 @@
             }
             window.location.href = `quiz.html?exam_id=${examId}`;
         }
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+    // پاک کردن اطلاعات کاربر
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('userId');
+    sessionStorage.removeItem('user_id');
+    sessionStorage.removeItem('userId');
+    alert('شما با موفقیت خارج شدید.');
+
+    // تلاش برای بستن تب (ممکن است در برخی مرورگرها عمل نکند)
+    window.open('', '_self');
+    window.close();
+
+    // هدایت به صفحه اصلی (index.html) در صورتی که بسته نشود
+    setTimeout(() => {
+        window.location.href = 'index.html';
+    }, 500);
+});
+
     </script>
 </body>
 </html>
