@@ -144,6 +144,12 @@
         <div class="form-group">
             <label for="excelFile">بارگذاری فایل اکسل (فقط ستون username):</label>
             <input type="file" id="excelFile" accept=".xlsx, .xls">
+            <div class="form-group">
+    <label for="manualUsername">افزودن کاربر مجاز به صورت دستی:</label>
+    <input type="text" id="manualUsername" placeholder="نام کاربری را وارد کنید">
+</div>
+<button onclick="addManualUser()">افزودن کاربر مجاز</button>
+
         </div>
         <button onclick="processExcel()">ثبت کاربران مجاز</button>
         <div id="message" class="message"></div>
@@ -342,6 +348,60 @@
                 messageDiv.style.display = 'none';
             }, 5000);
         }
+        async function addManualUser() {
+    const examId = document.getElementById('examSelect').value;
+    const username = document.getElementById('manualUsername').value.trim();
+    if (!examId) {
+        showMessage('لطفا یک آزمون انتخاب کنید', false);
+        return;
+    }
+    if (!username) {
+        showMessage('لطفا نام کاربری را وارد کنید', false);
+        return;
+    }
+    try {
+        // جستجوی کاربر
+        const { data: users, error: userError } = await supabase
+            .from('users')
+            .select('id, username')
+            .eq('username', username);
+
+        if (userError) throw userError;
+        if (!users.length) {
+            showMessage('نام کاربری پیدا نشد', false);
+            return;
+        }
+        const userId = users[0].id;
+
+        // بررسی عدم تکرار
+        const { data: exist, error: existError } = await supabase
+            .from('exam_users')
+            .select('id')
+            .eq('exam_id', examId)
+            .eq('user_id', userId);
+
+        if (existError) throw existError;
+        if (exist.length) {
+            showMessage('این کاربر قبلا مجاز شده است', false);
+            return;
+        }
+
+        // درج کاربر مجاز
+        const { error: insertError } = await supabase
+            .from('exam_users')
+            .insert([{ exam_id: examId, user_id: userId }]);
+
+        if (insertError) throw insertError;
+
+        showMessage('کاربر مجاز با موفقیت افزوده شد', true);
+        document.getElementById('manualUsername').value = '';
+        loadAllowedUsers(examId);
+
+    } catch (error) {
+        showMessage('خطا در ثبت کاربر: ' + error.message, false);
+    }
+}
+
     </script>
 </body>
 </html>
