@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>ورود کاربران</title>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <style>
     body {
       margin: 0;
@@ -31,18 +32,23 @@
       font-size: 24px;
     }
 
-    label {
-      display: block;
-      text-align: right;
-      color: #333;
+    .input-group {
+      position: relative;
       margin-top: 16px;
-      margin-bottom: 5px;
-      font-weight: bold;
     }
 
-    input {
+    .input-group i {
+      position: absolute;
+      top: 50%;
+      left: 12px;
+      transform: translateY(-50%);
+      color: #007acc;
+      font-size: 18px;
+    }
+
+    .input-group input {
       width: 100%;
-      padding: 12px;
+      padding: 12px 12px 12px 40px;
       border-radius: 8px;
       border: 1px solid #cbd6e2;
       background-color: #f9fbfd;
@@ -51,7 +57,7 @@
       transition: border 0.2s;
     }
 
-    input:focus {
+    .input-group input:focus {
       border: 1px solid #007acc;
       outline: none;
     }
@@ -86,6 +92,15 @@
     #message.success {
       color: #27ae60;
     }
+
+    label {
+      display: block;
+      text-align: right;
+      color: #333;
+      margin-bottom: 4px;
+      margin-top: 12px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -93,10 +108,16 @@
     <h2>ورود کاربران</h2>
     <form id="login-form">
       <label for="username">نام کاربری:</label>
-      <input type="text" id="username" required autocomplete="username">
+      <div class="input-group">
+        <i class="fa fa-user"></i>
+        <input type="text" id="username" required autocomplete="username">
+      </div>
 
       <label for="password">رمز عبور:</label>
-      <input type="password" id="password" required autocomplete="current-password">
+      <div class="input-group">
+        <i class="fa fa-lock"></i>
+        <input type="password" id="password" required autocomplete="current-password">
+      </div>
 
       <button type="submit">ورود</button>
       <div id="message"></div>
