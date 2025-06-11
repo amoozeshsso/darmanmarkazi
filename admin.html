@@ -66,29 +66,12 @@
       opacity: 0.9;
       transform: translateY(-1px);
     }
-   .add-btn {
-  background: #17a2b8; /* آبی فیروزه‌ای */
-  color: #fff;
-  padding: 12px 20px;
-  font-size: 15px;
-  border: none;
-  border-radius: 10px;
-  font-weight: bold;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-}
-.add-btn:hover {
-  background: #138496;
-  transform: translateY(-1px);
-}
-.add-btn i {
-  font-size: 16px;
-}
-
+    .add-btn { 
+      background: #27ae60; 
+      color: #fff; 
+      width: 100%;
+      font-size: 16px;
+    }
     .edit-btn { 
       background: #3498db; 
       color: #fff; 
@@ -209,17 +192,17 @@
         </button>
       </div>
 
-      <div class="file-input-wrapper" style="display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;">
-  <div style="flex: 1;">
-    <label for="excelFile">بارگذاری فایل اکسل کاربران:</label>
-    <input type="file" id="excelFile" accept=".xlsx,.xls" />
-  </div>
-  <button type="button" id="importBtn" class="add-btn">
-    <i class="bi bi-upload"></i>
-    وارد کردن کاربران
-  </button>
-</div>
+      <div class="file-input-wrapper">
+        <label for="excelFile">بارگذاری فایل اکسل کاربران:</label>
+        <input type="file" id="excelFile" accept=".xlsx,.xls" />
+        <button type="button" id="importBtn" class="add-btn">وارد کردن کاربران</button>
+      </div>
 
+      <div class="form-group">
+        <button type="button" id="deleteAllUsersBtn" class="delete-btn">
+          حذف همه کاربران 
+        </button>
+      </div>
 
       <h3 id="formTitle">افزودن کاربر جدید</h3>
       <form id="userForm">
