@@ -294,22 +294,25 @@
         utils.showLoading(true);
         try {
           let query = supabase
-            .from('users')
-            .select('id, username')
-            .eq('role', 'user')
-            .order('id');
+  .from('users')
+  .select('id, username', { count: 'exact' }) // گرفتن تعداد دقیق
+  .eq('role', 'user')
+  .order('id')
+  .range(0, 9999); // گرفتن تا 10000 کاربر
+
 
           if (searchTerm.trim() !== '') {
             // فیلتر بر اساس نام کاربری با ilike برای جستجوی غیر حساس به حروف بزرگ و کوچک
             query = query.ilike('username', `%${searchTerm.trim()}%`);
           }
 
-          const { data, error } = await query;
+          const { data, error, count } = await query;
+
 
           if (error) throw error;
 
           const userList = document.getElementById('userList');
-          document.getElementById('userCount').textContent = `تعداد کاربران: ${data.length}`;
+          document.getElementById('userCount').textContent = `تعداد کاربران: ${count ?? data.length}`;
 
           userList.innerHTML = data.length ? data.map(user => `
             <tr>
