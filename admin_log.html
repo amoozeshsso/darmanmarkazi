@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>لاگ فعالیت ادمین‌های دیگر</title>
+  <title>لاگ فعالیت ادمین‌های غیر از hossein</title>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -70,17 +70,19 @@
     const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const hosseinUuid = 'e1c6c8b1-5c56-4e2f-bb8e-1b2a1a1a1a1a';
+
+    // مقدار عددی id کاربر hossein را اینجا وارد کن (مثلاً 1)
+    const hosseinId = 1;
 
     async function loadLogs() {
       const logsDiv = document.getElementById('logs');
       logsDiv.innerHTML = 'در حال بارگذاری...';
 
-      // دریافت لاگ‌های ادمین‌های غیر از hossein
+      // دریافت لاگ‌های ادمین‌های غیر از hossein (بر اساس id عددی)
       const { data, error } = await supabase
         .from('admin_logs')
         .select('*')
-        .neq('admin_id', hosseinUuid)
+        .neq('admin_id', hosseinId)
         .order('created_at', { ascending: false });
 
       if (error) {
