@@ -173,24 +173,30 @@
     const promises = [];
 
     for (let i = 1; i <= 40; i++) {
-        const linkText = siteData[`link${i}_text`];
-        const linkUrl = siteData[`link${i}_url`];
-        const linkExamId = siteData[`link${i}_exam_id`];
+    const linkText = siteData[`link${i}_text`];
+    const linkUrl = siteData[`link${i}_url`];
+    const linkExamId = siteData[`link${i}_exam_id`];
 
-        if (!linkText || !linkUrl) continue;
+    console.log(`در حال بررسی لینک ${i}:`, linkText, linkUrl);
 
-        if (!linkExamId) {
-            // لینک عمومی
-            addResourceLink(linkText, linkUrl, container);
-        } else {
-            // فقط اگر کاربر برای این آزمون مجاز است
-            promises.push(
-                isUserAllowedForExam(linkExamId).then(allowed => {
-                    if (allowed) addResourceLink(linkText, linkUrl, container);
-                })
-            );
-        }
+    if (!linkText || !linkUrl) continue;
+
+    console.log(`نمایش لینک ${i}: ${linkText}`);
+
+    if (!linkExamId) {
+        addResourceLink(linkText, linkUrl, container);
+    } else {
+        promises.push(
+            isUserAllowedForExam(linkExamId).then(allowed => {
+                if (allowed) {
+                    console.log(`نمایش لینک مجاز شده ${i}: ${linkText}`);
+                    addResourceLink(linkText, linkUrl, container);
+                }
+            })
+        );
     }
+}
+
 
     await Promise.all(promises);
 }
