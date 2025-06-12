@@ -105,6 +105,7 @@
 </head>
 <body>
   <div class="login-container">
+    <img id="mainImg" alt="تصویر ورود" style="max-width: 100%; border-radius: 10px; display: none; margin-bottom: 16px;" />
     <h2>ورود کاربران</h2>
     <form id="login-form">
       <label for="username">نام کاربری:</label>
@@ -187,6 +188,24 @@
         console.error(err);
       }
     });
+    <script>
+  async function loadLoginImage() {
+    const { data, error } = await supabase
+      .from('site_content')
+      .select('image_url')
+      .eq('id', 1)
+      .single();
+
+    if (data && data.image_url) {
+      const img = document.getElementById('mainImg');
+      img.src = data.image_url;
+      img.style.display = 'block';
+    }
+  }
+
+  loadLoginImage();
+</script>
+
   </script>
 </body>
 </html>
