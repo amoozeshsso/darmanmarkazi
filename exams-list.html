@@ -135,10 +135,7 @@
         // --- پیکربندی Supabase ---
         const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-       const { createClient } = supabase;
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-const supabase = supabaseClient;
-
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // --- شناسایی کاربر با هر دو کلید ممکن ---
         const user_id =
@@ -171,39 +168,31 @@ const supabase = supabaseClient;
 
         // --- نمایش منابع با کنترل دسترسی ---
         async function showResourceLinks(siteData) {
-            console.log("تابع showResourceLinks اجرا شد ✅");
-    const container = document.getElementById('resources-list');
-    container.innerHTML = '';
-    const promises = [];
+            const container = document.getElementById('resources-list');
+            container.innerHTML = '';
+            const promises = [];
 
-    for (let i = 1; i <= 40; i++) {
-    const linkText = siteData[`link${i}_text`];
-    const linkUrl = siteData[`link${i}_url`];
-    const linkExamId = siteData[`link${i}_exam_id`];
+            for (let i = 1; i <= 20; i++) {
+                const linkText = siteData[`link${i}_text`];
+                const linkUrl = siteData[`link${i}_url`];
+                const linkExamId = siteData[`link${i}_exam_id`];
 
-    console.log(`در حال بررسی لینک ${i}:`, linkText, linkUrl);
+                if (!linkText || !linkUrl) continue;
 
-    if (!linkText || !linkUrl) continue;
-
-    console.log(`نمایش لینک ${i}: ${linkText}`);
-
-    if (!linkExamId) {
-        addResourceLink(linkText, linkUrl, container);
-    } else {
-        promises.push(
-            isUserAllowedForExam(linkExamId).then(allowed => {
-                if (allowed) {
-                    console.log(`نمایش لینک مجاز شده ${i}: ${linkText}`);
+                if (!linkExamId) {
+                    // لینک عمومی
                     addResourceLink(linkText, linkUrl, container);
+                } else {
+                    // فقط اگر کاربر برای این آزمون مجاز است
+                    promises.push(
+                        isUserAllowedForExam(linkExamId).then(allowed => {
+                            if (allowed) addResourceLink(linkText, linkUrl, container);
+                        })
+                    );
                 }
-            })
-        );
-    }
-}
-
-
-    await Promise.all(promises);
-}
+            }
+            await Promise.all(promises);
+        }
 
         function addResourceLink(text, url, container) {
             const a = document.createElement('a');
