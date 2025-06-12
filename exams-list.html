@@ -135,7 +135,10 @@
         // --- پیکربندی Supabase ---
         const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-       const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+       const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = supabaseClient;
+
 
         // --- شناسایی کاربر با هر دو کلید ممکن ---
         const user_id =
