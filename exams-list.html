@@ -168,31 +168,32 @@
 
         // --- نمایش منابع با کنترل دسترسی ---
         async function showResourceLinks(siteData) {
-            const container = document.getElementById('resources-list');
-            container.innerHTML = '';
-            const promises = [];
+    const container = document.getElementById('resources-list');
+    container.innerHTML = '';
+    const promises = [];
 
-            for (let i = 1; i <= 40; i++) {
-                const linkText = siteData[`link${i}_text`];
-                const linkUrl = siteData[`link${i}_url`];
-                const linkExamId = siteData[`link${i}_exam_id`];
+    for (let i = 1; i <= 40; i++) {
+        const linkText = siteData[`link${i}_text`];
+        const linkUrl = siteData[`link${i}_url`];
+        const linkExamId = siteData[`link${i}_exam_id`];
 
-                if (!linkText || !linkUrl) continue;
+        if (!linkText || !linkUrl) continue;
 
-                if (!linkExamId) {
-                    // لینک عمومی
-                    addResourceLink(linkText, linkUrl, container);
-                } else {
-                    // فقط اگر کاربر برای این آزمون مجاز است
-                    promises.push(
-                        isUserAllowedForExam(linkExamId).then(allowed => {
-                            if (allowed) addResourceLink(linkText, linkUrl, container);
-                        })
-                    );
-                }
-            }
-            await Promise.all(promises);
+        if (!linkExamId) {
+            // لینک عمومی
+            addResourceLink(linkText, linkUrl, container);
+        } else {
+            // فقط اگر کاربر برای این آزمون مجاز است
+            promises.push(
+                isUserAllowedForExam(linkExamId).then(allowed => {
+                    if (allowed) addResourceLink(linkText, linkUrl, container);
+                })
+            );
         }
+    }
+
+    await Promise.all(promises);
+}
 
         function addResourceLink(text, url, container) {
             const a = document.createElement('a');
