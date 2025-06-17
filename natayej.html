@@ -357,6 +357,7 @@
         "وضعیت حضور و غیاب": 1
     }));
     const ws = XLSX.utils.json_to_sheet(data);
+    ws['!sheetViews'] = [{ rightToLeft: true }]; // ← اضافه‌شده برای راست‌چین شدن اکسل
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "نتایج آزمون");
     XLSX.writeFile(wb, `نتایج آزمون ${currentExamTitle}.xlsx`);
