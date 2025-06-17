@@ -350,19 +350,17 @@
         }
 
         function downloadExcel() {
-            if (!filteredResults.length) return;
-            const data = filteredResults.map((row, idx) => ({
-                "ردیف": idx + 1,
-                "نام کاربری": row.username,
-                "تعداد دفعات شرکت": row.count,
-                "بیشترین نمره": row.maxScore,
-                "وضعیت": row.status
-            }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "نتایج آزمون");
-            XLSX.writeFile(wb, `نتایج آزمون ${currentExamTitle}.xlsx`);
-        }
+    if (!filteredResults.length) return;
+    const data = filteredResults.map((row) => ({
+        "کد پرسنلی / کد ملی": row.username,
+        "نمره": row.maxScore,
+        "وضعیت حضور و غیاب": 1
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "نتایج آزمون");
+    XLSX.writeFile(wb, `نتایج آزمون ${currentExamTitle}.xlsx`);
+}
     </script>
 </body>
 </html>
