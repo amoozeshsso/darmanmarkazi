@@ -353,14 +353,13 @@
     if (!filteredResults.length) return;
     const data = filteredResults.map((row) => ({
         "کد پرسنلی / کد ملی": row.username,
-        "نمره": row.maxScore,
-        "وضعیت حضور و غیاب": 1
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
+        "نمره": row.maxScore
+            }));
+    const ws = XLS.utils.json_to_sheet(data);
     ws['!sheetViews'] = [{ rightToLeft: true }]; // ← اضافه‌شده برای راست‌چین شدن اکسل
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "نتایج آزمون");
-    XLSX.writeFile(wb, `نتایج آزمون ${currentExamTitle}.xlsx`);
+    const wb = XLS.utils.book_new();
+    XLS.utils.book_append_sheet(wb, ws, "نتایج آزمون");
+    XLS.writeFile(wb, `نتایج آزمون ${currentExamTitle}.xls`);
 }
     </script>
 </body>
