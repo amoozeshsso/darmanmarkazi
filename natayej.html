@@ -353,7 +353,7 @@
     if (!filteredResults.length) return;
     const data = filteredResults.map((row) => ({
         "کد پرسنلی / کد ملی": row.username,
-        "نمره": row.maxScore
+        "نمره": row.maxScore,
             }));
     const ws = XLS.utils.json_to_sheet(data);
     ws['!sheetViews'] = [{ rightToLeft: true }]; // ← اضافه‌شده برای راست‌چین شدن اکسل
