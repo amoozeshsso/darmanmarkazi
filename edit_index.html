@@ -247,23 +247,23 @@
             }
 
             // اگر عکس جدید انتخاب شده، آپلود کن
-          //  const fileInput = document.getElementById('mainImage');
-        //  if (fileInput.files.length > 0) {
-             //   const file = fileInput.files[0];
-              //  const fileExt = file.name.split('.').pop();
-             //   const fileName = `main-image-${Date.now()}.${fileExt}`;
-              //  const { data: uploadData, error: uploadError } = await supabase
-               //     .storage.from('main-images')
-               //     .upload(fileName, file, { upsert: true });
-             //   if (uploadError) {
-                //    showMessage('خطا در آپلود عکس: ' + uploadError.message, false);
-                 //   return;
-            //    }
-           //     const { data: publicUrlData } = supabase
-            //        .storage.from('main-images')
-           //         .getPublicUrl(fileName);
-         //       updates.image_url = publicUrlData.publicUrl;
-         //   }
+            const fileInput = document.getElementById('mainImage');
+          if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `main-image-${Date.now()}.${fileExt}`;
+                const { data: uploadData, error: uploadError } = await supabase
+                    .storage.from('main-images')
+                    .upload(fileName, file, { upsert: true });
+                if (uploadError) {
+                    showMessage('خطا در آپلود عکس: ' + uploadError.message, false);
+                    return;
+                }
+                const { data: publicUrlData } = supabase
+                    .storage.from('main-images')
+                    .getPublicUrl(fileName);
+                updates.image_url = publicUrlData.publicUrl;
+            }
 
             // ذخیره در دیتابیس
             const { error } = await supabase
