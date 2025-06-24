@@ -152,22 +152,15 @@
         const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        let currentUser = null;
+
         const linkCount = 40; // تعداد لینک‌ها را به 20 افزایش دادیم
         let exams = [];
 
         // بارگذاری آزمون‌ها و محتوا هنگام لود صفحه
         window.onload = async () => {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (!user) {
-        showMessage('برای ویرایش باید وارد شوید.', false);
-        return;
-    }
-    currentUser = user;
-
-    await loadExams();
-    await loadContent();
-};
+            await loadExams();
+            await loadContent();
+        };
 
         async function loadExams() {
             // دریافت لیست آزمون‌ها
@@ -240,21 +233,13 @@
         });
 
         async function saveContent() {
-                if (!currentUser || currentUser.user_metadata?.name !== 'hossein') {
-        showMessage('شما اجازه ویرایش این بخش را ندارید.', false);
-        return;
-    }
-            let updates = { id: 1 };
-
-// فقط اگر hossein بود پیام خوشامدگویی و عکس را اجازه بده
-if (currentUser && currentUser.user_metadata?.name === 'hossein') {
-    updates.welcome_text = document.getElementById('welcome_text').value;
-    updates.image_url = document.getElementById('image_url').value;
-} else {
-    updates.welcome_text = null;  // جلوگیری از پاک شدن داده قبلی
-    updates.image_url = null;
-}
-
+            const welcome_text = document.getElementById('welcome_text').value;
+            const image_url = document.getElementById('image_url').value;
+            let updates = {
+                id: 1,
+                welcome_text,
+                image_url
+            };
             for (let i = 1; i <= linkCount; i++) {
                 updates[`link${i}_text`] = document.getElementById(`link${i}_text`).value;
                 updates[`link${i}_url`] = document.getElementById(`link${i}_url`).value;
@@ -263,26 +248,22 @@ if (currentUser && currentUser.user_metadata?.name === 'hossein') {
 
             // اگر عکس جدید انتخاب شده، آپلود کن
             const fileInput = document.getElementById('mainImage');
-          if (
-    currentUser && currentUser.user_metadata?.name === 'hossein' &&
-    fileInput.files.length > 0
-) {
-    const file = fileInput.files[0];
-    const fileExt = file.name.split('.').pop();
-    const fileName = `main-image-${Date.now()}.${fileExt}`;
-    const { data: uploadData, error: uploadError } = await supabase
-        .storage.from('main-images')
-        .upload(fileName, file, { upsert: true });
-    if (uploadError) {
-        showMessage('خطا در آپلود عکس: ' + uploadError.message, false);
-        return;
-    }
-    const { data: publicUrlData } = supabase
-        .storage.from('main-images')
-        .getPublicUrl(fileName);
-    updates.image_url = publicUrlData.publicUrl;
-}
-
+          if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `main-image-${Date.now()}.${fileExt}`;
+                const { data: uploadData, error: uploadError } = await supabase
+                    .storage.from('main-images')
+                    .upload(fileName, file, { upsert: true });
+                if (uploadError) {
+                    showMessage('خطا در آپلود عکس: ' + uploadError.message, false);
+                    return;
+                }
+                const { data: publicUrlData } = supabase
+                    .storage.from('main-images')
+                    .getPublicUrl(fileName);
+                updates.image_url = publicUrlData.publicUrl;
+            }
 
             // ذخیره در دیتابیس
             const { error } = await supabase
