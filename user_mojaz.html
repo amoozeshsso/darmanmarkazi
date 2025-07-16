@@ -280,39 +280,47 @@
         }
 
         async function processExcel() {
-    const examId = document.getElementById('examSelect').value;
-    const file = document.getElementById('excelFile').files[0];
-    if (!examId) return showMessage('لطفا یک آزمون انتخاب کنید', false);
-    if (!file) return showMessage('لطفا فایل اکسل را انتخاب کنید', false);
+  const examId = document.getElementById('examSelect').value;
+  const file = document.getElementById('excelFile').files[0];
+  if (!examId) return showMessage('لطفا یک آزمون انتخاب کنید', false);
+  if (!file) return showMessage('لطفا فایل اکسل را انتخاب کنید', false);
 
-    try {
-        const data = await file.arrayBuffer();
-        const wb = XLSX.read(data);
-        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header:1 });
-        const usernames = rows.slice(1).map(r => r[0]?.toString().trim()).filter(u=>u);
-        const { data: users, error: userError } = await supabase.from('users').select('id,username').in('username',usernames);
-        if (userError) throw userError;
-        if (!users.length) return showMessage('هیچ کاربری یافت نشد', false);
+  try {
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data);
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+    const usernames = rows.slice(1).map(r => r[0]?.toString().trim()).filter(u => u);
 
-        // حذف قبلی
-        const del = await supabase.from('exam_users').delete().eq('exam_id', examId);
-        if (del.error) throw del.error;
+    const { data: users, error: userError } = await supabase
+      .from('users')
+      .select('id, username')
+      .in('username', usernames);
+    if (userError) throw userError;
+    if (!users.length) return showMessage('هیچ کاربری یافت نشد', false);
 
-        const userEntries = users.map(u => ({ exam_id: examId, user_id: u.id }));
-        const chunkSize = 1000;
-        for (let i = 0; i < userEntries.length; i += chunkSize) {
-            const chunk = userEntries.slice(i, i + chunkSize);
-            const { error: insertError } = await supabase.from('exam_users').insert(chunk);
-            if (insertError) throw insertError;
-        }
+    // حذف قبلی‌ها
+    const del = await supabase.from('exam_users').delete().eq('exam_id', examId);
+    if (del.error) throw del.error;
 
-        showMessage(`✅ ${users.length} کاربر ثبت شد`, true);
-        loadAllowedUsers(examId);
-    } catch (err) {
-        console.error(err);
-        showMessage('خطا در پردازش: ' + err.message, false);
+    const userEntries = users.map(u => ({ exam_id: examId, user_id: u.id }));
+    const chunkSize = 1000;
+
+    for (let i = 0; i < userEntries.length; i += chunkSize) {
+      const chunk = userEntries.slice(i, i + chunkSize);
+      const { error: insertError } = await supabase.from('exam_users').insert(chunk);
+      if (insertError) throw insertError;
+      // صبر بین هر ارسال، اختیاری:
+      await new Promise(res => setTimeout(res, 100)); // 100 میلی‌ثانیه صبر برای اطمینان بیشتر
     }
+
+    showMessage(`✅ ${users.length} کاربر ثبت شد`, true);
+    loadAllowedUsers(examId);
+  } catch (err) {
+    console.error(err);
+    showMessage('خطا در پردازش: ' + err.message, false);
+  }
 }
+
 
         function showMessage(text, isSuccess) {
             const messageDiv = document.getElementById('message');
