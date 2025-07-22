@@ -214,6 +214,14 @@
                 .maybeSingle();
             return !!data;
         }
+function formatDateTime(dateString) {
+    return new Intl.DateTimeFormat('fa-IR', {
+        timeZone: 'Asia/Tehran',
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        hourCycle: 'h23'
+    }).format(new Date(dateString));
+}
 
         // --- بارگذاری لیست آزمون‌های فعال فقط برای کاربران مجاز ---
         async function loadExams() {
@@ -256,15 +264,16 @@
                     examDiv.className = 'exam-item';
                     examDiv.innerHTML = `
                         <div class="exam-title">${exam.title}</div>
-                        <div class="exam-details">
-                            زمان شروع: ${exam.start_at ? new Date(exam.start_at).toLocaleString('fa-IR') : '-'}
-                            <br>
-                            زمان پایان: ${exam.end_at ? new Date(exam.end_at).toLocaleString('fa-IR') : '-'}
-                            <br>
-                            مدت آزمون: ${exam.duration_minutes || '-'} دقیقه
-                            <br>
-                            حدنصاب قبولی: ${exam.pass_mark || '-'}
-                        </div>
+                       <div class="exam-details">
+    زمان شروع: ${exam.start_at ? formatDateTime(exam.start_at) : '-'}
+    <br>
+    زمان پایان: ${exam.end_at ? formatDateTime(exam.end_at) : '-'}
+    <br>
+    مدت آزمون: ${exam.duration_minutes || '-'} دقیقه
+    <br>
+    حدنصاب قبولی: ${exam.pass_mark || '-'}
+</div>
+
                         ${attemptsMsg}
                         <button class="start-btn" onclick="startQuiz(${exam.id}, ${maxAttempts}, ${attempts})" ${disabled}>شروع آزمون</button>
                     `;
