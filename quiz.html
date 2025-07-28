@@ -315,7 +315,14 @@
       // دکمه بعدی سمت راست، قبلی سمت چپ
       nextBtn.onclick = () => { saveAnswer(); currentQuestion++; showQuestion(); };
       prevBtn.onclick = () => { saveAnswer(); currentQuestion--; showQuestion(); };
-      quizForm.onsubmit = e => { e.preventDefault(); saveAnswer(); finalizeAndShowResult(); };
+     quizForm.onsubmit = e => {
+  e.preventDefault();
+  saveAnswer();
+  if (confirm('آیا مطمئن هستید که می‌خواهید آزمون را ثبت و پایان دهید؟')) {
+    finalizeAndShowResult();
+  }
+};
+
 
       loadQuiz();
     });
