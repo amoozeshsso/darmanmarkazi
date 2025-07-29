@@ -315,7 +315,19 @@
       // دکمه بعدی سمت راست، قبلی سمت چپ
       nextBtn.onclick = () => { saveAnswer(); currentQuestion++; showQuestion(); };
       prevBtn.onclick = () => { saveAnswer(); currentQuestion--; showQuestion(); };
-      quizForm.onsubmit = e => { e.preventDefault(); saveAnswer(); finalizeAndShowResult(); };
+     quizForm.onsubmit = e => {
+  e.preventDefault();
+  saveAnswer();
+
+  // اگر تایمر تمام نشده بود، پیام تأیید بده
+  if (!quizFinished && examStarted) {
+    const confirmSubmit = confirm('آیا از ثبت نهایی آزمون مطمئن هستید؟');
+    if (!confirmSubmit) return;
+  }
+
+  finalizeAndShowResult();
+};
+
 
       loadQuiz();
     });
