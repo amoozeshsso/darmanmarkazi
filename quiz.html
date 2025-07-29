@@ -319,10 +319,13 @@
   e.preventDefault();
   saveAnswer();
 
-  // اگر تایمر تمام نشده بود، پیام تأیید بده
-  if (!quizFinished && examStarted) {
-    const confirmSubmit = confirm('آیا از ثبت نهایی آزمون مطمئن هستید؟');
-    if (!confirmSubmit) return;
+  // اگر آزمون به پایان نرسیده و توسط کاربر ثبت می‌شود، پیام تأیید بگیر
+  if (!quizFinished && examStarted && !examSubmitted) {
+    const eventSource = e.isTrusted; // true = کاربر کلیک کرده، false = dispatch از تایمر
+    if (eventSource) {
+      const confirmSubmit = confirm('آیا از ثبت نهایی آزمون مطمئن هستید؟');
+      if (!confirmSubmit) return;
+    }
   }
 
   finalizeAndShowResult();
