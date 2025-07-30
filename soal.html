@@ -321,10 +321,7 @@
       });
 
       examSelect.addEventListener('change', loadQuestions);
-
-      await loadExamOptions();
-    });
-    document.getElementById('deleteAllBtn').addEventListener('click', async () => {
+      document.getElementById('deleteAllBtn').addEventListener('click', async () => {
   hideMessages();
   const examId = examSelect.value;
   if (!examId) {
@@ -341,6 +338,10 @@
   await loadQuestions();
   showLoading(false);
 });
-  </script>
+
+
+      await loadExamOptions();
+    });
+      </script>
 </body>
 </html>
