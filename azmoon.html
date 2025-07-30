@@ -367,14 +367,17 @@
 document.getElementById('searchInput').addEventListener('input', function () {
   const query = this.value.toLowerCase();
   const rows = list.querySelectorAll('tr');
-  rows.forEach((row, index) => {
-    if (index === 0) return; // رد کردن ردیف اول در صورت وجود پیام "در حال بارگذاری"
-    const titleCell = row.children[1];
-    if (!titleCell) return;
-    const title = titleCell.textContent.toLowerCase();
+
+  rows.forEach((row) => {
+    const cells = row.querySelectorAll('td');
+    // بررسی کنیم که ردیف واقعیه (حداقل 2 ستون داره) و حاوی عنوان آزمونه
+    if (cells.length < 2) return;
+
+    const title = cells[1].textContent.toLowerCase();
     row.style.display = title.includes(query) ? '' : 'none';
   });
 });
+
 
       await loadExams();
     });
