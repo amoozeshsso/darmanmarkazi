@@ -82,6 +82,8 @@
         <label for="correct_option">گزینه صحیح (شماره ۱ تا ۴):</label>
         <input type="number" id="correct_option" min="1" max="4" required />
         <button type="submit" id="submitBtn" class="add-btn">ذخیره سوال</button>
+        <button type="button" id="deleteAllBtn" class="delete-btn" style="width:100%; margin-top: 10px;">حذف کلیه سوالات آزمون</button>
+
       </form>
       <div id="error"></div>
       <div id="success"></div>
@@ -322,6 +324,24 @@
 
       await loadExamOptions();
     });
+    document.getElementById('deleteAllBtn').addEventListener('click', async () => {
+  hideMessages();
+  const examId = examSelect.value;
+  if (!examId) {
+    showError('ابتدا آزمون را انتخاب کنید');
+    return;
+  }
+
+  if (!confirm('آیا مطمئن هستید که می‌خواهید همه سوالات این آزمون حذف شوند؟')) return;
+
+  showLoading(true);
+  const { error } = await supabase.from('questions').delete().eq('exam_id', examId);
+  if (error) showError('خطا در حذف سوالات: ' + error.message);
+  else showSuccess('همه سوالات آزمون با موفقیت حذف شدند');
+  await loadQuestions();
+  showLoading(false);
+});
+
   </script>
 </body>
 </html>
