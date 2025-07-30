@@ -177,6 +177,7 @@
           <input type="number" id="passMark" min="1" max="100" value="10" required />
         </div>
         <button type="submit" id="submitBtn" class="add-btn">ذخیره</button>
+        <input type="text" id="searchInput" placeholder="جستجو بر اساس عنوان آزمون..." style="width:100%; padding:10px; margin-top:10px; font-size:14px; border:1px solid #ccc; border-radius:5px;" />
       </form>
       <div id="error"></div>
       <div id="success"></div>
@@ -363,6 +364,17 @@
           await supabase.from('exams').update({ active }).eq('id', id);
         }
       });
+document.getElementById('searchInput').addEventListener('input', function () {
+  const query = this.value.toLowerCase();
+  const rows = list.querySelectorAll('tr');
+  rows.forEach((row, index) => {
+    if (index === 0) return; // رد کردن ردیف اول در صورت وجود پیام "در حال بارگذاری"
+    const titleCell = row.children[1];
+    if (!titleCell) return;
+    const title = titleCell.textContent.toLowerCase();
+    row.style.display = title.includes(query) ? '' : 'none';
+  });
+});
 
       await loadExams();
     });
