@@ -7,6 +7,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <style>
         body {
             font-family: 'Vazirmatn', Tahoma;
@@ -133,6 +135,7 @@
             font-family: 'Vazirmatn', Tahoma, sans-serif;
         }
     </style>
+    
 </head>
 <body>
     <div class="container">
@@ -181,23 +184,31 @@
 
         // بارگیری آزمون‌ها هنگام لود صفحه
         window.onload = async () => {
-            const { data, error } = await supabase
-                .from('exams')
-                .select('id, title')
-                .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+        .from('exams')
+        .select('id, title')
+        .order('created_at', { ascending: false });
 
-            const select = document.getElementById('examSelect');
-            if (error) {
-                showMessage('خطا در دریافت آزمون‌ها: ' + error.message, false);
-                return;
-            }
-            data.forEach(exam => {
-                const option = document.createElement('option');
-                option.value = exam.id;
-                option.textContent = exam.title;
-                select.appendChild(option);
-            });
-        };
+    const select = document.getElementById('examSelect');
+    if (error) {
+        showMessage('خطا در دریافت آزمون‌ها: ' + error.message, false);
+        return;
+    }
+    data.forEach(exam => {
+        const option = document.createElement('option');
+        option.value = exam.id;
+        option.textContent = exam.title;
+        select.appendChild(option);
+    });
+
+    // 👇👇👇 اینو اضافه کن
+    new Choices('#examSelect', {
+        searchEnabled: true,
+        itemSelectText: '',
+        shouldSort: false
+    });
+};
+
 
         document.getElementById('examSelect').addEventListener('change', function() {
             const examId = this.value;
@@ -398,3 +409,4 @@
     </script>
 </body>
 </html>
+
