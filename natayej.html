@@ -60,9 +60,11 @@
       select, .search-input { width:100% } 
     }
     /* کادر انتخاب آزمون ثابت ۱۰ سانت */
+/* کادر انتخاب آزمون ثابت ۱۰ سانت */
 #examSelect + .choices .choices__inner {
   width: 10cm !important;
 }
+
 
   </style>
 </head>
@@ -144,15 +146,9 @@ window.onload = async () => {
   new Choices('#examSelect', { 
   searchEnabled: true, 
   shouldSort: false, 
-  itemSelectText: '', 
-  callbackOnCreateTemplates: function(template) {
-    return {
-      containerOuter: (classNames, data) => {
-        return `<div class="${classNames.containerOuter}" style="width:10cm;"></div>`;
-      }
-    };
-  }
+  itemSelectText: '' 
 });
+
   // رویداد جستجو
   searchInput.addEventListener('input', e => filterResultsByUsername(e.target.value));
   // دکمه‌ها
@@ -514,6 +510,7 @@ function escapeHtml(text) {
 </script>
 </body>
 </html>
+
 
 
 
