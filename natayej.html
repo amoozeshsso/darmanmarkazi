@@ -61,9 +61,19 @@
     }
     /* کادر انتخاب آزمون ثابت ۱۰ سانت */
 /* کادر انتخاب آزمون ثابت ۱۰ سانت */
-#examSelect + .choices .choices__inner {
-  width: 10cm !important;
+/* کادر انتخاب آزمون ثابت ۱۰ سانت */
+#examSelect + .choices {
+  width: 10cm !important;      /* عرض کل Choices */
+  min-width: 10cm !important;  /* حداقل عرض */
+  max-width: 10cm !important;  /* حداکثر عرض */
 }
+
+#examSelect + .choices .choices__inner {
+  width: 100% !important;      /* پر کردن کل فضای والد */
+  min-width: 100% !important;
+  max-width: 100% !important;
+}
+
 
 
   </style>
@@ -510,6 +520,7 @@ function escapeHtml(text) {
 </script>
 </body>
 </html>
+
 
 
 
