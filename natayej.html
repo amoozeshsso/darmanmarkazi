@@ -20,23 +20,33 @@
     h1 { margin:0 0 14px 0; text-align:center; color:#222; font-family: 'Vazirmatn', Tahoma, sans-serif; }
     .controls { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
     label { font-weight:600; margin-left:8px; color:var(--muted); font-family: 'Vazirmatn', Tahoma, sans-serif; }
-    select, input[type="text"] { 
-      padding:8px 10px; 
-      border-radius:8px; 
-      border:1px solid #d1d5db; 
-      background:#fbfdff; 
-      width: 10cm;   /* عرض ثابت ۱۰ سانتی‌متر */
-      font-size:0.98rem; 
-      font-family: 'Vazirmatn', Tahoma, sans-serif; 
+    select, input[type="text"] {
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid #d1d5db;
+      background:#fbfdff;
+      width: 10cm;   /* عرض پیش‌فرض (برای مرورگرهایی که Choices هنوز اعمال نشده) */
+      font-size:0.98rem;
+      font-family: 'Vazirmatn', Tahoma, sans-serif;
+      box-sizing: border-box;
     }
-    .search-input { flex:1; width: 10cm; } /* اصلاح عرض جستجو به 10cm */
-    .btn { 
-      padding:8px 14px; 
-      border-radius:8px; 
-      border:none; 
-      cursor:pointer; 
-      font-weight:600; 
-      font-family: 'Vazirmatn', Tahoma, sans-serif; 
+    /* کلاس مخصوصِ جستجو */
+    .search-input {
+      flex:1;
+      width: 10cm !important;
+      min-width: 10cm !important;
+      max-width: 10cm !important;
+      box-sizing: border-box !important;
+      padding:8px 10px;
+    } /* اصلاح عرض جستجو به 10cm */
+
+    .btn {
+      padding:8px 14px;
+      border-radius:8px;
+      border:none;
+      cursor:pointer;
+      font-weight:600;
+      font-family: 'Vazirmatn', Tahoma, sans-serif;
     }
     .btn-primary { background:var(--accent); color:white; }
     .btn-danger { background:var(--danger); color:white; }
@@ -55,27 +65,27 @@
     .muted { color:var(--muted); }
     .center { text-align:center; }
     .msg { margin-top:12px; color:#b35c00; text-align:center; font-family: 'Vazirmatn', Tahoma, sans-serif; }
-    @media (max-width:720px) { 
-      .controls { flex-direction:column; align-items:stretch } 
-      select, .search-input { width:100% } 
+    @media (max-width:720px) {
+      .controls { flex-direction:column; align-items:stretch }
+      select, .search-input { width:100% }
     }
-    /* کادر انتخاب آزمون ثابت ۱۰ سانت */
-/* کادر انتخاب آزمون ثابت ۱۰ سانت */
-/* کادر انتخاب آزمون ثابت ۱۰ سانت */
-#examSelect + .choices {
-  width: 10cm !important;      /* عرض کل Choices */
-  min-width: 10cm !important;  /* حداقل عرض */
-  max-width: 10cm !important;  /* حداکثر عرض */
-}
 
-#examSelect + .choices .choices__inner {
-  width: 100% !important;      /* پر کردن کل فضای والد */
-  min-width: 100% !important;
-  max-width: 100% !important;
-}
+    /* ---------- مهم: تنظیمات ثابت برای Choices (انتخاب آزمون) ---------- */
+    /* این بخش باید آخر CSS قرار بگیره تا override بشه */
+    #examSelect + .choices {
+      width: 10cm !important;
+      min-width: 10cm !important;
+      max-width: 10cm !important;
+      display: inline-block !important;
+    }
 
-
-
+    #examSelect + .choices .choices__inner {
+      width: 100% !important;
+      min-width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    /* --------------------------------------------------------------------- */
   </style>
 </head>
 <body>
@@ -153,14 +163,15 @@ window.onload = async () => {
   await loadUserMap();     // بارگذاری تمام کاربران (صفحه‌ای)
   await loadExams();       // بارگذاری لیست آزمون‌ها
   // فعال‌سازی Choices.js برای select
-  new Choices('#examSelect', { 
-  searchEnabled: true, 
-  shouldSort: false, 
-  itemSelectText: '' 
-});
+  new Choices('#examSelect', {
+    searchEnabled: true,
+    shouldSort: false,
+    itemSelectText: ''
+  });
 
-  // رویداد جستجو
-  searchInput.addEventListener('input', e => filterResultsByUsername(e.target.value));
+  // رویداد جستجو — توجه: این جستجو روی DOM جدول عمل می‌کند (سریع و بدون مشکل)
+  searchInput.addEventListener('input', onSearchInput);
+
   // دکمه‌ها
   downloadBtn.addEventListener('click', downloadExcelTwoColumns);
   deleteAllResultsBtn.addEventListener('click', deleteAllResults);
@@ -373,7 +384,53 @@ function toggleAttempts(id) {
   el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'table-row' : 'none';
 }
 
-/* ====================== جستجو/فیلتر ====================== */
+/* ====================== جستجو/فیلتر (DOM-based search) ====================== */
+
+function onSearchInput(e) {
+  const q = (e.target.value || '').trim().toLowerCase();
+
+  // اگر جدول ساخته شده، روی DOM ردیف‌ها فیلتر کن (سریع و بدون باز-رندر)
+  const tableRows = document.querySelectorAll('#resultsTable table tbody tr');
+  if (tableRows && tableRows.length > 0) {
+    let visible = 0;
+    tableRows.forEach(row => {
+      // ردیف‌هایی که جزئیات (attempt-list) هستند یک ردیف جدا هستند (we used paired rows).
+      // ما فقط ردیف‌های اصلی را بررسی می‌کنیم: ردیفی که 6 سلول دارد (main rows).
+      const tds = row.querySelectorAll('td');
+      if (!tds || tds.length < 2) { // احتمالاً جزئیات است
+        row.style.display = 'none';
+        return;
+      }
+      const usernameCell = tds[1];
+      const txt = (usernameCell && usernameCell.textContent) ? usernameCell.textContent.toLowerCase() : '';
+      if (!q || txt.includes(q)) {
+        row.style.display = '';
+        visible++;
+        // همچنین ردیف جزئیات بعدی (اگر وجود دارد) را خالی نکن تا دکمه "مشاهده جزئیات" درست کار کند
+        const next = row.nextElementSibling;
+        if (next && next.id && next.id.startsWith('attempts-')) {
+          next.style.display = (next.getAttribute('data-expanded') === 'true') ? '' : 'none';
+        }
+      } else {
+        // پنهان کن و درباره ردیف جزئیات بعدی هم پنهان کن
+        row.style.display = 'none';
+        const next = row.nextElementSibling;
+        if (next && next.id && next.id.startsWith('attempts-')) {
+          next.style.display = 'none';
+        }
+      }
+    });
+
+    // پیام مناسب نمایش بده
+    msgBox.textContent = (visible === 0 && q) ? 'نتیجه‌ای یافت نشد.' : '';
+    return;
+  }
+
+  // اگر جدول هنوز ساخته نشده بود، از fallback منطقی استفاده کن (فیلتر نتایجSummary و رندر مجدد)
+  filterResultsByUsername(q);
+}
+
+/* قدیمی: فیلتر مبتنی بر داده‌ها (fallback) */
 function filterResultsByUsername(q) {
   q = (q || '').trim().toLowerCase();
   if (!q) {
@@ -404,7 +461,8 @@ async function deleteUserResults(uid) {
       allExamResults = allExamResults.filter(r => !(r.user_id === uid && r.exam_id === currentExamId));
       await refreshAfterDataChange();
     }
-          location.reload();
+    // صفحه را رفرش می‌کنیم تا همه چیز همگام شود
+    location.reload();
 
   } catch (e) {
     console.error(e);
@@ -505,7 +563,6 @@ function downloadExcelTwoColumns() {
   XLSX.writeFile(wb, filename, { bookType: 'biff8' });
 }
 
-
 /* ====================== ابزارهای کمکی ====================== */
 
 function escapeHtml(text) {
@@ -520,9 +577,3 @@ function escapeHtml(text) {
 </script>
 </body>
 </html>
-
-
-
-
-
-
