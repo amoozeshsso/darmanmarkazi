@@ -21,16 +21,15 @@
     .controls { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
     label { font-weight:600; margin-left:8px; color:var(--muted); font-family: 'Vazirmatn', Tahoma, sans-serif; }
     select, input[type="text"] { 
-  padding:8px 10px; 
-  border-radius:8px; 
-  border:1px solid #d1d5db; 
-  background:#fbfdff; 
-  width: 10cm;   /* تغییر داده شده */
-  font-size:0.98rem; 
-  font-family: 'Vazirmatn', Tahoma, sans-serif; 
-}
-
-    .search-input { flex:1; width:500px; }
+      padding:8px 10px; 
+      border-radius:8px; 
+      border:1px solid #d1d5db; 
+      background:#fbfdff; 
+      width: 10cm;   /* عرض ثابت ۱۰ سانتی‌متر */
+      font-size:0.98rem; 
+      font-family: 'Vazirmatn', Tahoma, sans-serif; 
+    }
+    .search-input { flex:1; width: 10cm; } /* اصلاح عرض جستجو به 10cm */
     .btn { 
       padding:8px 14px; 
       border-radius:8px; 
@@ -370,14 +369,17 @@ function confirmDeleteUserResults(uid) {
   deleteUserResults(uid);
 }
 
+/* حذف نتایج کاربر فقط از آزمون جاری */
 async function deleteUserResults(uid) {
   try {
-    const { error } = await supabase.from('exam_results').delete().eq('exam_id', currentExamId).eq('user_id', uid);
+    const { error } = await supabase.from('exam_results').delete()
+      .eq('user_id', uid)
+      .eq('exam_id', currentExamId);
     if (error) {
       console.error('deleteUserResults error:', error);
       alert('خطا در حذف نتایج کاربر. کنسول را بررسی کنید.');
     } else {
-      allExamResults = allExamResults.filter(r => !(r.exam_id === currentExamId && r.user_id === uid));
+      allExamResults = allExamResults.filter(r => !(r.user_id === uid && r.exam_id === currentExamId));
       await refreshAfterDataChange();
     }
   } catch (e) {
@@ -412,7 +414,7 @@ async function deleteAllResults() {
     const { error } = await supabase.from('exam_results').delete().eq('exam_id', currentExamId);
     if (error) {
       console.error('deleteAllResults error:', error);
-      alert('خطا در حذف همهٔ نتایج.');
+      alert('خطا در حذف همه نتایج.');
     } else {
       allExamResults = [];
       await refreshAfterDataChange();
@@ -490,7 +492,3 @@ function escapeHtml(text) {
 </script>
 </body>
 </html>
-
-
-
-
