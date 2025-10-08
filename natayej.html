@@ -141,7 +141,18 @@ window.onload = async () => {
   await loadUserMap();     // بارگذاری تمام کاربران (صفحه‌ای)
   await loadExams();       // بارگذاری لیست آزمون‌ها
   // فعال‌سازی Choices.js برای select
-  new Choices('#examSelect', { searchEnabled: true, shouldSort: false, itemSelectText: '' });
+  new Choices('#examSelect', { 
+  searchEnabled: true, 
+  shouldSort: false, 
+  itemSelectText: '', 
+  callbackOnCreateTemplates: function(template) {
+    return {
+      containerOuter: (classNames, data) => {
+        return `<div class="${classNames.containerOuter}" style="width:10cm;"></div>`;
+      }
+    };
+  }
+});
   // رویداد جستجو
   searchInput.addEventListener('input', e => filterResultsByUsername(e.target.value));
   // دکمه‌ها
@@ -503,6 +514,7 @@ function escapeHtml(text) {
 </script>
 </body>
 </html>
+
 
 
 
