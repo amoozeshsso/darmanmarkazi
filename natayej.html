@@ -17,53 +17,70 @@
     :root { --accent: #4e54c8; --danger: #e74c3c; --ok: #27ae60; --muted:#6b7280; }
     body { font-family: 'Vazirmatn', Tahoma, sans-serif; background:#f8f9fb; margin:0; padding:20px; direction:rtl; }
     .container { max-width:900px; margin:24px auto; background:white; border-radius:12px; padding:22px; box-shadow:0 6px 24px rgba(10,10,20,0.06); }
-    h1 { margin:0 0 14px 0; text-align:center; color:#222; }
+    h1 { margin:0 0 14px 0; text-align:center; color:#222; font-family: 'Vazirmatn', Tahoma, sans-serif; }
     .controls { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
-    label { font-weight:600; margin-left:8px; color:var(--muted); }
-    select, input[type="text"] { padding:8px 10px; border-radius:8px; border:1px solid #d1d5db; background:#fbfdff; min-width:220px; font-size:0.98rem; }
+    label { font-weight:600; margin-left:8px; color:var(--muted); font-family: 'Vazirmatn', Tahoma, sans-serif; }
+    select, input[type="text"] { 
+      padding:8px 10px; 
+      border-radius:8px; 
+      border:1px solid #d1d5db; 
+      background:#fbfdff; 
+      min-width:220px; 
+      font-size:0.98rem; 
+      font-family: 'Vazirmatn', Tahoma, sans-serif; 
+    }
     .search-input { flex:1; min-width:220px; }
-    .btn { padding:8px 14px; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
+    .btn { 
+      padding:8px 14px; 
+      border-radius:8px; 
+      border:none; 
+      cursor:pointer; 
+      font-weight:600; 
+      font-family: 'Vazirmatn', Tahoma, sans-serif; 
+    }
     .btn-primary { background:var(--accent); color:white; }
     .btn-danger { background:var(--danger); color:white; }
     .btn-ghost { background:transparent; border:1px solid #e5e7eb; color:#111; }
     .stats { display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; }
-    .stat { background:#f1f5f9; padding:8px 12px; border-radius:8px; font-size:0.95rem; color:#111; }
-    table { width:100%; border-collapse:collapse; margin-top:16px; font-size:0.95rem; }
+    .stat { background:#f1f5f9; padding:8px 12px; border-radius:8px; font-size:0.95rem; color:#111; font-family: 'Vazirmatn', Tahoma, sans-serif; }
+    table { width:100%; border-collapse:collapse; margin-top:16px; font-size:0.95rem; font-family: 'Vazirmatn', Tahoma, sans-serif; }
     th, td { padding:10px 8px; border:1px solid #e6e9ef; text-align:center; }
     th { background:#eef2ff; color:#26304a; font-weight:700; }
     tr:nth-child(even) td { background:#fbfdff; }
-    .small { font-size:0.86rem; color:var(--muted); }
-    .action-btn { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; }
+    .small { font-size:0.86rem; color:var(--muted); font-family: 'Vazirmatn', Tahoma, sans-serif; }
+    .action-btn { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; font-family: 'Vazirmatn', Tahoma, sans-serif; }
     .delete-btn { background:var(--danger); color:white; }
     .remove-btn { background:#ff7a59; color:white; }
-    .attempt-list { text-align:left; padding:10px; background:#fffefa; border:1px dashed #f3e8d7; border-radius:8px; margin-top:8px; }
+    .attempt-list { text-align:left; padding:10px; background:#fffefa; border:1px dashed #f3e8d7; border-radius:8px; margin-top:8px; font-family: 'Vazirmatn', Tahoma, sans-serif; }
     .muted { color:var(--muted); }
     .center { text-align:center; }
-    .msg { margin-top:12px; color:#b35c00; text-align:center; }
-    @media (max-width:720px){ .controls { flex-direction:column; align-items:stretch } select, .search-input { width:100% } }
+    .msg { margin-top:12px; color:#b35c00; text-align:center; font-family: 'Vazirmatn', Tahoma, sans-serif; }
+    @media (max-width:720px) { 
+      .controls { flex-direction:column; align-items:stretch } 
+      select, .search-input { width:100% } 
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <a href="admin_exam.html" class="small" style="text-decoration:none;color:var(--accent)">← بازگشت به منوی مدیریت</a>
+    <a href="admin_exam.html" class="small" style="text-decoration:none;color:var(--accent); font-family: 'Vazirmatn', Tahoma, sans-serif;">← بازگشت به منوی مدیریت</a>
     <h1>مشاهده نتایج آزمون</h1>
 
-    <div class="controls">
+    <div class="controls" style="flex-direction: column; gap: 8px;">
       <div>
         <label for="examSelect">انتخاب آزمون:</label><br>
         <select id="examSelect"><option value="">-- آزمون را انتخاب کنید --</option></select>
       </div>
 
-      <div style="flex:1; min-width:220px;">
+      <div>
         <label for="searchInput">جستجو (نام کاربری):</label><br>
         <input id="searchInput" class="search-input" type="text" placeholder="نام کاربری را وارد کنید...">
       </div>
+    </div>
 
-      <div style="display:flex; gap:8px; align-items:center;">
-        <button id="downloadBtn" class="btn btn-primary" style="display:none;">دانلود اکسل (دو ستون)</button>
-        <button id="deleteAllResultsBtn" class="btn btn-danger" style="display:none;">حذف همه نتایج</button>
-        <button id="removeAllUsersBtn" class="btn btn-ghost" style="display:none;border-color:#f5c6c6;color:#9b1c1c;">حذف همه کاربران از آزمون</button>
-      </div>
+    <div style="display:flex; gap:8px; align-items:center; margin-top: 8px;">
+      <button id="downloadBtn" class="btn btn-primary" style="display:none;">دانلود اکسل (دو ستون)</button>
+      <button id="deleteAllResultsBtn" class="btn btn-danger" style="display:none;">حذف همه نتایج</button>
     </div>
 
     <div class="stats" id="statsArea" style="display:none;">
@@ -83,7 +100,7 @@
   - نمایش تمام کاربران مجاز از exam_users حتی اگر شرکت نکرده باشند (نمره = 0)
   - نمایش تعداد دفعات شرکت، بیشترین نمره، وضعیت
   - مرتب‌سازی بر اساس بیشترین نمره (نزولی)
-  - حذف تک‌تک رکوردها، حذف همه نتایج، حذف کاربران از آزمون
+  - حذف تک‌تک رکوردها، حذف همه نتایج
   - خروجی اکسل فقط دو ستون: "کد پرسنلی / کد ملی" و "نمره"
 */
 
@@ -109,7 +126,6 @@ const resultsTable = document.getElementById('resultsTable');
 const msgBox = document.getElementById('msg');
 const downloadBtn = document.getElementById('downloadBtn');
 const deleteAllResultsBtn = document.getElementById('deleteAllResultsBtn');
-const removeAllUsersBtn = document.getElementById('removeAllUsersBtn');
 const statTotal = document.getElementById('stat_total');
 const statParticipants = document.getElementById('stat_participants');
 const statAvg = document.getElementById('stat_avg');
@@ -126,18 +142,10 @@ window.onload = async () => {
   // دکمه‌ها
   downloadBtn.addEventListener('click', downloadExcelTwoColumns);
   deleteAllResultsBtn.addEventListener('click', deleteAllResults);
-  removeAllUsersBtn.addEventListener('click', removeAllUsersFromExam);
 };
 
 /* ====================== توابع کمکی ====================== */
 
-/**
- * fetchAllPaged:
- * تابع عمومی برای خواندن همه رکوردها از یک جدول با درنظر گرفتن paging
- * - table: نام جدول
- * - columns: رشته ستون‌ها مثل 'id, user_id, score'
- * - applyFilter: تابعی که روی query اعمال می‌شود (مثلاً q => q.eq('exam_id', 1))
- */
 async function fetchAllPaged(table, columns, applyFilter = null) {
   const pageSize = 1000;
   let from = 0;
@@ -168,7 +176,6 @@ async function fetchAllPaged(table, columns, applyFilter = null) {
 
 async function loadUserMap() {
   userMap = {};
-  // می‌گیریم تمام users (صفحه‌ای)
   const users = await fetchAllPaged('users', 'id, username');
   users.forEach(u => {
     userMap[u.id] = u.username ?? String(u.id);
@@ -178,14 +185,12 @@ async function loadUserMap() {
 
 async function loadExams() {
   msgBox.textContent = '';
-  // می‌گیریم لیست آزمون‌ها (بدون paging چون معمولاً کم تعدادند)
   const { data: exams, error } = await supabase.from('exams').select('id, title, pass_mark').order('id', { ascending: false });
   if (error) {
     console.error('خطا در loadExams:', error);
     msgBox.textContent = 'خطا در دریافت لیست آزمون‌ها';
     return;
   }
-  // پر کردن select
   examSelect.innerHTML = '<option value="">-- آزمون را انتخاب کنید --</option>';
   exams?.forEach(ex => {
     const opt = document.createElement('option');
@@ -204,12 +209,10 @@ async function loadExams() {
 /* ====================== بارگذاری نتایج آزمون ====================== */
 
 async function loadResults(examId, examTitle, passMark) {
-  // ریست UI
   msgBox.textContent = '';
   resultsTable.innerHTML = '';
   downloadBtn.style.display = 'none';
   deleteAllResultsBtn.style.display = 'none';
-  removeAllUsersBtn.style.display = 'none';
   statsArea.style.display = 'none';
 
   if (!examId) return;
@@ -217,7 +220,6 @@ async function loadResults(examId, examTitle, passMark) {
   currentExamTitle = examTitle;
   currentPassMark = Number(passMark) || 0;
 
-  // ۱) گرفتن همهٔ کاربران مجاز برای این آزمون (exam_users) — صفحه‌ای
   allExamUsers = await fetchAllPaged('exam_users', 'id, exam_id, user_id', q => q.eq('exam_id', currentExamId));
   if (!allExamUsers || allExamUsers.length === 0) {
     msgBox.textContent = 'هیچ کاربری برای این آزمون تعریف نشده است.';
@@ -226,15 +228,11 @@ async function loadResults(examId, examTitle, passMark) {
     renderResultsTable([]);
     return;
   }
-  // نگه داشتن فقط آی‌دی‌ها
   const allowedUserIds = allExamUsers.map(r => r.user_id);
 
-  // ۲) گرفتن همهٔ نتایج برای این آزمون (exam_results) — صفحه‌ای
   allExamResults = await fetchAllPaged('exam_results', 'id, exam_id, user_id, score, submitted_at', q => q.eq('exam_id', currentExamId));
-  // ممکنه بعضی users نمره نداشته باشند — در ادامه در نظر گرفته می‌شوند
 
-  // ۳) محاسبهٔ تعداد دفعات و بیشترین نمره و لیست ids برای هر کاربر
-  const userStats = {}; // user_id => { count, maxScore, ids: [{id,score,submitted_at}] }
+  const userStats = {};
   allowedUserIds.forEach(uid => { userStats[uid] = { count: 0, maxScore: 0, ids: [] }; });
 
   allExamResults.forEach(row => {
@@ -245,7 +243,6 @@ async function loadResults(examId, examTitle, passMark) {
     userStats[uid].ids.push({ id: row.id, score: row.score, submitted_at: row.submitted_at });
   });
 
-  // ۴) ساخت آرایهٔ نتایج نهایی
   resultsSummary = Object.keys(userStats).map(uid => {
     const u = userMap[uid] ?? 'نامشخص';
     const count = userStats[uid].count || 0;
@@ -255,13 +252,9 @@ async function loadResults(examId, examTitle, passMark) {
     return { username: u, user_id: uid, count, maxScore, status, ids };
   });
 
-  // ۵) مرتب‌سازی نزولی بر اساس maxScore
   resultsSummary.sort((a,b) => b.maxScore - a.maxScore);
-
-  // کپی برای فیلتر/جستجو
   filteredResults = resultsSummary.slice();
 
-  // نمایش آمار (تعداد مجاز، شرکت‌کننده، میانگین)
   const totalAllowed = resultsSummary.length;
   const participants = resultsSummary.filter(r => r.count > 0).length;
   const avg = (() => {
@@ -274,13 +267,10 @@ async function loadResults(examId, examTitle, passMark) {
   statAvg.querySelector('strong').textContent = avg;
   statsArea.style.display = 'flex';
 
-  // نمایش جدول
   renderResultsTable(filteredResults);
 
-  // نمایش دکمه‌ها
   downloadBtn.style.display = 'inline-block';
   deleteAllResultsBtn.style.display = 'inline-block';
-  removeAllUsersBtn.style.display = 'inline-block';
 }
 
 /* ====================== نمایش جدول و جزئیات ====================== */
@@ -291,7 +281,6 @@ function renderResultsTable(list) {
     return;
   }
 
-  // ساخت جدول با ستون‌ها: ردیف، نام کاربری، تعداد دفعات، بیشترین نمره، وضعیت، عملیات
   let html = `<table>
     <thead>
       <tr>
@@ -320,7 +309,6 @@ function renderResultsTable(list) {
         <td>
           <button class="action-btn btn-ghost" onclick="toggleAttempts('${detailsId}')">مشاهده جزئیات</button>
           <button class="action-btn delete-btn" onclick="confirmDeleteUserResults('${r.user_id}')">حذف نتایج</button>
-          <button class="action-btn remove-btn" onclick="confirmRemoveUserFromExam('${r.user_id}')">حذف از آزمون</button>
         </td>
       </tr>
       <tr id="${detailsId}" style="display:none;">
@@ -340,7 +328,6 @@ function renderAttemptsList(r) {
   if (!r.ids || r.ids.length === 0) {
     return `<div class="attempt-list"><div class="small muted">این کاربر در این آزمون شرکت نکرده است.</div></div>`;
   }
-  // مرتب‌سازی تلاش‌ها بر اساس submitted_at نزولی (آخرین اول)
   const attempts = r.ids.slice().sort((a,b) => {
     const ta = a.submitted_at ? new Date(a.submitted_at).getTime() : 0;
     const tb = b.submitted_at ? new Date(b.submitted_at).getTime() : 0;
@@ -389,29 +376,7 @@ async function deleteUserResults(uid) {
       console.error('deleteUserResults error:', error);
       alert('خطا در حذف نتایج کاربر. کنسول را بررسی کنید.');
     } else {
-      // بروزرسانی محلی: حذف از allExamResults و recalculation
       allExamResults = allExamResults.filter(r => !(r.exam_id === currentExamId && r.user_id === uid));
-      await refreshAfterDataChange();
-    }
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-function confirmRemoveUserFromExam(uid) {
-  if (!confirm('آیا مطمئن هستید که می‌خواهید این کاربر را از لیست مجاز این آزمون حذف کنید؟ (اگر حذف شود، دیگر در لیست مجاز نخواهد بود)')) return;
-  removeUserFromExam(uid);
-}
-
-async function removeUserFromExam(uid) {
-  try {
-    const { error } = await supabase.from('exam_users').delete().eq('exam_id', currentExamId).eq('user_id', uid);
-    if (error) {
-      console.error('removeUserFromExam error:', error);
-      alert('خطا در حذف کاربر از آزمون.');
-    } else {
-      // اگر می‌خواهی به صورت هم‌زمان نتایج او را هم پاک کنی، می‌تونی اینجا کال کنی (در این نسخه فقط از exam_users حذف می‌کنیم)
-      allExamUsers = allExamUsers.filter(r => !(r.exam_id === currentExamId && r.user_id === uid));
       await refreshAfterDataChange();
     }
   } catch (e) {
@@ -431,7 +396,6 @@ async function deleteAttempt(attemptId) {
       console.error('deleteAttempt error:', error);
       alert('خطا در حذف تلاش.');
     } else {
-      // حذف محلی از allExamResults
       allExamResults = allExamResults.filter(r => r.id !== attemptId);
       await refreshAfterDataChange();
     }
@@ -457,29 +421,9 @@ async function deleteAllResults() {
   }
 }
 
-/* حذف همهٔ کاربران از آزمون (exam_users) */
-async function removeAllUsersFromExam() {
-  if (!confirm('آیا مطمئن هستید که می‌خواهید تمام کاربران را از این آزمون حذف کنید؟ (این عمل قابل بازگشت نیست)')) return;
-  try {
-    const { error } = await supabase.from('exam_users').delete().eq('exam_id', currentExamId);
-    if (error) {
-      console.error('removeAllUsersFromExam error:', error);
-      alert('خطا در حذف کاربران از آزمون.');
-    } else {
-      allExamUsers = [];
-      // همچنین بهتر است نتایج مربوطه را پاک کنید یا خیر؟ در این نسخه فقط exam_users حذف می‌شود.
-      await refreshAfterDataChange();
-    }
-  } catch (e) {
-    console.error(e);
-  }
-}
-
 /* پس از هر تغییر داده، محاسبات محلی را بروز کن و جدول را دوباره بساز */
 async function refreshAfterDataChange() {
-  // دوباره‌سازی userStats و resultsSummary از allExamUsers و allExamResults
   const allowedIds = allExamUsers.map(u=>u.user_id);
-  // بازسازی userStats
   const userStats = {};
   allowedIds.forEach(uid => userStats[uid] = { count:0, maxScore:0, ids:[] });
   allExamResults.forEach(r => {
@@ -498,16 +442,14 @@ async function refreshAfterDataChange() {
     return { username: u, user_id: uid, count, maxScore, status, ids };
   });
 
-  // مرتب‌سازی و نمایش
   resultsSummary.sort((a,b)=> b.maxScore - a.maxScore);
   filteredResults = resultsSummary.slice();
   renderResultsTable(filteredResults);
 
-  // بروزرسانی آمار
   const totalAllowed = resultsSummary.length;
   const participants = resultsSummary.filter(r => r.count>0).length;
   const avg = (() => {
-    const arr = resultsSummary.filter(r=>r.count>0).map(r=>r.maxScore);
+    const arr = resultsSummary.filter(r => r.count>0).map(r => r.maxScore);
     if (arr.length===0) return 0;
     return Math.round((arr.reduce((s,x)=>s+x,0)/arr.length)*100)/100;
   })();
@@ -521,7 +463,6 @@ async function refreshAfterDataChange() {
 
 function downloadExcelTwoColumns() {
   if (!resultsSummary || resultsSummary.length === 0) return alert('هیچ داده‌ای برای خروجی وجود ندارد.');
-  // فقط دو ستون: "کد پرسنلی / کد ملی" و "نمره"
   const rows = [['کد پرسنلی / کد ملی', 'نمره']];
   resultsSummary.forEach(r => {
     rows.push([r.username, r.maxScore]);
@@ -543,15 +484,8 @@ function escapeHtml(text) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/'/g, '&#39;');
 }
-
-/* ===========================================================
-   نکته: این فایل همهٔ عملیات را محلی و با page-fetch انجام می‌دهد.
-   اگر جدول users خیلی بزرگ باشد و فقط بخواهی نام‌های خاصی را بخوانی،
-   می‌توانیم به جای fetchAllPaged یک fetch محدود (in) بسازیم.
-   اما معمولا fetchAllPaged برای اندازه‌های تا چند ده هزار رکورد هم پایدار است.
-   =========================================================== */
 </script>
 </body>
 </html>
