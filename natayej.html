@@ -468,17 +468,21 @@ async function refreshAfterDataChange() {
 
 function downloadExcelTwoColumns() {
   if (!resultsSummary || resultsSummary.length === 0) return alert('هیچ داده‌ای برای خروجی وجود ندارد.');
+  
   const rows = [['کد پرسنلی / کد ملی', 'نمره']];
   resultsSummary.forEach(r => {
     rows.push([r.username, r.maxScore]);
   });
+
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws['!sheetViews'] = [{ rightToLeft: true }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'نتایج');
-  const filename = `نتایج آزمون ${currentExamTitle || ''}.xlsx`;
-  XLSX.writeFile(wb, filename);
+
+  const filename = `نتایج آزمون ${currentExamTitle || ''}.xls`;
+  XLSX.writeFile(wb, filename, { bookType: 'biff8' });
 }
+
 
 /* ====================== ابزارهای کمکی ====================== */
 
@@ -494,4 +498,5 @@ function escapeHtml(text) {
 </script>
 </body>
 </html>
+
 
