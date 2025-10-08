@@ -382,6 +382,8 @@ async function deleteUserResults(uid) {
       allExamResults = allExamResults.filter(r => !(r.user_id === uid && r.exam_id === currentExamId));
       await refreshAfterDataChange();
     }
+          location.reload();
+
   } catch (e) {
     console.error(e);
   }
@@ -492,3 +494,4 @@ function escapeHtml(text) {
 </script>
 </body>
 </html>
+
