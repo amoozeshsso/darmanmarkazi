@@ -221,7 +221,6 @@
       const limit = 1000;
       let done = false;
 
-      // بارگذاری در چند مرحله برای بیش از 1000 ردیف
       while (!done) {
         const { data, error } = await supabase
           .from('exam_users')
@@ -303,6 +302,7 @@
       }
     }
 
+    // ✅ نسخه اصلاح شده برای import بیش از 1000 کاربر
     async function processExcel() {
       const examId = document.getElementById('examSelect').value;
       const file = document.getElementById('excelFile').files[0];
@@ -315,25 +315,45 @@
         const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
         const usernames = rows.slice(1).map(r => r[0]?.toString().trim()).filter(u => u);
 
-        const { data: users, error: userError } = await supabase
-          .from('users')
-          .select('id, username')
-          .in('username', usernames);
-        if (userError) throw userError;
+        const uniqueUsernames = Array.from(new Set(usernames));
+        if (!uniqueUsernames.length) return showMessage('هیچ نام کاربری در فایل پیدا نشد', false);
+
+        const inChunkSize = 900;
+        let users = [];
+        for (let i = 0; i < uniqueUsernames.length; i += inChunkSize) {
+          const slice = uniqueUsernames.slice(i, i + inChunkSize);
+          const { data: u, error: uErr } = await supabase
+            .from('users')
+            .select('id, username')
+            .in('username', slice);
+          if (uErr) throw uErr;
+          users = users.concat(u || []);
+        }
         if (!users.length) return showMessage('هیچ کاربری یافت نشد', false);
 
-        const { data: existing } = await supabase
-          .from('exam_users')
-          .select('user_id')
-          .eq('exam_id', examId);
+        let existing = [];
+        let start = 0;
+        const pageLimit = 1000;
+        let done = false;
+        while (!done) {
+          const { data: exChunk, error: exErr } = await supabase
+            .from('exam_users')
+            .select('user_id')
+            .eq('exam_id', examId)
+            .range(start, start + pageLimit - 1);
+          if (exErr) throw exErr;
+          existing = existing.concat(exChunk || []);
+          if (exChunk.length < pageLimit) done = true;
+          else start += pageLimit;
+        }
 
         const existingUserIds = new Set(existing.map(e => e.user_id));
         const newUsers = users.filter(u => !existingUserIds.has(u.id));
         const userEntries = newUsers.map(u => ({ exam_id: examId, user_id: u.id }));
 
-        const chunkSize = 1000;
-        for (let i = 0; i < userEntries.length; i += chunkSize) {
-          const chunk = userEntries.slice(i, i + chunkSize);
+        const insertChunkSize = 1000;
+        for (let i = 0; i < userEntries.length; i += insertChunkSize) {
+          const chunk = userEntries.slice(i, i + insertChunkSize);
           const { error: insertError } = await supabase.from('exam_users').insert(chunk);
           if (insertError) throw insertError;
           await new Promise(res => setTimeout(res, 100));
