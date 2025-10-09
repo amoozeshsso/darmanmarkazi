@@ -1,412 +1,394 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>مدیریت کاربران مجاز آزمون</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-    <style>
-        body {
-            font-family: 'Vazirmatn', Tahoma;
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .back-btn {
-            display: inline-block;
-            margin-bottom: 18px;
-            background: #4e54c8;
-            color: #fff;
-            padding: 10px 28px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .back-btn:hover {
-            background: #1c5980;
-            color: #fff;
-        }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #34495e;
-            font-weight: bold;
-        }
-        select, input[type="file"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #bdc3c7;
-            border-radius: 6px;
-            font-size: 16px;
-             font-family: 'Vazirmatn', Tahoma, sans-serif;
-        }
-        button {
-    background: #2980b9;
-    color: white;
-    border: none;
-    padding: 12px 22px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-    font-family: 'Vazirmatn', Tahoma, sans-serif;
-    transition: background 0.3s;
-}
+  <meta charset="UTF-8">
+  <title>مدیریت کاربران مجاز آزمون</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
-        button:hover {
-            background: #1c5980;
-        }
-        .message {
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 6px;
-            display: none;
-        }
-        .success {
-            background: #2ecc71;
-            color: white;
-        }
-        .error {
-            background: #e74c3c;
-            color: white;
-        }
-        .users-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 25px 0 10px 0;
-        }
-        .users-table th, .users-table td {
-            border: 1px solid #ddd;
-            padding: 8px 6px;
-            text-align: center;
-        }
-        .users-table th {
-            background: #ecf0f1;
-        }
-        .delete-btn {
-            background: #e74c3c;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            padding: 7px 14px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .delete-btn:hover {
-            background: #c0392b;
-        }
-        .delete-all-btn {
-            background: #c0392b;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 10px 28px;
-            font-size: 15px;
-            margin-bottom: 15px;
-            margin-top: 5px;
-            cursor: pointer;
-        }
-        .delete-all-btn:hover {
-            background: #b71c1c;
-        }
-        body {
-            font-family: 'Vazirmatn', Tahoma, sans-serif;
-        }
-    </style>
-    
+  <style>
+    body {
+      font-family: 'Vazirmatn', Tahoma;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 18px;
+      background: #4e54c8;
+      color: #fff;
+      padding: 10px 28px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .back-btn:hover {
+      background: #1c5980;
+      color: #fff;
+    }
+    h1 {
+      color: #2c3e50;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .form-group { margin-bottom: 20px; }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #34495e;
+      font-weight: bold;
+    }
+    select, input[type="file"], input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #bdc3c7;
+      border-radius: 6px;
+      font-size: 16px;
+      font-family: 'Vazirmatn', Tahoma, sans-serif;
+    }
+    button {
+      background: #2980b9;
+      color: white;
+      border: none;
+      padding: 12px 22px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      font-family: 'Vazirmatn', Tahoma, sans-serif;
+      transition: background 0.3s;
+    }
+    button:hover { background: #1c5980; }
+    .message {
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 6px;
+      display: none;
+    }
+    .success { background: #2ecc71; color: white; }
+    .error { background: #e74c3c; color: white; }
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 25px 0 10px 0;
+    }
+    .users-table th, .users-table td {
+      border: 1px solid #ddd;
+      padding: 8px 6px;
+      text-align: center;
+    }
+    .users-table th { background: #ecf0f1; }
+    .delete-btn {
+      background: #e74c3c;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 7px 14px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .delete-btn:hover { background: #c0392b; }
+    .delete-all-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      gap: 10px;
+    }
+    .delete-all-btn {
+      background: #c0392b;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 28px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .delete-all-btn:hover { background: #b71c1c; }
+    #searchInput {
+      flex: 1;
+      border: 2px solid #bdc3c7;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: 'Vazirmatn', Tahoma;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <a href="admin_exam.html" class="back-btn">بازگشت به منوی مدیریت</a>
-        <h1>تعیین کاربران مجاز برای آزمون</h1>
-        <div class="form-group">
-            <label for="examSelect">انتخاب آزمون:</label>
-            <select id="examSelect">
-                <option value="">لطفا یک آزمون انتخاب کنید</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="excelFile">بارگذاری فایل اکسل (فقط ستون username):</label>
-            <input type="file" id="excelFile" accept=".xlsx, .xls">
-            <div class="form-group">
-                </div>
-        <button onclick="processExcel()"> ثبت کاربران مجازاکسل</button>
-        <div id="message" class="message"></div>
-    <label for="manualUsername">افزودن کاربر مجاز به صورت دستی:</label>
-    <input type="text" id="manualUsername" placeholder="نام کاربری را وارد کنید">
-</div>
-<button onclick="addManualUser()">افزودن کاربر مجازدستی</button>
+  <div class="container">
+    <a href="admin_exam.html" class="back-btn">بازگشت به منوی مدیریت</a>
+    <h1>تعیین کاربران مجاز برای آزمون</h1>
 
-        
-
-        <div id="usersSection" style="display:none;">
-            <h3 style="margin-top:40px;">لیست کاربران مجاز این آزمون</h3>
-            <button class="delete-all-btn" onclick="deleteAllUsers()">حذف همه کاربران مجاز</button>
-            <table class="users-table" id="usersTable">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>نام کاربری</th>
-                        <th>حذف</th>
-                    </tr>
-                </thead>
-                <tbody id="usersTableBody"></tbody>
-            </table>
-        </div>
+    <div class="form-group">
+      <label for="examSelect">انتخاب آزمون:</label>
+      <select id="examSelect">
+        <option value="">لطفا یک آزمون انتخاب کنید</option>
+      </select>
     </div>
 
-    <script>
-        const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    <div class="form-group">
+      <label for="excelFile">بارگذاری فایل اکسل (فقط ستون username):</label>
+      <input type="file" id="excelFile" accept=".xlsx, .xls">
+    </div>
+    <button onclick="processExcel()">ثبت کاربران مجاز اکسل</button>
+    <div id="message" class="message"></div>
 
-        // بارگیری آزمون‌ها هنگام لود صفحه
-        window.onload = async () => {
-    const { data, error } = await supabase
+    <label for="manualUsername">افزودن کاربر مجاز به صورت دستی:</label>
+    <input type="text" id="manualUsername" placeholder="نام کاربری را وارد کنید">
+    <button onclick="addManualUser()">افزودن کاربر مجاز دستی</button>
+
+    <div id="usersSection" style="display:none;">
+      <h3 style="margin-top:40px;">لیست کاربران مجاز این آزمون</h3>
+
+      <div class="delete-all-section">
+        <button class="delete-all-btn" onclick="deleteAllUsers()">حذف همه کاربران مجاز</button>
+        <input type="text" id="searchInput" placeholder="جستجو در نام کاربری..." oninput="filterUsers()">
+      </div>
+
+      <table class="users-table" id="usersTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>نام کاربری</th>
+            <th>حذف</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    window.onload = async () => {
+      const { data, error } = await supabase
         .from('exams')
         .select('id, title')
         .order('created_at', { ascending: false });
 
-    const select = document.getElementById('examSelect');
-    if (error) {
+      const select = document.getElementById('examSelect');
+      if (error) {
         showMessage('خطا در دریافت آزمون‌ها: ' + error.message, false);
         return;
-    }
-    data.forEach(exam => {
+      }
+      data.forEach(exam => {
         const option = document.createElement('option');
         option.value = exam.id;
         option.textContent = exam.title;
         select.appendChild(option);
-    });
+      });
 
-    // 👇👇👇 اینو اضافه کن
-    new Choices('#examSelect', {
+      new Choices('#examSelect', {
         searchEnabled: true,
         itemSelectText: '',
         shouldSort: false
+      });
+    };
+
+    document.getElementById('examSelect').addEventListener('change', function () {
+      const examId = this.value;
+      if (examId) loadAllowedUsers(examId);
+      else document.getElementById('usersSection').style.display = 'none';
     });
-};
 
+    async function loadAllowedUsers(examId) {
+      const usersSection = document.getElementById('usersSection');
+      const usersTableBody = document.getElementById('usersTableBody');
+      usersTableBody.innerHTML = '<tr><td colspan="3">در حال بارگذاری...</td></tr>';
+      usersSection.style.display = 'block';
 
-        document.getElementById('examSelect').addEventListener('change', function() {
-            const examId = this.value;
-            if (examId) {
-                loadAllowedUsers(examId);
-            } else {
-                document.getElementById('usersSection').style.display = 'none';
-            }
-        });
+      let allExamUsers = [];
+      let start = 0;
+      const limit = 1000;
+      let done = false;
 
-        async function loadAllowedUsers(examId) {
-            const usersSection = document.getElementById('usersSection');
-            const usersTableBody = document.getElementById('usersTableBody');
-            usersTableBody.innerHTML = '<tr><td colspan="3">در حال بارگذاری...</td></tr>';
-            usersSection.style.display = 'block';
+      // بارگذاری در چند مرحله برای بیش از 1000 ردیف
+      while (!done) {
+        const { data, error } = await supabase
+          .from('exam_users')
+          .select('id, user_id')
+          .eq('exam_id', examId)
+          .range(start, start + limit - 1);
 
-            // دریافت کاربران مجاز این آزمون
-            const { data, error } = await supabase
-                .from('exam_users')
-                .select('id, user_id')
-                .eq('exam_id', examId);
-
-            if (error) {
-                usersTableBody.innerHTML = '<tr><td colspan="3">خطا در دریافت کاربران مجاز</td></tr>';
-                return;
-            }
-            if (!data.length) {
-                usersTableBody.innerHTML = '<tr><td colspan="3">کاربری مجاز ثبت نشده است</td></tr>';
-                return;
-            }
-
-            // دریافت نام کاربری‌ها
-            const userIds = data.map(row => row.user_id);
-            const { data: users, error: userErr } = await supabase
-                .from('users')
-                .select('id, username')
-                .in('id', userIds);
-
-            if (userErr) {
-                usersTableBody.innerHTML = '<tr><td colspan="3">خطا در دریافت نام کاربری‌ها</td></tr>';
-                return;
-            }
-
-            // ساخت جدول
-            usersTableBody.innerHTML = data.map((row, idx) => {
-                const user = users.find(u => u.id === row.user_id);
-                return `<tr>
-                    <td>${idx + 1}</td>
-                    <td>${user ? user.username : row.user_id}</td>
-                    <td><button class="delete-btn" onclick="deleteUser(${row.id}, ${examId})">حذف</button></td>
-                </tr>`;
-            }).join('');
+        if (error) {
+          usersTableBody.innerHTML = '<tr><td colspan="3">خطا در دریافت کاربران مجاز</td></tr>';
+          return;
         }
 
-        async function deleteUser(examUserId, examId) {
-            if (!confirm('آیا از حذف این کاربر مجاز مطمئن هستید؟')) return;
-            const { error } = await supabase
-                .from('exam_users')
-                .delete()
-                .eq('id', examUserId);
-            if (error) {
-                showMessage('خطا در حذف کاربر مجاز: ' + error.message, false);
-            } else {
-                showMessage('کاربر مجاز با موفقیت حذف شد', true);
-                loadAllowedUsers(examId);
-            }
-        }
+        allExamUsers = allExamUsers.concat(data);
+        if (data.length < limit) done = true;
+        else start += limit;
+      }
 
-        async function deleteAllUsers() {
-            const examId = document.getElementById('examSelect').value;
-            if (!examId) return;
-            if (!confirm('آیا از حذف همه کاربران مجاز مطمئن هستید؟')) return;
-            const { error } = await supabase
-                .from('exam_users')
-                .delete()
-                .eq('exam_id', examId);
-            if (error) {
-                showMessage('خطا در حذف همه کاربران مجاز: ' + error.message, false);
-            } else {
-                showMessage('همه کاربران مجاز با موفقیت حذف شدند', true);
-                loadAllowedUsers(examId);
-            }
-        }
-
-        async function processExcel() {
-  const examId = document.getElementById('examSelect').value;
-  const file = document.getElementById('excelFile').files[0];
-  if (!examId) return showMessage('لطفا یک آزمون انتخاب کنید', false);
-  if (!file) return showMessage('لطفا فایل اکسل را انتخاب کنید', false);
-
-  try {
-    const data = await file.arrayBuffer();
-    const wb = XLSX.read(data);
-    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
-    const usernames = rows.slice(1).map(r => r[0]?.toString().trim()).filter(u => u);
-
-    // گرفتن user_id های معادل usernames
-    const { data: users, error: userError } = await supabase
-      .from('users')
-      .select('id, username')
-      .in('username', usernames);
-    if (userError) throw userError;
-    if (!users.length) return showMessage('هیچ کاربری یافت نشد', false);
-
-    // گرفتن user_idهایی که قبلاً در exam_users هستند
-    const { data: existing, error: existingError } = await supabase
-      .from('exam_users')
-      .select('user_id')
-      .eq('exam_id', examId);
-    if (existingError) throw existingError;
-
-    const existingUserIds = new Set(existing.map(e => e.user_id));
-
-    // فیلتر فقط userهایی که قبلاً ثبت نشده‌اند
-    const newUsers = users.filter(u => !existingUserIds.has(u.id));
-
-    const userEntries = newUsers.map(u => ({ exam_id: examId, user_id: u.id }));
-    const chunkSize = 1000;
-
-    for (let i = 0; i < userEntries.length; i += chunkSize) {
-      const chunk = userEntries.slice(i, i + chunkSize);
-      const { error: insertError } = await supabase.from('exam_users').insert(chunk);
-      if (insertError) throw insertError;
-      await new Promise(res => setTimeout(res, 100)); // کمی صبر
-    }
-
-    showMessage(`✅ ${newUsers.length} کاربر جدید اضافه شد`, true);
-    loadAllowedUsers(examId);
-  } catch (err) {
-    console.error(err);
-    showMessage('خطا در پردازش: ' + err.message, false);
-  }
-}
-
-        function showMessage(text, isSuccess) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${isSuccess ? 'success' : 'error'}`;
-            messageDiv.style.display = 'block';
-            setTimeout(() => {
-                messageDiv.style.display = 'none';
-            }, 5000);
-        }
-        async function addManualUser() {
-    const examId = document.getElementById('examSelect').value;
-    const username = document.getElementById('manualUsername').value.trim();
-    if (!examId) {
-        showMessage('لطفا یک آزمون انتخاب کنید', false);
+      if (!allExamUsers.length) {
+        usersTableBody.innerHTML = '<tr><td colspan="3">کاربری مجاز ثبت نشده است</td></tr>';
         return;
+      }
+
+      const userIds = allExamUsers.map(r => r.user_id);
+      let allUsers = [];
+      for (let i = 0; i < userIds.length; i += limit) {
+        const chunk = userIds.slice(i, i + limit);
+        const { data: users, error: userErr } = await supabase
+          .from('users')
+          .select('id, username')
+          .in('id', chunk);
+        if (userErr) continue;
+        allUsers = allUsers.concat(users);
+      }
+
+      usersTableBody.innerHTML = allExamUsers.map((row, idx) => {
+        const user = allUsers.find(u => u.id === row.user_id);
+        return `<tr>
+          <td>${idx + 1}</td>
+          <td>${user ? user.username : row.user_id}</td>
+          <td><button class="delete-btn" onclick="deleteUser(${row.id}, ${examId})">حذف</button></td>
+        </tr>`;
+      }).join('');
     }
-    if (!username) {
-        showMessage('لطفا نام کاربری را وارد کنید', false);
-        return;
+
+    function filterUsers() {
+      const searchText = document.getElementById('searchInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#usersTableBody tr');
+      rows.forEach(row => {
+        const username = row.cells[1]?.textContent.toLowerCase() || '';
+        row.style.display = username.includes(searchText) ? '' : 'none';
+      });
     }
-    try {
-        // جستجوی کاربر
+
+    async function deleteUser(examUserId, examId) {
+      if (!confirm('آیا از حذف این کاربر مجاز مطمئن هستید؟')) return;
+      const { error } = await supabase
+        .from('exam_users')
+        .delete()
+        .eq('id', examUserId);
+      if (error) showMessage('خطا در حذف کاربر مجاز: ' + error.message, false);
+      else {
+        showMessage('کاربر مجاز با موفقیت حذف شد', true);
+        loadAllowedUsers(examId);
+      }
+    }
+
+    async function deleteAllUsers() {
+      const examId = document.getElementById('examSelect').value;
+      if (!examId) return;
+      if (!confirm('آیا از حذف همه کاربران مجاز مطمئن هستید؟')) return;
+      const { error } = await supabase
+        .from('exam_users')
+        .delete()
+        .eq('exam_id', examId);
+      if (error) showMessage('خطا در حذف همه کاربران مجاز: ' + error.message, false);
+      else {
+        showMessage('همه کاربران مجاز با موفقیت حذف شدند', true);
+        loadAllowedUsers(examId);
+      }
+    }
+
+    async function processExcel() {
+      const examId = document.getElementById('examSelect').value;
+      const file = document.getElementById('excelFile').files[0];
+      if (!examId) return showMessage('لطفا یک آزمون انتخاب کنید', false);
+      if (!file) return showMessage('لطفا فایل اکسل را انتخاب کنید', false);
+
+      try {
+        const data = await file.arrayBuffer();
+        const wb = XLSX.read(data);
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+        const usernames = rows.slice(1).map(r => r[0]?.toString().trim()).filter(u => u);
+
         const { data: users, error: userError } = await supabase
-            .from('users')
-            .select('id, username')
-            .eq('username', username);
-
+          .from('users')
+          .select('id, username')
+          .in('username', usernames);
         if (userError) throw userError;
-        if (!users.length) {
-            showMessage('نام کاربری پیدا نشد', false);
-            return;
+        if (!users.length) return showMessage('هیچ کاربری یافت نشد', false);
+
+        const { data: existing } = await supabase
+          .from('exam_users')
+          .select('user_id')
+          .eq('exam_id', examId);
+
+        const existingUserIds = new Set(existing.map(e => e.user_id));
+        const newUsers = users.filter(u => !existingUserIds.has(u.id));
+        const userEntries = newUsers.map(u => ({ exam_id: examId, user_id: u.id }));
+
+        const chunkSize = 1000;
+        for (let i = 0; i < userEntries.length; i += chunkSize) {
+          const chunk = userEntries.slice(i, i + chunkSize);
+          const { error: insertError } = await supabase.from('exam_users').insert(chunk);
+          if (insertError) throw insertError;
+          await new Promise(res => setTimeout(res, 100));
         }
+
+        showMessage(`✅ ${newUsers.length} کاربر جدید اضافه شد`, true);
+        loadAllowedUsers(examId);
+      } catch (err) {
+        showMessage('خطا در پردازش: ' + err.message, false);
+      }
+    }
+
+    async function addManualUser() {
+      const examId = document.getElementById('examSelect').value;
+      const username = document.getElementById('manualUsername').value.trim();
+      if (!examId) return showMessage('لطفا یک آزمون انتخاب کنید', false);
+      if (!username) return showMessage('لطفا نام کاربری را وارد کنید', false);
+
+      try {
+        const { data: users, error: userError } = await supabase
+          .from('users')
+          .select('id, username')
+          .eq('username', username);
+        if (userError) throw userError;
+        if (!users.length) return showMessage('نام کاربری پیدا نشد', false);
+
         const userId = users[0].id;
 
-        // بررسی عدم تکرار
-        const { data: exist, error: existError } = await supabase
-            .from('exam_users')
-            .select('id')
-            .eq('exam_id', examId)
-            .eq('user_id', userId);
+        const { data: exist } = await supabase
+          .from('exam_users')
+          .select('id')
+          .eq('exam_id', examId)
+          .eq('user_id', userId);
+        if (exist.length) return showMessage('این کاربر قبلاً مجاز شده است', false);
 
-        if (existError) throw existError;
-        if (exist.length) {
-            showMessage('این کاربر قبلا مجاز شده است', false);
-            return;
-        }
-
-        // درج کاربر مجاز
         const { error: insertError } = await supabase
-            .from('exam_users')
-            .insert([{ exam_id: examId, user_id: userId }]);
-
+          .from('exam_users')
+          .insert([{ exam_id: examId, user_id: userId }]);
         if (insertError) throw insertError;
 
         showMessage('کاربر مجاز با موفقیت افزوده شد', true);
         document.getElementById('manualUsername').value = '';
         loadAllowedUsers(examId);
-
-    } catch (error) {
+      } catch (error) {
         showMessage('خطا در ثبت کاربر: ' + error.message, false);
+      }
     }
-}
 
-    </script>
+    function showMessage(text, isSuccess) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = text;
+      messageDiv.className = `message ${isSuccess ? 'success' : 'error'}`;
+      messageDiv.style.display = 'block';
+      setTimeout(() => { messageDiv.style.display = 'none'; }, 5000);
+    }
+  </script>
 </body>
 </html>
-
