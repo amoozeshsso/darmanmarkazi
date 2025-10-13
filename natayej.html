@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <title>مشاهده نتایج آزمون — پنل مدیریت</title>
+  <title>مشاهده نتایج آزمون — پنل مدیریت (با زمان کل)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -30,7 +30,6 @@
       font-family: 'Vazirmatn', Tahoma, sans-serif;
       box-sizing: border-box;
     }
-    /* کلاس مخصوصِ جستجو */
     .search-input {
       flex:1;
       width: 10cm !important;
@@ -38,8 +37,7 @@
       max-width: 10cm !important;
       box-sizing: border-box !important;
       padding:8px 10px;
-    } /* اصلاح عرض جستجو به 10cm */
-
+    }
     .btn {
       padding:8px 14px;
       border-radius:8px;
@@ -69,23 +67,18 @@
       .controls { flex-direction:column; align-items:stretch }
       select, .search-input { width:100% }
     }
-
-    /* ---------- مهم: تنظیمات ثابت برای Choices (انتخاب آزمون) ---------- */
-    /* این بخش باید آخر CSS قرار بگیره تا override بشه */
     #examSelect + .choices {
       width: 10cm !important;
       min-width: 10cm !important;
       max-width: 10cm !important;
       display: inline-block !important;
     }
-
     #examSelect + .choices .choices__inner {
       width: 100% !important;
       min-width: 100% !important;
       max-width: 100% !important;
       box-sizing: border-box !important;
     }
-    /* --------------------------------------------------------------------- */
   </style>
 </head>
 <body>
@@ -122,31 +115,30 @@
 
 <script>
 /*
-  نسخهٔ کامل و جامع:
-  - بارگذاری صفحه‌ای (paged) برای دور زدن محدودیت 1000 رکورد Supabase
-  - نمایش تمام کاربران مجاز از exam_users حتی اگر شرکت نکرده باشند (نمره = 0)
-  - نمایش تعداد دفعات شرکت، بیشترین نمره، وضعیت
-  - مرتب‌سازی بر اساس بیشترین نمره (نزولی)
-  - حذف تک‌تک رکوردها، حذف همه نتایج
-  - خروجی اکسل فقط دو ستون: "کد پرسنلی / کد ملی" و "نمره"
+  تغییرات کلیدی:
+  - وقتی لیست آزمون‌ها را می‌گیریم، کوشش شده فیلدهای start_at و duration_minutes را هم دریافت کنیم (اگر وجود داشته باشند).
+  - وقتی نتایج را می‌گیریم، فیلد started_at را نیز select می‌کنیم (اگر در جدول موجود باشد).
+  - در حالت نمایش جزئیات: اگر started_at برای هر تلاش موجود باشد، مدت آن تلاش محاسبه می‌شود؛ در غیر این صورت اگر زمان شروع آزمون (exam.start_at) موجود باشد، مدت از آن تا submitted_at محاسبه می‌شود.
+  - مجموع زمان‌های قابل محاسبه برای کاربر در بالای لیست تلاش‌ها نمایش داده می‌شود.
+
+  نکتهٔ مهم: این اصلاحات فقط در سمت کلاینت (JS) است و نیازی به تغییر در پایگاه‌داده یا API ندارد. اگر فیلدهایی مانند started_at یا start_at وجود نداشته باشند، کد با "-" یا "نامشخص" نشان می‌دهد.
 */
 
-/* ---- کانفیگ Supabase (اگه خواستی عوضش کن) ---- */
 const SUPABASE_URL = 'https://qdccjbakfuywvdqfcoyg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkY2NqYmFrZnV5d3ZkcWZjb3lnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzk3MTEsImV4cCI6MjA2MTk1NTcxMX0.cwpbvCF3Qs3Mg1GAYPimijXnyDDzQERuTb_k2XZl5ZU';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* ---- متغیرهای سراسری ---- */
-let userMap = {};           // نگاشت user_id => username (یا کد ملی)
-let resultsSummary = [];    // آرایه‌ای از نتایج نهایی (هر کاربر: count, maxScore, ids)
-let filteredResults = [];   // نتایجی که پس از جستجو نمایش داده می‌شوند
-let allExamUsers = [];      // رکوردهای exam_users برای آزمون فعلی
-let allExamResults = [];    // رکوردهای exam_results برای آزمون فعلی
+let userMap = {};
+let resultsSummary = [];
+let filteredResults = [];
+let allExamUsers = [];
+let allExamResults = [];
 let currentExamId = null;
 let currentExamTitle = "";
 let currentPassMark = 0;
+let currentExamStart = null;       // Date یا null
+let currentExamDurationMinutes = null; // عدد یا null
 
-/* ---- المان‌های DOM ---- */
 const examSelect = document.getElementById('examSelect');
 const searchInput = document.getElementById('searchInput');
 const resultsTable = document.getElementById('resultsTable');
@@ -158,26 +150,18 @@ const statParticipants = document.getElementById('stat_participants');
 const statAvg = document.getElementById('stat_avg');
 const statsArea = document.getElementById('statsArea');
 
-/* ---- مقدار اولیه/رویدادها ---- */
 window.onload = async () => {
-  await loadUserMap();     // بارگذاری تمام کاربران (صفحه‌ای)
-  await loadExams();       // بارگذاری لیست آزمون‌ها
-  // فعال‌سازی Choices.js برای select
+  await loadUserMap();
+  await loadExams();
   new Choices('#examSelect', {
     searchEnabled: true,
     shouldSort: false,
     itemSelectText: ''
   });
-
-  // رویداد جستجو — توجه: این جستجو روی DOM جدول عمل می‌کند (سریع و بدون مشکل)
   searchInput.addEventListener('input', onSearchInput);
-
-  // دکمه‌ها
   downloadBtn.addEventListener('click', downloadExcelTwoColumns);
   deleteAllResultsBtn.addEventListener('click', deleteAllResults);
 };
-
-/* ====================== توابع کمکی ====================== */
 
 async function fetchAllPaged(table, columns, applyFilter = null) {
   const pageSize = 1000;
@@ -205,8 +189,6 @@ async function fetchAllPaged(table, columns, applyFilter = null) {
   return all;
 }
 
-/* ====================== بارگذاری اولیه داده‌ها ====================== */
-
 async function loadUserMap() {
   userMap = {};
   const users = await fetchAllPaged('users', 'id, username');
@@ -218,7 +200,8 @@ async function loadUserMap() {
 
 async function loadExams() {
   msgBox.textContent = '';
-  const { data: exams, error } = await supabase.from('exams').select('id, title, pass_mark').order('id', { ascending: false });
+  // سعی می‌کنیم فیلدهای start_at و duration_minutes را هم بگیریم اگر وجود داشته باشند
+  const { data: exams, error } = await supabase.from('exams').select('id, title, pass_mark, start_at, duration_minutes').order('id', { ascending: false });
   if (error) {
     console.error('خطا در loadExams:', error);
     msgBox.textContent = 'خطا در دریافت لیست آزمون‌ها';
@@ -230,16 +213,19 @@ async function loadExams() {
     opt.value = ex.id;
     opt.textContent = ex.title || `آزمون ${ex.id}`;
     opt.dataset.passmark = ex.pass_mark ?? 0;
+    if (ex.start_at) opt.dataset.start_at = ex.start_at;
+    if (ex.duration_minutes !== undefined && ex.duration_minutes !== null) opt.dataset.duration_minutes = ex.duration_minutes;
     examSelect.appendChild(opt);
   });
   examSelect.onchange = async () => {
     const sel = examSelect.options[examSelect.selectedIndex];
     const pass = sel?.dataset?.passmark ?? 0;
+    // خواندن اطلاعات start و duration از attributeهای option
+    currentExamStart = sel?.dataset?.start_at ? new Date(sel.dataset.start_at) : null;
+    currentExamDurationMinutes = sel?.dataset?.duration_minutes ? Number(sel.dataset.duration_minutes) : null;
     await loadResults(sel.value, sel.textContent, pass);
   };
 }
-
-/* ====================== بارگذاری نتایج آزمون ====================== */
 
 async function loadResults(examId, examTitle, passMark) {
   msgBox.textContent = '';
@@ -263,7 +249,8 @@ async function loadResults(examId, examTitle, passMark) {
   }
   const allowedUserIds = allExamUsers.map(r => r.user_id);
 
-  allExamResults = await fetchAllPaged('exam_results', 'id, exam_id, user_id, score, submitted_at', q => q.eq('exam_id', currentExamId));
+  // اینجا فیلدهای started_at و submitted_at را انتخاب می‌کنیم اگر وجود داشته باشند
+  allExamResults = await fetchAllPaged('exam_results', 'id, exam_id, user_id, score, submitted_at, started_at', q => q.eq('exam_id', currentExamId));
 
   const userStats = {};
   allowedUserIds.forEach(uid => { userStats[uid] = { count: 0, maxScore: 0, ids: [] }; });
@@ -273,7 +260,8 @@ async function loadResults(examId, examTitle, passMark) {
     if (!userStats[uid]) userStats[uid] = { count: 0, maxScore: 0, ids: [] };
     userStats[uid].count++;
     if (typeof row.score === 'number' && row.score > userStats[uid].maxScore) userStats[uid].maxScore = row.score;
-    userStats[uid].ids.push({ id: row.id, score: row.score, submitted_at: row.submitted_at });
+    // push کامل رکورد (حال شامل started_at و submitted_at)
+    userStats[uid].ids.push({ id: row.id, score: row.score, submitted_at: row.submitted_at, started_at: row.started_at });
   });
 
   resultsSummary = Object.keys(userStats).map(uid => {
@@ -305,8 +293,6 @@ async function loadResults(examId, examTitle, passMark) {
   downloadBtn.style.display = 'inline-block';
   deleteAllResultsBtn.style.display = 'inline-block';
 }
-
-/* ====================== نمایش جدول و جزئیات ====================== */
 
 function renderResultsTable(list) {
   if (!list || list.length === 0) {
@@ -356,7 +342,6 @@ function renderResultsTable(list) {
   resultsTable.innerHTML = html;
 }
 
-/* helper: HTML برای لیست تلاش‌ها (attempts) برای هر کاربر */
 function renderAttemptsList(r) {
   if (!r.ids || r.ids.length === 0) {
     return `<div class="attempt-list"><div class="small muted">این کاربر در این آزمون شرکت نکرده است.</div></div>`;
@@ -366,38 +351,83 @@ function renderAttemptsList(r) {
     const tb = b.submitted_at ? new Date(b.submitted_at).getTime() : 0;
     return tb - ta;
   });
+
   let html = `<div class="attempt-list">`;
   html += `<div class="small muted">فهرست تلاش‌ها (جدیدترین اول):</div><br>`;
-  html += `<table style="width:100%;border-collapse:collapse"><thead><tr><th>آی‌دی</th><th>نمره</th><th>تاریخ</th><th>حذف</th></tr></thead><tbody>`;
+  html += `<table style="width:100%;border-collapse:collapse"><thead><tr><th>آی‌دی</th><th>نمره</th><th>شروع</th><th>پایان</th><th>مدت</th><th>حذف</th></tr></thead><tbody>`;
+
+  let totalDurationMs = 0; // جمع مدت‌هایی که قابل محاسبه‌اند
   attempts.forEach(a => {
-    const dateStr = a.submitted_at ? (new Date(a.submitted_at)).toLocaleString() : '-';
-    html += `<tr><td>${a.id}</td><td>${a.score}</td><td>${dateStr}</td><td><button class="action-btn delete-btn" onclick="confirmDeleteAttempt(${a.id})">حذف</button></td></tr>`;
+    const start = a.started_at ? new Date(a.started_at) : (currentExamStart ? new Date(currentExamStart) : null);
+    const end = a.submitted_at ? new Date(a.submitted_at) : null;
+    const startStr = (a.started_at) ? (new Date(a.started_at)).toLocaleString() : (currentExamStart ? (new Date(currentExamStart)).toLocaleString() : '-');
+    const endStr = end ? end.toLocaleString() : '-';
+
+    // محاسبه مدت زمان برای هر تلاش
+    let durationStr = '-';
+    let durationMs = null;
+    if (start && end) {
+      durationMs = end.getTime() - start.getTime();
+      if (durationMs < 0) durationMs = 0;
+      const secs = Math.floor(durationMs / 1000);
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = secs % 60;
+      durationStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      totalDurationMs += durationMs;
+    } else if (end && currentExamDurationMinutes !== null && currentExamDurationMinutes !== undefined) {
+      // اگر فقط end موجود و مدت آزمون از قبل مشخص است، از duration آزمون استفاده کن (هجومی)
+      const approxMs = currentExamDurationMinutes * 60 * 1000;
+      durationMs = approxMs;
+      const secs = Math.floor(durationMs / 1000);
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = secs % 60;
+      durationStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} (تقریبی)`;
+      totalDurationMs += durationMs;
+    }
+
+    html += `<tr>
+      <td>${a.id}</td>
+      <td>${a.score}</td>
+      <td>${startStr}</td>
+      <td>${endStr}</td>
+      <td>${durationStr}</td>
+      <td><button class="action-btn delete-btn" onclick="confirmDeleteAttempt(${a.id})">حذف</button></td>
+    </tr>`;
   });
-  html += `</tbody></table></div>`;
+
+  html += `</tbody></table>`;
+
+  // نمایش جمع مدت زمان (اگر چیزی محاسبه شده باشد)
+  if (totalDurationMs > 0) {
+    const secs = Math.floor(totalDurationMs / 1000);
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    html += `<div style="margin-top:10px;font-weight:700">کل زمان قابل محاسبه (تمام تلاش‌ها): ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}</div>`;
+  } else {
+    html += `<div style="margin-top:10px;" class="small muted">مدت قابل محاسبه‌ای یافت نشد (برای محاسبهٔ دقیق نیاز به فیلد started_at یا exam.start_at است).</div>`;
+  }
+
+  html += `</div>`;
   return html;
 }
 
-/* toggle نمایش جزئیات */
 function toggleAttempts(id) {
   const el = document.getElementById(id);
   if (!el) return;
   el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'table-row' : 'none';
 }
 
-/* ====================== جستجو/فیلتر (DOM-based search) ====================== */
-
 function onSearchInput(e) {
   const q = (e.target.value || '').trim().toLowerCase();
-
-  // اگر جدول ساخته شده، روی DOM ردیف‌ها فیلتر کن (سریع و بدون باز-رندر)
   const tableRows = document.querySelectorAll('#resultsTable table tbody tr');
   if (tableRows && tableRows.length > 0) {
     let visible = 0;
     tableRows.forEach(row => {
-      // ردیف‌هایی که جزئیات (attempt-list) هستند یک ردیف جدا هستند (we used paired rows).
-      // ما فقط ردیف‌های اصلی را بررسی می‌کنیم: ردیفی که 6 سلول دارد (main rows).
       const tds = row.querySelectorAll('td');
-      if (!tds || tds.length < 2) { // احتمالاً جزئیات است
+      if (!tds || tds.length < 2) {
         row.style.display = 'none';
         return;
       }
@@ -406,13 +436,11 @@ function onSearchInput(e) {
       if (!q || txt.includes(q)) {
         row.style.display = '';
         visible++;
-        // همچنین ردیف جزئیات بعدی (اگر وجود دارد) را خالی نکن تا دکمه "مشاهده جزئیات" درست کار کند
         const next = row.nextElementSibling;
         if (next && next.id && next.id.startsWith('attempts-')) {
           next.style.display = (next.getAttribute('data-expanded') === 'true') ? '' : 'none';
         }
       } else {
-        // پنهان کن و درباره ردیف جزئیات بعدی هم پنهان کن
         row.style.display = 'none';
         const next = row.nextElementSibling;
         if (next && next.id && next.id.startsWith('attempts-')) {
@@ -420,17 +448,12 @@ function onSearchInput(e) {
         }
       }
     });
-
-    // پیام مناسب نمایش بده
     msgBox.textContent = (visible === 0 && q) ? 'نتیجه‌ای یافت نشد.' : '';
     return;
   }
-
-  // اگر جدول هنوز ساخته نشده بود، از fallback منطقی استفاده کن (فیلتر نتایجSummary و رندر مجدد)
   filterResultsByUsername(q);
 }
 
-/* قدیمی: فیلتر مبتنی بر داده‌ها (fallback) */
 function filterResultsByUsername(q) {
   q = (q || '').trim().toLowerCase();
   if (!q) {
@@ -441,14 +464,11 @@ function filterResultsByUsername(q) {
   renderResultsTable(filteredResults);
 }
 
-/* ====================== حذف‌ها — با تأیید کاربر ====================== */
-
 function confirmDeleteUserResults(uid) {
   if (!confirm('آیا مطمئن هستید که می‌خواهید تمام نتایج این کاربر برای این آزمون حذف شود؟ (این عمل قابل بازگشت نیست)')) return;
   deleteUserResults(uid);
 }
 
-/* حذف نتایج کاربر فقط از آزمون جاری */
 async function deleteUserResults(uid) {
   try {
     const { error } = await supabase.from('exam_results').delete()
@@ -461,9 +481,7 @@ async function deleteUserResults(uid) {
       allExamResults = allExamResults.filter(r => !(r.user_id === uid && r.exam_id === currentExamId));
       await refreshAfterDataChange();
     }
-    // صفحه را رفرش می‌کنیم تا همه چیز همگام شود
     location.reload();
-
   } catch (e) {
     console.error(e);
   }
@@ -489,7 +507,6 @@ async function deleteAttempt(attemptId) {
   }
 }
 
-/* حذف همهٔ نتایج (exam_results) برای آزمون جاری */
 async function deleteAllResults() {
   if (!confirm('آیا مطمئن هستید که می‌خواهید همهٔ نتایج این آزمون حذف شود؟ (این عمل قابل بازگشت نیست)')) return;
   try {
@@ -506,7 +523,6 @@ async function deleteAllResults() {
   }
 }
 
-/* پس از هر تغییر داده، محاسبات محلی را بروز کن و جدول را دوباره بساز */
 async function refreshAfterDataChange() {
   const allowedIds = allExamUsers.map(u=>u.user_id);
   const userStats = {};
@@ -515,7 +531,7 @@ async function refreshAfterDataChange() {
     if (!userStats[r.user_id]) userStats[r.user_id] = { count:0, maxScore:0, ids:[] };
     userStats[r.user_id].count++;
     if (typeof r.score === 'number' && r.score > userStats[r.user_id].maxScore) userStats[r.user_id].maxScore = r.score;
-    userStats[r.user_id].ids.push({ id:r.id, score:r.score, submitted_at:r.submitted_at });
+    userStats[r.user_id].ids.push({ id:r.id, score:r.score, submitted_at:r.submitted_at, started_at:r.started_at });
   });
 
   resultsSummary = Object.keys(userStats).map(uid => {
@@ -533,26 +549,18 @@ async function refreshAfterDataChange() {
 
   const totalAllowed = resultsSummary.length;
   const participants = resultsSummary.filter(r => r.count>0).length;
-  const avg = (() => {
-    const arr = resultsSummary.filter(r => r.count>0).map(r => r.maxScore);
-    if (arr.length===0) return 0;
-    return Math.round((arr.reduce((s,x)=>s+x,0)/arr.length)*100)/100;
-  })();
+  const avg = (() => { const arr = resultsSummary.filter(r => r.count>0).map(r => r.maxScore); if (arr.length===0) return 0; return Math.round((arr.reduce((s,x)=>s+x,0)/arr.length)*100)/100; })();
   statTotal.querySelector('strong').textContent = totalAllowed;
   statParticipants.querySelector('strong').textContent = participants;
   statAvg.querySelector('strong').textContent = avg;
   statsArea.style.display = totalAllowed ? 'flex' : 'none';
 }
 
-/* ====================== خروجی Excel (فقط دو ستون) ====================== */
-
 function downloadExcelTwoColumns() {
   if (!resultsSummary || resultsSummary.length === 0) return alert('هیچ داده‌ای برای خروجی وجود ندارد.');
-  
+
   const rows = [['کد پرسنلی / کد ملی', 'نمره']];
-  resultsSummary.forEach(r => {
-    rows.push([r.username, r.maxScore]);
-  });
+  resultsSummary.forEach(r => { rows.push([r.username, r.maxScore]); });
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws['!sheetViews'] = [{ rightToLeft: true }];
@@ -562,8 +570,6 @@ function downloadExcelTwoColumns() {
   const filename = `نتایج آزمون ${currentExamTitle || ''}.xls`;
   XLSX.writeFile(wb, filename, { bookType: 'biff8' });
 }
-
-/* ====================== ابزارهای کمکی ====================== */
 
 function escapeHtml(text) {
   if (text === null || text === undefined) return '';
