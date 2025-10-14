@@ -377,6 +377,83 @@ document.getElementById('searchInput').addEventListener('input', function () {
     row.style.display = title.includes(query) ? '' : 'none';
   });
 });
+      // ===== افزودن قابلیت مرتب‌سازی به سرستون‌ها =====
+      // قرار دهید: بلافاصله بعد از پایان listener جستجو و قبل از `await loadExams();`
+      (function addTableSorting() {
+        const table = document.querySelector('table');
+        const headers = table.querySelectorAll('th');
+
+        // نمایش نشانگر کلیک‌پذیری
+        headers.forEach(h => h.style.cursor = 'pointer');
+
+        headers.forEach((th, index) => {
+          // نادیده گرفتن ستون‌هایی که نباید مرتب شوند (مثلاً عملیات)
+          // در صورت نیاز می‌توانید شرط اضافه کنید: if (th.textContent.includes('عملیات')) return;
+          th.addEventListener('click', () => {
+            // حالت ترتیب: asc / desc — ذخیره در attribute داده‌ای th
+            const currentOrder = th.dataset.order === 'asc' ? 'desc' : 'asc';
+            // پاک‌کردن وضعیت از همه سرستون‌ها و فقط برای این ستون ست کردن
+            headers.forEach(h => delete h.dataset.order);
+            th.dataset.order = currentOrder;
+
+            // جمع‌آوری ردیف‌ها (فقط ردیف‌های واقعی)
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => r.querySelectorAll('td').length > 1);
+
+            // تابع استخراج مقدار سلول برای مقایسه
+            const getCellValue = (row, idx) => {
+              const cell = row.children[idx];
+              if (!cell) return '';
+              return cell.textContent.trim();
+            };
+
+            // تشخیص نوع داده (عدد / تاریخ / متن)
+            const detectType = val => {
+              if (!val) return 'string';
+              // تاریخ فارسی ممکن است به شکل محلی باشد؛ تلاش برای parse ISO یا عدد
+              const asNum = parseFloat(val.replace(/[,‌\s]/g, ''));
+              if (!isNaN(asNum) && val.match(/^\d+([,‌\s]?\d+)*(\.\d+)?$/)) return 'number';
+              const asDate = Date.parse(val);
+              if (!isNaN(asDate)) return 'date';
+              return 'string';
+            };
+
+            // تعیین نوع با نگاه به اولین مقدار غیرخالی
+            let colType = 'string';
+            for (const r of rows) {
+              const v = getCellValue(r, index);
+              if (v) { colType = detectType(v); break; }
+            }
+
+            rows.sort((a, b) => {
+              let A = getCellValue(a, index);
+              let B = getCellValue(b, index);
+
+              // نرمال‌سازی براساس نوع
+              if (colType === 'number') {
+                A = parseFloat(A.replace(/[,‌\s]/g, '')) || 0;
+                B = parseFloat(B.replace(/[,‌\s]/g, '')) || 0;
+                return currentOrder === 'asc' ? A - B : B - A;
+              }
+              if (colType === 'date') {
+                const da = Date.parse(A) || 0;
+                const db = Date.parse(B) || 0;
+                return currentOrder === 'asc' ? da - db : db - da;
+              }
+              // متن (حساس به حروف کوچک)
+              A = A.toLowerCase();
+              B = B.toLowerCase();
+              if (A < B) return currentOrder === 'asc' ? -1 : 1;
+              if (A > B) return currentOrder === 'asc' ? 1 : -1;
+              return 0;
+            });
+
+            // درج دوباره ردیف‌ها
+            rows.forEach(r => tbody.appendChild(r));
+          });
+        });
+      })();
+      // ===== پایان بلوک مرتب‌سازی =====
 
 
       await loadExams();
@@ -391,3 +468,4 @@ document.getElementById('searchInput').addEventListener('input', function () {
   100% { transform: rotate(360deg);}
 }
 </style>
+
