@@ -264,8 +264,10 @@
                   data-title="${exam.title}" 
                   data-max_attempts="${exam.max_attempts || 1}"
                   data-duration="${exam.duration_minutes || 20}"
-                  data-start="${exam.start_at ? new Date(exam.start_at).toISOString().slice(0,16) : ''}"
-                  data-end="${exam.end_at ? new Date(exam.end_at).toISOString().slice(0,16) : ''}"
+                  data-start="${exam.start_at ? new Date(new Date(exam.start_at).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0,16) : ''}"
+ data-end="${exam.end_at ? new Date(new Date(exam.end_at).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0,16) : ''}"
+
+                  
                   data-random_question_count="${exam.random_question_count || 2}"
                   data-pass_mark="${exam.pass_mark || 10}"
                 >ویرایش</button>
@@ -468,4 +470,5 @@ document.getElementById('searchInput').addEventListener('input', function () {
   100% { transform: rotate(360deg);}
 }
 </style>
+
 
