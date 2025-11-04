@@ -240,7 +240,7 @@
 
       async function loadExams() {
         showLoading(true); hideMessages();
-        const { data, error } = await supabase.from('exams').select('*').order('id');
+       const { data, error } = await supabase.from('exams').select('*').order('id', { ascending: false });
         if (error) {
           showError(error.message || 'خطا در دریافت داده‌ها');
           list.innerHTML = '<tr><td colspan="10">خطا در دریافت داده‌ها</td></tr>';
@@ -470,5 +470,6 @@ document.getElementById('searchInput').addEventListener('input', function () {
   100% { transform: rotate(360deg);}
 }
 </style>
+
 
 
